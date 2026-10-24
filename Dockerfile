@@ -2,6 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY ["StockConsumptionPlanner.slnx", "./"]
+COPY ["Directory.Build.props", "./"]
 COPY ["src/StockConsumptionPlanner.App/StockConsumptionPlanner.App.csproj", "src/StockConsumptionPlanner.App/"]
 COPY ["src/Modules/StockReport/StockConsumptionPlanner.Modules.StockReport/StockConsumptionPlanner.Modules.StockReport.csproj", "src/Modules/StockReport/StockConsumptionPlanner.Modules.StockReport/"]
 COPY ["src/Modules/StockReport/StockConsumptionPlanner.Modules.StockReport.Contracts/StockConsumptionPlanner.Modules.StockReport.Contracts.csproj", "src/Modules/StockReport/StockConsumptionPlanner.Modules.StockReport.Contracts/"]
