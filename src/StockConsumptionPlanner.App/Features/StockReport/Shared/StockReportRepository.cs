@@ -12,57 +12,6 @@ public interface IStockReportRepository
     Task ClearAsync(CancellationToken cancellationToken = default);
 }
 
-public sealed class InMemoryStockReportRepository : IStockReportRepository
-{
-    private readonly Lock _syncLock = new();
-    private StockReportBatch? _currentBatch;
-
-    public Task SaveCurrentAsync(StockReportBatch batch, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(batch);
-
-        List<StockReportItem> activeItems = batch.Items
-            .Select(item => item with { LifecycleStatus = StockLifecycleStatus.Active })
-            .ToList();
-
-        StockReportBatch activeBatch = batch with
-        {
-            Items = activeItems,
-            LifecycleStatus = StockLifecycleStatus.Active
-        };
-
-        lock (_syncLock)
-        {
-            _currentBatch = activeBatch;
-        }
-
-        return Task.CompletedTask;
-    }
-
-    public Task<StockReportBatch?> GetCurrentAsync(CancellationToken cancellationToken = default)
-    {
-        lock (_syncLock)
-        {
-            if (_currentBatch is null || _currentBatch.LifecycleStatus != StockLifecycleStatus.Active)
-            {
-                return Task.FromResult<StockReportBatch?>(null);
-            }
-
-            return Task.FromResult<StockReportBatch?>(_currentBatch);
-        }
-    }
-
-    public Task ClearAsync(CancellationToken cancellationToken = default)
-    {
-        lock (_syncLock)
-        {
-            _currentBatch = null;
-        }
-
-        return Task.CompletedTask;
-    }
-}
-
 public sealed class EfCoreStockReportRepository(IDbContextFactory<StockReportDbContext> dbContextFactory)
     : IStockReportRepository
 {

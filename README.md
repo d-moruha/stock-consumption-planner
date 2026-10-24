@@ -50,12 +50,12 @@ Stock and plans meet on one field: the material movement document id.
   - `Features/StockReport/InspectStockReport/` — `InspectStockReportEndpoint`, `InspectStockReportHandler` (`ClosedXML` inspection & Ukrainian/English header auto-suggestion), and inspection DTOs.
   - `Features/StockReport/ImportStockReport/` — `ImportStockReportEndpoint`, `ImportStockReportHandler` (mapped-only row parsing), and import/mapping DTOs.
   - `Features/StockReport/GetCurrentStockReport/` — `GetCurrentStockReportEndpoint` and `CurrentStockReportDto`.
-  - `Features/StockReport/Shared/` — `StockReportField`, `StockReportFieldCatalog`, `StockReportBatch` / `StockReportItem` models, `IStockReportRepository` (`EfCoreStockReportRepository` with `StockReportDbContext` for SQLite/PostgreSQL and `InMemoryStockReportRepository`), and `ExcelWorksheetHelper`.
+  - `Features/StockReport/Shared/` — `StockReportField`, `StockReportFieldCatalog`, `StockReportBatch` / `StockReportItem` models (`StockLifecycleStatus`), `IStockReportRepository` (`EfCoreStockReportRepository` with `StockReportDbContext` for SQLite and PostgreSQL), and `ExcelWorksheetHelper`.
   - `Features/StockReport/StockImportPage.razor` — Co-located Blazor UI page (`/stock-import`).
   - `Features/StockReport/StockReportFeatureExtensions.cs` — `AddStockReportFeature()`, `MapStockReportEndpoints()`, and automatic database schema initialization on startup.
 - `tests/StockConsumptionPlanner.Tests` — xUnit unit and integration tests organized under `Features/StockReport/`.
 
-## Persistence Configuration (`Sqlite` | `Postgres` | `InMemory`)
+## Persistence Configuration (`Sqlite` | `Postgres`)
 
 Persistence is configured via `Persistence:Provider` in `appsettings.json` or environment variables:
 
@@ -65,8 +65,6 @@ Persistence is configured via `Persistence:Provider` in `appsettings.json` or en
 - **Multi-instance / PostgreSQL deployment (`Postgres`)**:
   - `Persistence:Provider`: `"Postgres"`
   - `ConnectionStrings:Postgres`: `"Host=postgres;Port=5432;Database=stock_planner;Username=postgres;Password=postgres"`
-- **Lightweight in-memory mode (`InMemory`)**:
-  - `Persistence:Provider`: `"InMemory"`
 
 ## Target Material Document Fields
 
@@ -85,7 +83,7 @@ Persistence is configured via `Persistence:Provider` in `appsettings.json` or en
 - `POST /api/stock-reports/inspect` — Inspects an uploaded `.xlsx` file, returns worksheet names, detected columns with sample values, and heuristic Ukrainian/English column mapping suggestions.
 - `POST /api/stock-reports/import` — Parses only the 7 mapped columns starting from `DataStartRowNumber`, ignores all unmapped columns, stores the current batch in `IStockReportRepository`, and returns summary metrics and row-level errors.
 - `GET /api/stock-reports/current` — Returns the currently stored stock report batch and summary totals.
-- `GET /healthz` — Returns service health and active persistence provider (`Sqlite` by default, or `Postgres` / `InMemory`).
+- `GET /healthz` — Returns service health and active persistence provider (`Sqlite` by default, or `Postgres`).
 
 ## Running with Docker
 

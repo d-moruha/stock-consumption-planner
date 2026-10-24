@@ -39,20 +39,16 @@ public static class StockReportFeatureExtensions
 
         switch (normalizedProvider)
         {
-            case "inmemory":
-                services.AddSingleton<IStockReportRepository, InMemoryStockReportRepository>();
-                break;
-
             case "sqlite":
             {
-        string sqliteConn = ResolveSqliteConnectionString(options, configuration);
-        services.AddDbContextFactory<StockReportDbContext>((sp, builder) =>
-        {
-            IConfiguration runtimeConfig = sp.GetService<IConfiguration>() ?? configuration;
-            StockReportPersistenceOptions runtimeOptions = ResolvePersistenceOptions(runtimeConfig);
-            string runtimeSqliteConn = ResolveSqliteConnectionString(runtimeOptions, runtimeConfig);
-            builder.UseSqlite(runtimeSqliteConn);
-        });
+                string sqliteConn = ResolveSqliteConnectionString(options, configuration);
+                services.AddDbContextFactory<StockReportDbContext>((sp, builder) =>
+                {
+                    IConfiguration runtimeConfig = sp.GetService<IConfiguration>() ?? configuration;
+                    StockReportPersistenceOptions runtimeOptions = ResolvePersistenceOptions(runtimeConfig);
+                    string runtimeSqliteConn = ResolveSqliteConnectionString(runtimeOptions, runtimeConfig);
+                    builder.UseSqlite(runtimeSqliteConn);
+                });
                 services.AddSingleton<IStockReportRepository, EfCoreStockReportRepository>();
                 services.AddHostedService<StockReportDatabaseInitializerHostedService>();
                 break;
@@ -60,14 +56,14 @@ public static class StockReportFeatureExtensions
 
             case "postgres":
             {
-        string postgresConn = ResolvePostgresConnectionString(options, configuration);
-        services.AddDbContextFactory<StockReportDbContext>((sp, builder) =>
-        {
-            IConfiguration runtimeConfig = sp.GetService<IConfiguration>() ?? configuration;
-            StockReportPersistenceOptions runtimeOptions = ResolvePersistenceOptions(runtimeConfig);
-            string runtimePostgresConn = ResolvePostgresConnectionString(runtimeOptions, runtimeConfig);
-            builder.UseNpgsql(runtimePostgresConn);
-        });
+                string postgresConn = ResolvePostgresConnectionString(options, configuration);
+                services.AddDbContextFactory<StockReportDbContext>((sp, builder) =>
+                {
+                    IConfiguration runtimeConfig = sp.GetService<IConfiguration>() ?? configuration;
+                    StockReportPersistenceOptions runtimeOptions = ResolvePersistenceOptions(runtimeConfig);
+                    string runtimePostgresConn = ResolvePostgresConnectionString(runtimeOptions, runtimeConfig);
+                    builder.UseNpgsql(runtimePostgresConn);
+                });
                 services.AddSingleton<IStockReportRepository, EfCoreStockReportRepository>();
                 services.AddHostedService<StockReportDatabaseInitializerHostedService>();
                 break;
@@ -75,7 +71,7 @@ public static class StockReportFeatureExtensions
 
             default:
                 throw new InvalidOperationException(
-                    $"Unsupported Persistence:Provider '{options.Provider}'. Allowed values: Sqlite, Postgres, InMemory.");
+                    $"Unsupported Persistence:Provider '{options.Provider}'. Allowed values: Sqlite, Postgres.");
         }
 
         return services;
