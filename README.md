@@ -46,7 +46,7 @@ Stock and plans meet on one field: the material movement document id.
 
 ## Solution Structure
 
-- `src/StockConsumptionPlanner.App` — Runnable ASP.NET Core (.NET 9) host with Blazor UI (`/`, `/stock-import`), module registration, and `/healthz` health check endpoint.
+- `src/StockConsumptionPlanner.App` — Runnable ASP.NET Core (.NET 10) host with Blazor UI (`/`, `/stock-import`), module registration, and `/healthz` health check endpoint.
 - `src/Modules/StockReport/StockConsumptionPlanner.Modules.StockReport.Contracts` — Public DTOs, target field catalog (`StockReportField`), and column mapping contracts.
 - `src/Modules/StockReport/StockConsumptionPlanner.Modules.StockReport` — Domain models, `IStockReportRepository` (`InMemoryStockReportRepository`), `ClosedXmlStockReportService` inspector/parser, and `/api/stock-reports` Minimal API endpoints.
 - `tests/StockConsumptionPlanner.Modules.StockReport.Tests` — xUnit unit and integration tests.
