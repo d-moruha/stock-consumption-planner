@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Modules\StockReport\StockConsumptionPlanner.Modules.StockReport\StockConsumptionPlanner.Modules.StockReport.csproj" />
+    <ProjectReference Include="..\Modules\StockReport\StockConsumptionPlanner.Modules.StockReport.Contracts\StockConsumptionPlanner.Modules.StockReport.Contracts.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>
