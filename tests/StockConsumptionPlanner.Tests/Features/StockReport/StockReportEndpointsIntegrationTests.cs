@@ -2,23 +2,37 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using StockConsumptionPlanner.App.Features.StockReport.GetCurrentStockReport;
 using StockConsumptionPlanner.App.Features.StockReport.ImportStockReport;
 using StockConsumptionPlanner.App.Features.StockReport.InspectStockReport;
 
 namespace StockConsumptionPlanner.Tests.Features.StockReport;
 
-public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebApplicationFactory<Program>>, IDisposable
 {
     private readonly WebApplicationFactory<Program> _factory;
+    private readonly string _sqliteDbPath;
 
     public StockReportEndpointsIntegrationTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory;
+        _sqliteDbPath = Path.Combine(Path.GetTempPath(), $"scp-test-{Guid.NewGuid():N}.db");
+
+        _factory = factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Persistence:Provider"] = "Sqlite",
+                    ["ConnectionStrings:Sqlite"] = $"Data Source={_sqliteDbPath};Pooling=False"
+                });
+            });
+        });
     }
 
     [Fact]
-    public async Task Healthz_ReturnsHealthyWithInMemoryProvider()
+    public async Task Healthz_ReturnsHealthyWithDefaultSqliteProvider()
     {
         using HttpClient client = _factory.CreateClient();
 
@@ -27,11 +41,11 @@ public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebAppl
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         string payload = await response.Content.ReadAsStringAsync();
         Assert.Contains("Healthy", payload);
-        Assert.Contains("InMemory", payload);
+        Assert.Contains("Sqlite", payload);
     }
 
     [Fact]
-    public async Task Inspect_Import_And_GetCurrent_EndToEndFlow_WorksWithCustomMappingAndTypoKey()
+    public async Task Inspect_Import_And_GetCurrent_EndToEndFlow_PersistsToSqliteWithCustomMappingAndTypoKey()
     {
         using HttpClient client = _factory.CreateClient();
         using MemoryStream excelStream = ClosedXmlStockReportServiceTests.CreateUkrainianWorkbookWithPreamble();
@@ -109,5 +123,21 @@ public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebAppl
         Assert.Equal(20000.00m, current.TotalValue);
         Assert.Equal("0049001234", current.Items[0].MaterialDocumentNumber);
         Assert.Equal("0001", current.Items[0].MaterialDocumentItem);
+        Assert.True(File.Exists(_sqliteDbPath));
+    }
+
+    public void Dispose()
+    {
+        try
+        {
+            if (File.Exists(_sqliteDbPath))
+            {
+                File.Delete(_sqliteDbPath);
+            }
+        }
+        catch
+        {
+            // Ignore cleanup lock races in test teardown.
+        }
     }
 }

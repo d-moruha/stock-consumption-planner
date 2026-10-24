@@ -28,3 +28,4 @@ coverage*.info
 *.db
 *.db-shm
 *.db-wal
+**/data/*.db*

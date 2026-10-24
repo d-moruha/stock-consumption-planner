@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using StockConsumptionPlanner.App.Features.StockReport;
 using StockConsumptionPlanner.App.Features.StockReport.Shared;
 
@@ -35,6 +37,122 @@ public sealed class StockReportRepositoryAndModuleTests
         Assert.Null(await repository.GetCurrentAsync());
     }
 
+    [Fact]
+    public async Task EfCoreSqliteRepository_SaveReplaceRetrieveAndClear_PersistsAcrossDbContexts()
+    {
+        string dbPath = Path.Combine(Path.GetTempPath(), $"scp-sqlite-repo-{Guid.NewGuid():N}.db");
+
+        try
+        {
+            ServiceCollection services = new();
+            IConfiguration configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Persistence:Provider"] = "Sqlite",
+                    ["ConnectionStrings:Sqlite"] = $"Data Source={dbPath};Pooling=False"
+                })
+                .Build();
+
+            services.AddStockReportFeature(configuration);
+
+            await using ServiceProvider provider = services.BuildServiceProvider();
+
+            foreach (IHostedService hostedService in provider.GetServices<IHostedService>())
+            {
+                await hostedService.StartAsync(CancellationToken.None);
+            }
+
+            IStockReportRepository repository = provider.GetRequiredService<IStockReportRepository>();
+            Assert.IsType<EfCoreStockReportRepository>(repository);
+
+            Assert.Null(await repository.GetCurrentAsync());
+
+            StockReportBatch firstBatch = new(
+                "first_report.xlsx",
+                "Залишки",
+                new DateTimeOffset(2026, 10, 24, 12, 0, 0, TimeSpan.Zero),
+                [
+                    new StockReportItem(5, "0049001000", "0001", 2026, "0000100", "Перший матеріал", 12.500m, 1500.75m),
+                    new StockReportItem(6, "0049001001", "0002", 2025, "0000200", "Другий матеріал", 7.250m, 499.25m)
+                ]);
+
+            await repository.SaveCurrentAsync(firstBatch);
+
+            StockReportBatch? loadedFirst = await repository.GetCurrentAsync();
+            Assert.NotNull(loadedFirst);
+            Assert.Equal("first_report.xlsx", loadedFirst.SourceFileName);
+            Assert.Equal("Залишки", loadedFirst.SheetName);
+            Assert.Equal(2, loadedFirst.TotalRows);
+            Assert.Equal(19.750m, loadedFirst.TotalQuantity);
+            Assert.Equal(2000.00m, loadedFirst.TotalValue);
+            Assert.Equal("0049001000", loadedFirst.Items[0].MaterialDocumentNumber);
+            Assert.Equal("0001", loadedFirst.Items[0].MaterialDocumentItem);
+
+            StockReportBatch replacementBatch = new(
+                "second_report.xlsx",
+                "Sheet2",
+                new DateTimeOffset(2026, 10, 24, 14, 0, 0, TimeSpan.Zero),
+                [
+                    new StockReportItem(2, "0050009999", "0010", 2026, "MAT-999", "Replacement item", 3.000m, 300.00m)
+                ]);
+
+            await repository.SaveCurrentAsync(replacementBatch);
+
+            StockReportBatch? loadedReplacement = await repository.GetCurrentAsync();
+            Assert.NotNull(loadedReplacement);
+            Assert.Equal("second_report.xlsx", loadedReplacement.SourceFileName);
+            Assert.Single(loadedReplacement.Items);
+            Assert.Equal("0050009999", loadedReplacement.Items[0].MaterialDocumentNumber);
+
+            await repository.ClearAsync();
+            Assert.Null(await repository.GetCurrentAsync());
+        }
+        finally
+        {
+            if (File.Exists(dbPath))
+            {
+                File.Delete(dbPath);
+            }
+        }
+    }
+
+    [Fact]
+    public void AddStockReportFeature_PostgresProvider_RegistersEfCoreRepositoryWithNpgsql()
+    {
+        ServiceCollection services = new();
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Persistence:Provider"] = "Postgres",
+                ["ConnectionStrings:Postgres"] = "Host=localhost;Port=5432;Database=stock_planner;Username=postgres;Password=postgres"
+            })
+            .Build();
+
+        services.AddStockReportFeature(configuration);
+
+        using ServiceProvider provider = services.BuildServiceProvider();
+        IStockReportRepository repository = provider.GetRequiredService<IStockReportRepository>();
+        Assert.IsType<EfCoreStockReportRepository>(repository);
+
+        IDbContextFactory<StockReportDbContext> factory = provider.GetRequiredService<IDbContextFactory<StockReportDbContext>>();
+        using StockReportDbContext dbContext = factory.CreateDbContext();
+        Assert.Equal("Npgsql.EntityFrameworkCore.PostgreSQL", dbContext.Database.ProviderName);
+    }
+
+    [Fact]
+    public void AddStockReportFeature_UnsupportedProvider_ThrowsInvalidOperationException()
+    {
+        ServiceCollection services = new();
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Persistence:Provider"] = "UnknownDb"
+            })
+            .Build();
+
+        Assert.Throws<InvalidOperationException>(() => services.AddStockReportFeature(configuration));
+    }
+
     [Theory]
     [InlineData("MaterialDocumentYear", StockReportField.MaterialDocumentYear)]
     [InlineData("MaterialDccoumentYear", StockReportField.MaterialDocumentYear)]
@@ -51,21 +169,5 @@ public sealed class StockReportRepositoryAndModuleTests
 
         Assert.True(parsed);
         Assert.Equal(expected, actual);
-    }
-
-    [Theory]
-    [InlineData("Sqlite")]
-    [InlineData("Postgres")]
-    public void AddStockReportFeature_ConfiguredFutureProviders_ThrowsNotSupportedException(string provider)
-    {
-        ServiceCollection services = new();
-        IConfiguration configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Persistence:Provider"] = provider
-            })
-            .Build();
-
-        Assert.Throws<NotSupportedException>(() => services.AddStockReportFeature(configuration));
     }
 }
