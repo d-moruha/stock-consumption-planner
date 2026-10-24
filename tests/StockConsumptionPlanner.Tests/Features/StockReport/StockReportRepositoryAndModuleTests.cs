@@ -29,6 +29,8 @@ public sealed class StockReportRepositoryAndModuleTests
 
         StockReportBatch? loaded = await repository.GetCurrentAsync();
         Assert.NotNull(loaded);
+        Assert.Equal(StockLifecycleStatus.Active, loaded.LifecycleStatus);
+        Assert.All(loaded.Items, item => Assert.Equal(StockLifecycleStatus.Active, item.LifecycleStatus));
         Assert.Equal(2, loaded.TotalRows);
         Assert.Equal(10.0m, loaded.TotalQuantity);
         Assert.Equal(400.00m, loaded.TotalValue);
@@ -82,6 +84,7 @@ public sealed class StockReportRepositoryAndModuleTests
             Assert.NotNull(loadedFirst);
             Assert.Equal("first_report.xlsx", loadedFirst.SourceFileName);
             Assert.Equal("Залишки", loadedFirst.SheetName);
+            Assert.Equal(StockLifecycleStatus.Active, loadedFirst.LifecycleStatus);
             Assert.Equal(2, loadedFirst.TotalRows);
             Assert.Equal(19.750m, loadedFirst.TotalQuantity);
             Assert.Equal(2000.00m, loadedFirst.TotalValue);
@@ -106,6 +109,207 @@ public sealed class StockReportRepositoryAndModuleTests
 
             await repository.ClearAsync();
             Assert.Null(await repository.GetCurrentAsync());
+        }
+        finally
+        {
+            if (File.Exists(dbPath))
+            {
+                File.Delete(dbPath);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task EfCoreSqliteRepository_LifecycleTransitions_StagingToActiveToSupersededAndPurged()
+    {
+        string dbPath = Path.Combine(Path.GetTempPath(), $"scp-sqlite-lifecycle-{Guid.NewGuid():N}.db");
+
+        try
+        {
+            ServiceCollection services = new();
+            IConfiguration configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Persistence:Provider"] = "Sqlite",
+                    ["ConnectionStrings:Sqlite"] = $"Data Source={dbPath};Pooling=False"
+                })
+                .Build();
+
+            services.AddStockReportFeature(configuration);
+
+            await using ServiceProvider provider = services.BuildServiceProvider();
+            foreach (IHostedService hostedService in provider.GetServices<IHostedService>())
+            {
+                await hostedService.StartAsync(CancellationToken.None);
+            }
+
+            EfCoreStockReportRepository repository = Assert.IsType<EfCoreStockReportRepository>(
+                provider.GetRequiredService<IStockReportRepository>());
+            IDbContextFactory<StockReportDbContext> dbFactory =
+                provider.GetRequiredService<IDbContextFactory<StockReportDbContext>>();
+
+            StockReportBatch report1 = new(
+                "report1.xlsx",
+                "Sheet1",
+                DateTimeOffset.UtcNow,
+                [
+                    new StockReportItem(2, "0049000001", "0001", 2026, "MAT-1", "Item 1", 10m, 100m),
+                    new StockReportItem(3, "0049000002", "0001", 2026, "MAT-2", "Item 2", 20m, 200m)
+                ]);
+
+            // Stage Report 1 without promoting yet: should be Staging and invisible to GetCurrentAsync.
+            int report1BatchId = await repository.StageBatchInChunksAsync(report1, chunkSize: 1);
+            Assert.Null(await repository.GetCurrentAsync());
+
+            await using (StockReportDbContext db = await dbFactory.CreateDbContextAsync())
+            {
+                StockReportBatchEntity stagedBatch = await db.StockReportBatches.SingleAsync(b => b.Id == report1BatchId);
+                Assert.Equal(StockLifecycleStatus.Staging, stagedBatch.LifecycleStatus);
+
+                List<StockReportItemEntity> stagedItems = await db.StockReportItems
+                    .Where(i => i.BatchId == report1BatchId)
+                    .ToListAsync();
+                Assert.Equal(2, stagedItems.Count);
+                Assert.All(stagedItems, i => Assert.Equal(StockLifecycleStatus.Staging, i.LifecycleStatus));
+            }
+
+            // Promote Report 1 to Active: now visible to GetCurrentAsync.
+            await repository.PromoteStagedBatchAsync(report1BatchId);
+            StockReportBatch? activeReport1 = await repository.GetCurrentAsync();
+            Assert.NotNull(activeReport1);
+            Assert.Equal("report1.xlsx", activeReport1.SourceFileName);
+            Assert.Equal(2, activeReport1.TotalRows);
+
+            // Import Report 2 with purgeSupersededImmediately = false to inspect Superseded state before deletion.
+            StockReportBatch report2 = new(
+                "report2.xlsx",
+                "Sheet1",
+                DateTimeOffset.UtcNow,
+                [
+                    new StockReportItem(2, "0049000099", "0001", 2026, "MAT-99", "New Item", 50m, 500m)
+                ]);
+
+            int report2BatchId = await repository.SaveCurrentAsync(
+                report2,
+                purgeSupersededImmediately: false,
+                chunkSize: 1);
+
+            await using (StockReportDbContext db = await dbFactory.CreateDbContextAsync())
+            {
+                StockReportBatchEntity oldBatch = await db.StockReportBatches.SingleAsync(b => b.Id == report1BatchId);
+                StockReportBatchEntity newBatch = await db.StockReportBatches.SingleAsync(b => b.Id == report2BatchId);
+                Assert.Equal(StockLifecycleStatus.Superseded, oldBatch.LifecycleStatus);
+                Assert.Equal(StockLifecycleStatus.Active, newBatch.LifecycleStatus);
+
+                List<StockReportItemEntity> oldItems = await db.StockReportItems
+                    .Where(i => i.BatchId == report1BatchId)
+                    .ToListAsync();
+                Assert.All(oldItems, i => Assert.Equal(StockLifecycleStatus.Superseded, i.LifecycleStatus));
+            }
+
+            // GetCurrentAsync must return only Report 2 (Active).
+            StockReportBatch? activeReport2 = await repository.GetCurrentAsync();
+            Assert.NotNull(activeReport2);
+            Assert.Equal("report2.xlsx", activeReport2.SourceFileName);
+            Assert.Single(activeReport2.Items);
+
+            // Purge Superseded batches via ExecuteDeleteAsync.
+            int deletedBatches = await repository.PurgeNonActiveBatchesAsync();
+            Assert.Equal(1, deletedBatches);
+
+            await using (StockReportDbContext db = await dbFactory.CreateDbContextAsync())
+            {
+                Assert.Equal(1, await db.StockReportBatches.CountAsync());
+                Assert.Equal(1, await db.StockReportItems.CountAsync());
+            }
+        }
+        finally
+        {
+            if (File.Exists(dbPath))
+            {
+                File.Delete(dbPath);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task EfCoreSqliteRepository_Large2500RowBatchImport_StagesInChunksPromotesAndReplacesPreviousReport()
+    {
+        string dbPath = Path.Combine(Path.GetTempPath(), $"scp-sqlite-2500-{Guid.NewGuid():N}.db");
+
+        try
+        {
+            ServiceCollection services = new();
+            IConfiguration configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Persistence:Provider"] = "Sqlite",
+                    ["ConnectionStrings:Sqlite"] = $"Data Source={dbPath};Pooling=False"
+                })
+                .Build();
+
+            services.AddStockReportFeature(configuration);
+
+            await using ServiceProvider provider = services.BuildServiceProvider();
+            foreach (IHostedService hostedService in provider.GetServices<IHostedService>())
+            {
+                await hostedService.StartAsync(CancellationToken.None);
+            }
+
+            IStockReportRepository repository = provider.GetRequiredService<IStockReportRepository>();
+            IDbContextFactory<StockReportDbContext> dbFactory =
+                provider.GetRequiredService<IDbContextFactory<StockReportDbContext>>();
+
+            List<StockReportItem> initialItems = Enumerable.Range(1, 2000)
+                .Select(idx => new StockReportItem(
+                    idx + 1,
+                    $"4900{idx:D6}",
+                    "0001",
+                    2025,
+                    $"MAT-{idx:D5}",
+                    $"Initial Material {idx}",
+                    1.5m,
+                    15.0m))
+                .ToList();
+
+            await repository.SaveCurrentAsync(new StockReportBatch(
+                "initial_2000.xlsx",
+                "Залишки",
+                DateTimeOffset.UtcNow,
+                initialItems));
+
+            List<StockReportItem> secondItems = Enumerable.Range(1, 2500)
+                .Select(idx => new StockReportItem(
+                    idx + 1,
+                    $"5000{idx:D6}",
+                    "0002",
+                    2026,
+                    $"MAT-NEW-{idx:D5}",
+                    $"Updated Material {idx}",
+                    2.0m,
+                    25.0m))
+                .ToList();
+
+            await repository.SaveCurrentAsync(new StockReportBatch(
+                "second_2500.xlsx",
+                "Залишки",
+                DateTimeOffset.UtcNow,
+                secondItems));
+
+            StockReportBatch? current = await repository.GetCurrentAsync();
+            Assert.NotNull(current);
+            Assert.Equal("second_2500.xlsx", current.SourceFileName);
+            Assert.Equal(2500, current.TotalRows);
+            Assert.Equal(5000.0m, current.TotalQuantity);
+            Assert.Equal(62500.0m, current.TotalValue);
+            Assert.Equal("5000000001", current.Items[0].MaterialDocumentNumber);
+            Assert.Equal("5000002500", current.Items[^1].MaterialDocumentNumber);
+
+            await using (StockReportDbContext db = await dbFactory.CreateDbContextAsync())
+            {
+                Assert.Equal(1, await db.StockReportBatches.CountAsync());
+                Assert.Equal(2500, await db.StockReportItems.CountAsync());
+            }
         }
         finally
         {

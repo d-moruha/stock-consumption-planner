@@ -12,6 +12,8 @@ public sealed class StockReportBatchEntity
 
     public DateTimeOffset ImportedAtUtc { get; set; }
 
+    public StockLifecycleStatus LifecycleStatus { get; set; } = StockLifecycleStatus.Staging;
+
     public List<StockReportItemEntity> Items { get; set; } = [];
 }
 
@@ -38,6 +40,8 @@ public sealed class StockReportItemEntity
     public decimal MaterialQuantity { get; set; }
 
     public decimal MaterialValue { get; set; }
+
+    public StockLifecycleStatus LifecycleStatus { get; set; } = StockLifecycleStatus.Staging;
 }
 
 public sealed class StockReportDbContext(DbContextOptions<StockReportDbContext> options) : DbContext(options)
@@ -55,6 +59,12 @@ public sealed class StockReportDbContext(DbContextOptions<StockReportDbContext> 
             entity.Property(b => b.SourceFileName).HasMaxLength(512).IsRequired();
             entity.Property(b => b.SheetName).HasMaxLength(256).IsRequired();
             entity.Property(b => b.ImportedAtUtc).IsRequired();
+            entity.Property(b => b.LifecycleStatus)
+                .HasConversion<string>()
+                .HasMaxLength(32)
+                .IsRequired();
+
+            entity.HasIndex(b => b.LifecycleStatus);
 
             entity.HasMany(b => b.Items)
                 .WithOne(i => i.Batch)
@@ -72,8 +82,21 @@ public sealed class StockReportDbContext(DbContextOptions<StockReportDbContext> 
             entity.Property(i => i.MaterialDescription).HasMaxLength(1024).IsRequired();
             entity.Property(i => i.MaterialQuantity).HasPrecision(18, 4);
             entity.Property(i => i.MaterialValue).HasPrecision(18, 2);
+            entity.Property(i => i.LifecycleStatus)
+                .HasConversion<string>()
+                .HasMaxLength(32)
+                .IsRequired();
 
+            entity.HasIndex(i => i.LifecycleStatus);
             entity.HasIndex(i => new { i.BatchId, i.SourceRowNumber });
+            entity.HasIndex(i => new
+            {
+                i.LifecycleStatus,
+                i.MaterialDocumentNumber,
+                i.MaterialDocumentItem,
+                i.MaterialDocumentYear
+            });
+            entity.HasIndex(i => new { i.LifecycleStatus, i.MaterialNumber });
         });
     }
 }
