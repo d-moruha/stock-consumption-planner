@@ -307,6 +307,92 @@ public sealed class StockReportRepositoryAndModuleTests
     }
 
     [Fact]
+    public async Task SqlitePersistence_SurvivesAcrossSeparateHostServiceProvidersAndSupportsPurgeOfStaleStaging()
+    {
+        string dbPath = Path.Combine(Path.GetTempPath(), $"scp-sqlite-restart-{Guid.NewGuid():N}.db");
+
+        try
+        {
+            IConfiguration configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Persistence:Provider"] = "Sqlite",
+                    ["ConnectionStrings:Sqlite"] = $"Data Source={dbPath};Pooling=False"
+                })
+                .Build();
+
+            // Host instance 1: initialize schema, import an Active batch, and leave an interrupted Staging batch.
+            {
+                ServiceCollection services1 = new();
+                services1.AddStockReportFeature(configuration);
+
+                await using ServiceProvider provider1 = services1.BuildServiceProvider();
+                foreach (IHostedService hostedService in provider1.GetServices<IHostedService>())
+                {
+                    await hostedService.StartAsync(CancellationToken.None);
+                }
+
+                EfCoreStockReportRepository repo1 = Assert.IsType<EfCoreStockReportRepository>(
+                    provider1.GetRequiredService<IStockReportRepository>());
+
+                await repo1.SaveCurrentAsync(new StockReportBatch(
+                    "persisted_across_restart.xlsx",
+                    "Залишки",
+                    DateTimeOffset.UtcNow,
+                    [
+                        new StockReportItem(2, "0049007777", "0001", 2026, "MAT-777", "Persisted Material", 15.5m, 1550.0m)
+                    ]));
+
+                // Simulate an interrupted import that stayed in Staging.
+                await repo1.StageBatchInChunksAsync(new StockReportBatch(
+                    "interrupted_staging.xlsx",
+                    "Залишки",
+                    DateTimeOffset.UtcNow,
+                    [
+                        new StockReportItem(2, "0049008888", "0001", 2026, "MAT-888", "Unfinished Staging", 99.0m, 9900.0m)
+                    ]));
+            }
+
+            // Host instance 2: connect to the same SQLite DB file, verify only Active batch is returned, and purge stale Staging.
+            {
+                ServiceCollection services2 = new();
+                services2.AddStockReportFeature(configuration);
+
+                await using ServiceProvider provider2 = services2.BuildServiceProvider();
+                foreach (IHostedService hostedService in provider2.GetServices<IHostedService>())
+                {
+                    await hostedService.StartAsync(CancellationToken.None);
+                }
+
+                EfCoreStockReportRepository repo2 = Assert.IsType<EfCoreStockReportRepository>(
+                    provider2.GetRequiredService<IStockReportRepository>());
+
+                StockReportBatch? active = await repo2.GetCurrentAsync();
+                Assert.NotNull(active);
+                Assert.Equal("persisted_across_restart.xlsx", active.SourceFileName);
+                Assert.Single(active.Items);
+                Assert.Equal("0049007777", active.Items[0].MaterialDocumentNumber);
+
+                int purgedCount = await repo2.PurgeNonActiveBatchesAsync();
+                Assert.Equal(1, purgedCount);
+
+                IDbContextFactory<StockReportDbContext> dbFactory2 =
+                    provider2.GetRequiredService<IDbContextFactory<StockReportDbContext>>();
+                await using StockReportDbContext db = await dbFactory2.CreateDbContextAsync();
+                Assert.Equal(1, await db.StockReportBatches.CountAsync());
+                Assert.Equal(1, await db.StockReportItems.CountAsync());
+            }
+        }
+        finally
+        {
+            if (File.Exists(dbPath))
+            {
+                File.Delete(dbPath);
+            }
+        }
+    }
+
+    [Fact]
     public void AddStockReportFeature_PostgresProvider_RegistersEfCoreRepositoryWithNpgsql()
     {
         ServiceCollection services = new();

@@ -280,7 +280,7 @@ public sealed class OpenXmlStockReportServiceTests
         return stream;
     }
 
-    private static MemoryStream CreateSingleSheetWorkbook(
+    public static MemoryStream CreateSingleSheetWorkbook(
         string sheetName,
         IReadOnlyDictionary<int, IReadOnlyList<(int Column, object Value)>> rows)
     {
