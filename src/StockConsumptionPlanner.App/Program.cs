@@ -1,13 +1,12 @@
 using StockConsumptionPlanner.App.Components;
-using StockConsumptionPlanner.Modules.StockReport;
-using StockConsumptionPlanner.Modules.StockReport.Endpoints;
+using StockConsumptionPlanner.App.Features.StockReport;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddStockReportModule(builder.Configuration);
+builder.Services.AddStockReportFeature(builder.Configuration);
 
 WebApplication app = builder.Build();
 

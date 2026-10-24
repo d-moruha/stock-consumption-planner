@@ -1,4 +1,4 @@
-namespace StockConsumptionPlanner.Modules.StockReport.Contracts;
+namespace StockConsumptionPlanner.App.Features.StockReport.Shared;
 
 public sealed record StockReportFieldMetadata(
     StockReportField Field,

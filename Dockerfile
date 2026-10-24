@@ -4,9 +4,7 @@ WORKDIR /src
 COPY ["StockConsumptionPlanner.slnx", "./"]
 COPY ["Directory.Build.props", "./"]
 COPY ["src/StockConsumptionPlanner.App/StockConsumptionPlanner.App.csproj", "src/StockConsumptionPlanner.App/"]
-COPY ["src/Modules/StockReport/StockConsumptionPlanner.Modules.StockReport/StockConsumptionPlanner.Modules.StockReport.csproj", "src/Modules/StockReport/StockConsumptionPlanner.Modules.StockReport/"]
-COPY ["src/Modules/StockReport/StockConsumptionPlanner.Modules.StockReport.Contracts/StockConsumptionPlanner.Modules.StockReport.Contracts.csproj", "src/Modules/StockReport/StockConsumptionPlanner.Modules.StockReport.Contracts/"]
-COPY ["tests/StockConsumptionPlanner.Modules.StockReport.Tests/StockConsumptionPlanner.Modules.StockReport.Tests.csproj", "tests/StockConsumptionPlanner.Modules.StockReport.Tests/"]
+COPY ["tests/StockConsumptionPlanner.Tests/StockConsumptionPlanner.Tests.csproj", "tests/StockConsumptionPlanner.Tests/"]
 
 RUN dotnet restore "src/StockConsumptionPlanner.App/StockConsumptionPlanner.App.csproj"
 

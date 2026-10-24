@@ -7,12 +7,7 @@
   <Folder Name="/src/">
     <Project Path="src/StockConsumptionPlanner.App/StockConsumptionPlanner.App.csproj" />
   </Folder>
-  <Folder Name="/src/Modules/" />
-  <Folder Name="/src/Modules/StockReport/">
-    <Project Path="src/Modules/StockReport/StockConsumptionPlanner.Modules.StockReport.Contracts/StockConsumptionPlanner.Modules.StockReport.Contracts.csproj" />
-    <Project Path="src/Modules/StockReport/StockConsumptionPlanner.Modules.StockReport/StockConsumptionPlanner.Modules.StockReport.csproj" />
-  </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/StockConsumptionPlanner.Modules.StockReport.Tests/StockConsumptionPlanner.Modules.StockReport.Tests.csproj" />
+    <Project Path="tests/StockConsumptionPlanner.Tests/StockConsumptionPlanner.Tests.csproj" />
   </Folder>
 </Solution>

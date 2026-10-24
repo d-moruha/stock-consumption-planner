@@ -1,9 +1,9 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using StockConsumptionPlanner.Modules.StockReport.Application;
-using StockConsumptionPlanner.Modules.StockReport.Infrastructure;
+using StockConsumptionPlanner.App.Features.StockReport.GetCurrentStockReport;
+using StockConsumptionPlanner.App.Features.StockReport.ImportStockReport;
+using StockConsumptionPlanner.App.Features.StockReport.InspectStockReport;
+using StockConsumptionPlanner.App.Features.StockReport.Shared;
 
-namespace StockConsumptionPlanner.Modules.StockReport;
+namespace StockConsumptionPlanner.App.Features.StockReport;
 
 public sealed class StockReportPersistenceOptions
 {
@@ -12,9 +12,9 @@ public sealed class StockReportPersistenceOptions
     public string Provider { get; set; } = "InMemory";
 }
 
-public static class StockReportModuleExtensions
+public static class StockReportFeatureExtensions
 {
-    public static IServiceCollection AddStockReportModule(
+    public static IServiceCollection AddStockReportFeature(
         this IServiceCollection services,
         IConfiguration configuration)
     {
@@ -25,9 +25,8 @@ public static class StockReportModuleExtensions
         configuration.GetSection(StockReportPersistenceOptions.SectionName).Bind(options);
         services.AddSingleton(options);
 
-        services.AddSingleton<ClosedXmlStockReportService>();
-        services.AddSingleton<IStockReportExcelInspector>(sp => sp.GetRequiredService<ClosedXmlStockReportService>());
-        services.AddSingleton<IStockReportExcelParser>(sp => sp.GetRequiredService<ClosedXmlStockReportService>());
+        services.AddSingleton<IStockReportExcelInspector, InspectStockReportHandler>();
+        services.AddSingleton<IStockReportExcelParser, ImportStockReportHandler>();
 
         string provider = string.IsNullOrWhiteSpace(options.Provider)
             ? "InMemory"
@@ -49,5 +48,17 @@ public static class StockReportModuleExtensions
         }
 
         return services;
+    }
+
+    public static IEndpointRouteBuilder MapStockReportEndpoints(this IEndpointRouteBuilder endpoints)
+    {
+        RouteGroupBuilder group = endpoints.MapGroup("/api/stock-reports")
+            .DisableAntiforgery();
+
+        group.MapInspectStockReportEndpoint();
+        group.MapImportStockReportEndpoint();
+        group.MapGetCurrentStockReportEndpoint();
+
+        return endpoints;
     }
 }

@@ -1,4 +1,4 @@
-namespace StockConsumptionPlanner.Modules.StockReport.Domain;
+namespace StockConsumptionPlanner.App.Features.StockReport.Shared;
 
 public sealed record StockReportItem(
     int SourceRowNumber,

@@ -1,11 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using StockConsumptionPlanner.Modules.StockReport.Application;
-using StockConsumptionPlanner.Modules.StockReport.Contracts;
-using StockConsumptionPlanner.Modules.StockReport.Domain;
-using StockConsumptionPlanner.Modules.StockReport.Infrastructure;
+using StockConsumptionPlanner.App.Features.StockReport;
+using StockConsumptionPlanner.App.Features.StockReport.Shared;
 
-namespace StockConsumptionPlanner.Modules.StockReport.Tests;
+namespace StockConsumptionPlanner.Tests.Features.StockReport;
 
 public sealed class StockReportRepositoryAndModuleTests
 {
@@ -58,7 +56,7 @@ public sealed class StockReportRepositoryAndModuleTests
     [Theory]
     [InlineData("Sqlite")]
     [InlineData("Postgres")]
-    public void AddStockReportModule_ConfiguredFutureProviders_ThrowsNotSupportedException(string provider)
+    public void AddStockReportFeature_ConfiguredFutureProviders_ThrowsNotSupportedException(string provider)
     {
         ServiceCollection services = new();
         IConfiguration configuration = new ConfigurationBuilder()
@@ -68,6 +66,6 @@ public sealed class StockReportRepositoryAndModuleTests
             })
             .Build();
 
-        Assert.Throws<NotSupportedException>(() => services.AddStockReportModule(configuration));
+        Assert.Throws<NotSupportedException>(() => services.AddStockReportFeature(configuration));
     }
 }

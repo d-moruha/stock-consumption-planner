@@ -2,9 +2,11 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
-using StockConsumptionPlanner.Modules.StockReport.Contracts;
+using StockConsumptionPlanner.App.Features.StockReport.GetCurrentStockReport;
+using StockConsumptionPlanner.App.Features.StockReport.ImportStockReport;
+using StockConsumptionPlanner.App.Features.StockReport.InspectStockReport;
 
-namespace StockConsumptionPlanner.Modules.StockReport.Tests;
+namespace StockConsumptionPlanner.Tests.Features.StockReport;
 
 public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 {

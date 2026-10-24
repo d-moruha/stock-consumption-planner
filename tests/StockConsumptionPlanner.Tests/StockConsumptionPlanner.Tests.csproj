@@ -22,8 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Modules\StockReport\StockConsumptionPlanner.Modules.StockReport\StockConsumptionPlanner.Modules.StockReport.csproj" />
-    <ProjectReference Include="..\..\src\Modules\StockReport\StockConsumptionPlanner.Modules.StockReport.Contracts\StockConsumptionPlanner.Modules.StockReport.Contracts.csproj" />
     <ProjectReference Include="..\..\src\StockConsumptionPlanner.App\StockConsumptionPlanner.App.csproj" />
   </ItemGroup>
 

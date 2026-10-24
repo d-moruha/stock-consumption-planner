@@ -1,4 +1,17 @@
-namespace StockConsumptionPlanner.Modules.StockReport.Contracts;
+using StockConsumptionPlanner.App.Features.StockReport.Shared;
+
+namespace StockConsumptionPlanner.App.Features.StockReport.ImportStockReport;
+
+public sealed class StockReportColumnMappingDto
+{
+    public string? SheetName { get; set; }
+
+    public int HeaderRowNumber { get; set; } = 1;
+
+    public int DataStartRowNumber { get; set; } = 2;
+
+    public Dictionary<StockReportField, int> FieldColumnMap { get; set; } = new();
+}
 
 public sealed record StockReportItemDto(
     int SourceRowNumber,
@@ -28,13 +41,3 @@ public sealed record StockReportImportResultDto(
     IReadOnlyList<int> IgnoredColumnIndices,
     IReadOnlyList<StockReportItemDto> Items,
     IReadOnlyList<StockReportRowErrorDto> Errors);
-
-public sealed record CurrentStockReportDto(
-    bool HasReport,
-    string? SourceFileName,
-    string? SheetName,
-    DateTimeOffset? ImportedAtUtc,
-    int TotalRows,
-    decimal TotalQuantity,
-    decimal TotalValue,
-    IReadOnlyList<StockReportItemDto> Items);

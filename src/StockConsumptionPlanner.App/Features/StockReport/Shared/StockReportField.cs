@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace StockConsumptionPlanner.Modules.StockReport.Contracts;
+namespace StockConsumptionPlanner.App.Features.StockReport.Shared;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum StockReportField

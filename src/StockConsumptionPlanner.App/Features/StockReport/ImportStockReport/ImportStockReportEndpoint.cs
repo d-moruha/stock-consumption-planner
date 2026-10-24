@@ -1,30 +1,14 @@
 using System.Text.Json;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-using StockConsumptionPlanner.Modules.StockReport.Application;
-using StockConsumptionPlanner.Modules.StockReport.Contracts;
-using StockConsumptionPlanner.Modules.StockReport.Domain;
+using StockConsumptionPlanner.App.Features.StockReport.Shared;
 
-namespace StockConsumptionPlanner.Modules.StockReport.Endpoints;
+namespace StockConsumptionPlanner.App.Features.StockReport.ImportStockReport;
 
-public static class StockReportEndpoints
+public static class ImportStockReportEndpoint
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    public static IEndpointRouteBuilder MapImportStockReportEndpoint(this IEndpointRouteBuilder group)
     {
-        PropertyNameCaseInsensitive = true
-    };
-
-    public static IEndpointRouteBuilder MapStockReportEndpoints(this IEndpointRouteBuilder endpoints)
-    {
-        RouteGroupBuilder group = endpoints.MapGroup("/api/stock-reports")
-            .DisableAntiforgery();
-
-        group.MapPost("/inspect", HandleInspectAsync);
-        group.MapPost("/import", HandleImportAsync);
-        group.MapGet("/current", HandleGetCurrentAsync);
-
-        return endpoints;
+        group.MapPost("/import", HandleAsync);
+        return group;
     }
 
     public static bool TryDeserializeMapping(string? rawJson, out StockReportColumnMappingDto? mapping, out string? error)
@@ -98,70 +82,7 @@ public static class StockReportEndpoints
         }
     }
 
-    private static async Task<IResult> HandleInspectAsync(
-        HttpRequest request,
-        IStockReportExcelInspector inspector,
-        CancellationToken cancellationToken)
-    {
-        if (!request.HasFormContentType)
-        {
-            return Results.BadRequest(new { error = "Expected multipart/form-data request." });
-        }
-
-        IFormCollection form = await request.ReadFormAsync(cancellationToken);
-        IFormFile? file = form.Files.GetFile("file") ?? form.Files.FirstOrDefault();
-        if (file is null || file.Length == 0)
-        {
-            return Results.BadRequest(new { error = "An .xlsx file is required." });
-        }
-
-        string? sheetName = form.TryGetValue("sheetName", out var sheetValues)
-            ? sheetValues.FirstOrDefault()
-            : request.Query["sheetName"].FirstOrDefault();
-
-        int headerRowNumber = 1;
-        string? rawHeaderRow = form.TryGetValue("headerRowNumber", out var headerValues)
-            ? headerValues.FirstOrDefault()
-            : request.Query["headerRowNumber"].FirstOrDefault();
-
-        if (!string.IsNullOrWhiteSpace(rawHeaderRow) && int.TryParse(rawHeaderRow, out int parsedHeaderRow))
-        {
-            headerRowNumber = Math.Max(1, parsedHeaderRow);
-        }
-
-        int? dataStartRowNumber = null;
-        string? rawDataStartRow = form.TryGetValue("dataStartRowNumber", out var dataStartValues)
-            ? dataStartValues.FirstOrDefault()
-            : request.Query["dataStartRowNumber"].FirstOrDefault();
-
-        if (!string.IsNullOrWhiteSpace(rawDataStartRow) && int.TryParse(rawDataStartRow, out int parsedDataStart))
-        {
-            dataStartRowNumber = Math.Max(headerRowNumber + 1, parsedDataStart);
-        }
-
-        try
-        {
-            await using Stream stream = file.OpenReadStream();
-            using MemoryStream memoryStream = new();
-            await stream.CopyToAsync(memoryStream, cancellationToken);
-            memoryStream.Position = 0;
-
-            StockReportInspectionDto inspection = inspector.Inspect(
-                memoryStream,
-                file.FileName,
-                sheetName,
-                headerRowNumber,
-                dataStartRowNumber);
-
-            return Results.Ok(inspection);
-        }
-        catch (Exception ex)
-        {
-            return Results.BadRequest(new { error = $"Failed to inspect Excel file: {ex.Message}" });
-        }
-    }
-
-    private static async Task<IResult> HandleImportAsync(
+    private static async Task<IResult> HandleAsync(
         HttpRequest request,
         IStockReportExcelParser parser,
         IStockReportRepository repository,
@@ -228,47 +149,6 @@ public static class StockReportEndpoints
         {
             return Results.BadRequest(new { error = $"Failed to import Excel file: {ex.Message}" });
         }
-    }
-
-    private static async Task<IResult> HandleGetCurrentAsync(
-        IStockReportRepository repository,
-        CancellationToken cancellationToken)
-    {
-        StockReportBatch? batch = await repository.GetCurrentAsync(cancellationToken);
-        if (batch is null)
-        {
-            return Results.Ok(new CurrentStockReportDto(
-                false,
-                null,
-                null,
-                null,
-                0,
-                0m,
-                0m,
-                []));
-        }
-
-        List<StockReportItemDto> items = batch.Items
-            .Select(item => new StockReportItemDto(
-                item.SourceRowNumber,
-                item.MaterialDocumentNumber,
-                item.MaterialDocumentItem,
-                item.MaterialDocumentYear,
-                item.MaterialNumber,
-                item.MaterialDescription,
-                item.MaterialQuantity,
-                item.MaterialValue))
-            .ToList();
-
-        return Results.Ok(new CurrentStockReportDto(
-            true,
-            batch.SourceFileName,
-            batch.SheetName,
-            batch.ImportedAtUtc,
-            batch.TotalRows,
-            batch.TotalQuantity,
-            batch.TotalValue,
-            items));
     }
 
     private static bool TryGetPropertyIgnoreCase(JsonElement element, string propertyName, out JsonElement value)

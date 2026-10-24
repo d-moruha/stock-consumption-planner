@@ -1,19 +1,21 @@
 using ClosedXML.Excel;
-using StockConsumptionPlanner.Modules.StockReport.Contracts;
-using StockConsumptionPlanner.Modules.StockReport.Infrastructure;
+using StockConsumptionPlanner.App.Features.StockReport.ImportStockReport;
+using StockConsumptionPlanner.App.Features.StockReport.InspectStockReport;
+using StockConsumptionPlanner.App.Features.StockReport.Shared;
 
-namespace StockConsumptionPlanner.Modules.StockReport.Tests;
+namespace StockConsumptionPlanner.Tests.Features.StockReport;
 
 public sealed class ClosedXmlStockReportServiceTests
 {
-    private readonly ClosedXmlStockReportService _service = new();
+    private readonly InspectStockReportHandler _inspector = new();
+    private readonly ImportStockReportHandler _parser = new();
 
     [Fact]
     public void Inspect_UkrainianHeadersWithCustomHeaderRow_AutoSuggestsAllSevenFields()
     {
         using MemoryStream stream = CreateUkrainianWorkbookWithPreamble();
 
-        StockReportInspectionDto inspection = _service.Inspect(
+        StockReportInspectionDto inspection = _inspector.Inspect(
             stream,
             "zvit_zalushki.xlsx",
             sheetName: "Залишки",
@@ -63,7 +65,7 @@ public sealed class ClosedXmlStockReportServiceTests
         }
 
         stream.Position = 0;
-        StockReportInspectionDto inspection = _service.Inspect(stream, "english_typo.xlsx");
+        StockReportInspectionDto inspection = _inspector.Inspect(stream, "english_typo.xlsx");
 
         Assert.Equal(3, inspection.SuggestedMapping[StockReportField.MaterialDocumentYear]);
     }
@@ -90,7 +92,7 @@ public sealed class ClosedXmlStockReportServiceTests
             }
         };
 
-        StockReportImportResultDto result = _service.Parse(stream, "zvit_zalushki.xlsx", mapping);
+        StockReportImportResultDto result = _parser.Parse(stream, "zvit_zalushki.xlsx", mapping);
 
         Assert.Equal(2, result.TotalRowsProcessed);
         Assert.Equal(2, result.ValidRowCount);
@@ -177,7 +179,7 @@ public sealed class ClosedXmlStockReportServiceTests
             }
         };
 
-        StockReportImportResultDto result = _service.Parse(stream, "errors.xlsx", mapping);
+        StockReportImportResultDto result = _parser.Parse(stream, "errors.xlsx", mapping);
 
         Assert.Equal(2, result.TotalRowsProcessed);
         Assert.Equal(1, result.ValidRowCount);

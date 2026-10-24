@@ -1,4 +1,6 @@
-namespace StockConsumptionPlanner.Modules.StockReport.Contracts;
+using StockConsumptionPlanner.App.Features.StockReport.Shared;
+
+namespace StockConsumptionPlanner.App.Features.StockReport.InspectStockReport;
 
 public sealed record DetectedExcelColumnDto(
     int ColumnIndex,

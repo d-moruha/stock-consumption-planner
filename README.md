@@ -44,12 +44,16 @@ Stock and plans meet on one field: the material movement document id.
 | Stock | Material movement document id, current quantity |
 | Plan | Material movement document id of the related stock |
 
-## Solution Structure
+## Solution Structure (Vertical Slice Architecture)
 
-- `src/StockConsumptionPlanner.App` — Runnable ASP.NET Core (.NET 10) host with Blazor UI (`/`, `/stock-import`), module registration, and `/healthz` health check endpoint.
-- `src/Modules/StockReport/StockConsumptionPlanner.Modules.StockReport.Contracts` — Public DTOs, target field catalog (`StockReportField`), and column mapping contracts.
-- `src/Modules/StockReport/StockConsumptionPlanner.Modules.StockReport` — Domain models, `IStockReportRepository` (`InMemoryStockReportRepository`), `ClosedXmlStockReportService` inspector/parser, and `/api/stock-reports` Minimal API endpoints.
-- `tests/StockConsumptionPlanner.Modules.StockReport.Tests` — xUnit unit and integration tests.
+- `src/StockConsumptionPlanner.App` — Single runnable ASP.NET Core (.NET 10) project organized by feature slices under `Features/`:
+  - `Features/StockReport/InspectStockReport/` — `InspectStockReportEndpoint`, `InspectStockReportHandler` (`ClosedXML` inspection & Ukrainian/English header auto-suggestion), and inspection DTOs.
+  - `Features/StockReport/ImportStockReport/` — `ImportStockReportEndpoint`, `ImportStockReportHandler` (mapped-only row parsing), and import/mapping DTOs.
+  - `Features/StockReport/GetCurrentStockReport/` — `GetCurrentStockReportEndpoint` and `CurrentStockReportDto`.
+  - `Features/StockReport/Shared/` — `StockReportField`, `StockReportFieldCatalog`, `StockReportBatch` / `StockReportItem` models, `IStockReportRepository` (`InMemoryStockReportRepository`), and `ExcelWorksheetHelper`.
+  - `Features/StockReport/StockImportPage.razor` — Co-located Blazor UI page (`/stock-import`).
+  - `Features/StockReport/StockReportFeatureExtensions.cs` — `AddStockReportFeature()` and `MapStockReportEndpoints()`.
+- `tests/StockConsumptionPlanner.Tests` — xUnit unit and integration tests organized under `Features/StockReport/`.
 
 ## Target Material Document Fields
 
