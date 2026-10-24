@@ -9,7 +9,11 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_HTTP_PORTS=8080
-      - Persistence__Provider=InMemory
+      - Persistence__Provider=${PERSISTENCE_PROVIDER:-Sqlite}
+      - ConnectionStrings__Sqlite=Data Source=/app/data/stock-consumption-planner.db
+      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=stock_planner;Username=postgres;Password=postgres
+    volumes:
+      - sqlite_data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8080/healthz || exit 1"]
@@ -32,4 +36,5 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
 volumes:
+  sqlite_data:
   postgres_data:
