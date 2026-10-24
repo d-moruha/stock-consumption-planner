@@ -1,0 +1,35 @@
+services:
+  stock-consumption-planner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stock-consumption-planner
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTP_PORTS=8080
+      - Persistence__Provider=InMemory
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  postgres:
+    image: postgres:16-alpine
+    profiles:
+      - postgres
+    environment:
+      - POSTGRES_DB=stock_planner
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

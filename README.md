@@ -43,3 +43,41 @@ Stock and plans meet on one field: the material movement document id.
 | --- | --- |
 | Stock | Material movement document id, current quantity |
 | Plan | Material movement document id of the related stock |
+
+## Solution Structure (Vertical Slice Architecture)
+
+- `src/StockConsumptionPlanner.App` — Single runnable ASP.NET Core (.NET 10) project organized by feature slices under `Features/`:
+  - `Features/StockReport/InspectStockReport/` — `InspectStockReportEndpoint`, `InspectStockReportHandler` (`ClosedXML` inspection & Ukrainian/English header auto-suggestion), and inspection DTOs.
+  - `Features/StockReport/ImportStockReport/` — `ImportStockReportEndpoint`, `ImportStockReportHandler` (mapped-only row parsing), and import/mapping DTOs.
+  - `Features/StockReport/GetCurrentStockReport/` — `GetCurrentStockReportEndpoint` and `CurrentStockReportDto`.
+  - `Features/StockReport/Shared/` — `StockReportField`, `StockReportFieldCatalog`, `StockReportBatch` / `StockReportItem` models, `IStockReportRepository` (`InMemoryStockReportRepository`), and `ExcelWorksheetHelper`.
+  - `Features/StockReport/StockImportPage.razor` — Co-located Blazor UI page (`/stock-import`).
+  - `Features/StockReport/StockReportFeatureExtensions.cs` — `AddStockReportFeature()` and `MapStockReportEndpoints()`.
+- `tests/StockConsumptionPlanner.Tests` — xUnit unit and integration tests organized under `Features/StockReport/`.
+
+## Target Material Document Fields
+
+| Field Key | Type | Notes |
+|---|---|---|
+| `MaterialDocumentNumber` | `string` | Preserves leading zeros |
+| `MaterialDocumentItem` | `string` | Preserves leading zeros (e.g. `0001`) |
+| `MaterialDocumentYear` | `int` | 4-digit year (also matches `MaterialDccoumentYear`) |
+| `MaterialNumber` | `string` | Material / nomenclature code |
+| `MaterialDescription` | `string` | Ukrainian / English material description |
+| `MaterialQuantity` | `decimal` | Supports `.` and `,` decimal separators |
+| `MaterialValue` | `decimal` | Supports `.` and `,` decimal separators |
+
+## API Endpoints
+
+- `POST /api/stock-reports/inspect` — Inspects an uploaded `.xlsx` file, returns worksheet names, detected columns with sample values, and heuristic Ukrainian/English column mapping suggestions.
+- `POST /api/stock-reports/import` — Parses only the 7 mapped columns starting from `DataStartRowNumber`, ignores all unmapped columns, stores the current batch in `IStockReportRepository`, and returns summary metrics and row-level errors.
+- `GET /api/stock-reports/current` — Returns the currently stored stock report batch and summary totals.
+- `GET /healthz` — Returns service health and active persistence provider (`InMemory`).
+
+## Running with Docker
+
+```bash
+docker compose up --build
+```
+
+The application listens on `http://localhost:8080`.

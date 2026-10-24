@@ -1,0 +1,674 @@
+@page "/stock-import"
+@rendermode InteractiveServer
+@using System.Text.Json
+@inject IStockReportExcelInspector ExcelInspector
+@inject IStockReportExcelParser ExcelParser
+@inject IStockReportRepository StockReportRepository
+@inject IJSRuntime JsRuntime
+
+<PageTitle>Stock Report Import (.xlsx)</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="h3 mb-1">Current Stock Report Import (.xlsx)</h1>
+        <p class="text-muted mb-0">
+            Upload an Excel report, select the worksheet and header row, map the 7 required material fields, and ignore all other columns.
+        </p>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(_statusMessage))
+{
+    <div class="alert @(_isErrorStatus ? "alert-danger" : "alert-success") d-flex justify-content-between align-items-center" role="alert">
+        <span>@_statusMessage</span>
+        <button type="button" class="btn-close" @onclick="() => _statusMessage = null" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Step 1 — File Selection &amp; Header Row Configuration</span>
+        @if (!string.IsNullOrWhiteSpace(_uploadedFileName))
+        {
+            <span class="badge bg-primary">@_uploadedFileName</span>
+        }
+    </div>
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label fw-semibold" for="excelFileInput">Excel Workbook (`.xlsx`)</label>
+                <InputFile id="excelFileInput" class="form-control" accept=".xlsx" OnChange="OnFileSelectedAsync" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-semibold" for="sheetSelector">Worksheet</label>
+                <select id="sheetSelector"
+                        class="form-select"
+                        disabled="@(_inspection is null)"
+                        value="@_selectedSheetName"
+                        @onchange="OnSheetChangedAsync">
+                    @if (_inspection is not null)
+                    {
+                        @foreach (string sheet in _inspection.SheetNames)
+                        {
+                            <option value="@sheet">@sheet</option>
+                        }
+                    }
+                    else
+                    {
+                        <option value="">Upload a file first...</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label fw-semibold" for="headerRowInput">Header Row</label>
+                <input id="headerRowInput"
+                       type="number"
+                       min="1"
+                       class="form-control"
+                       value="@_headerRowNumber"
+                       @onchange="OnHeaderRowChanged" />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label fw-semibold" for="dataStartRowInput">Data Start Row</label>
+                <input id="dataStartRowInput"
+                       type="number"
+                       min="@(_headerRowNumber + 1)"
+                       class="form-control"
+                       @bind="_dataStartRowNumber" />
+            </div>
+        </div>
+
+        <div class="mt-3 d-flex gap-2">
+            <button type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    disabled="@(_fileBytes is null || _isBusy)"
+                    @onclick="ReinspectCurrentFileAsync">
+                Re-inspect Sheet &amp; Headers
+            </button>
+            <button type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    disabled="@(_inspection is null)"
+                    @onclick="ApplyAutoSuggestedMapping">
+                Reset to Auto-Suggested Mapping
+            </button>
+            <button type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    disabled="@(_inspection is null)"
+                    @onclick="LoadSavedMappingFromStorageAsync">
+                Load Saved Mapping
+            </button>
+            <button type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    disabled="@(_inspection is null)"
+                    @onclick="SaveMappingToStorageAsync">
+                Save Mapping in Browser
+            </button>
+        </div>
+    </div>
+</div>
+
+@if (_inspection is not null)
+{
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">Step 2 — Interactive Column Mapping (7 Target Fields)</span>
+            <span class="small text-muted">
+                Detected @_inspection.Columns.Count columns (@GetMappedColumnCount() mapped, @GetIgnoredColumns().Count ignored)
+            </span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-3">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 24%;">Target Field</th>
+                            <th style="width: 24%;">Ukrainian / Expected Header</th>
+                            <th style="width: 34%;">Excel Column Mapping</th>
+                            <th style="width: 18%;">Sample Values</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (StockReportFieldMetadata metadata in StockReportFieldCatalog.All)
+                        {
+                            int selectedCol = GetSelectedColumn(metadata.Field);
+                            DetectedExcelColumnDto? colInfo = _inspection.Columns.FirstOrDefault(c => c.ColumnIndex == selectedCol);
+
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@metadata.DisplayName</div>
+                                    <code class="small">@metadata.Key</code>
+                                    <span class="badge bg-light text-dark border ms-1">@metadata.DataType</span>
+                                </td>
+                                <td>
+                                    <div>@metadata.UkrainianName</div>
+                                    <div class="small text-muted">@metadata.Description</div>
+                                </td>
+                                <td>
+                                    <select class="form-select @(selectedCol > 0 ? "border-success" : "border-danger")"
+                                            value="@selectedCol"
+                                            @onchange="e => OnFieldColumnChanged(metadata.Field, e.Value?.ToString())">
+                                        <option value="0">-- Select Excel Column --</option>
+                                        @foreach (DetectedExcelColumnDto column in _inspection.Columns)
+                                        {
+                                            string samplePreview = column.SampleValues.Count > 0
+                                                ? $" (sample: {string.Join(", ", column.SampleValues.Take(2))})"
+                                                : string.Empty;
+                                            <option value="@column.ColumnIndex">
+                                                [@column.ColumnLetter] @column.HeaderText@samplePreview
+                                            </option>
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    @if (colInfo is not null && colInfo.SampleValues.Count > 0)
+                                    {
+                                        <div class="small text-truncate" style="max-width: 240px;" title="@string.Join(" | ", colInfo.SampleValues)">
+                                            @string.Join(" | ", colInfo.SampleValues)
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">No sample</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="border rounded p-3 bg-light">
+                <div class="small fw-semibold text-uppercase text-muted mb-2">Spreadsheet Column Disposition</div>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (DetectedExcelColumnDto col in _inspection.Columns)
+                    {
+                        StockReportField? mappedField = GetFieldForColumn(col.ColumnIndex);
+                        if (mappedField.HasValue)
+                        {
+                            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-2 py-1">
+                                [@col.ColumnLetter] @col.HeaderText &rarr; @mappedField.Value
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle px-2 py-1">
+                                [@col.ColumnLetter] @col.HeaderText (Ignored)
+                            </span>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="mt-3 d-flex justify-content-end">
+                <button type="button"
+                        class="btn btn-primary"
+                        disabled="@(!AreAllFieldsMapped() || _isBusy)"
+                        @onclick="ExecuteImportAsync">
+                    Import Mapped Stock Report
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (_lastImportResult is not null && _lastImportResult.Errors.Count > 0)
+{
+    <div class="card border-warning shadow-sm mb-4">
+        <div class="card-header bg-warning-subtle text-warning-emphasis py-2 fw-semibold">
+            Row Validation &amp; Conversion Errors (@_lastImportResult.Errors.Count errors across @_lastImportResult.ErrorRowCount rows)
+        </div>
+        <div class="table-responsive" style="max-height: 240px;">
+            <table class="table table-sm table-striped align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Row #</th>
+                        <th>Field</th>
+                        <th>Raw Value</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (StockReportRowErrorDto err in _lastImportResult.Errors)
+                    {
+                        <tr>
+                            <td><code>@err.RowNumber</code></td>
+                            <td><code>@err.Field</code></td>
+                            <td><code>@(err.RawValue ?? "(empty)")</code></td>
+                            <td class="text-danger">@err.Message</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <span class="fw-semibold">Step 3 — Current Stored Stock Report</span>
+            @if (_currentBatch is not null)
+            {
+                <span class="text-muted small ms-2">
+                    (@_currentBatch.SourceFileName / @_currentBatch.SheetName — @_currentBatch.TotalRows rows)
+                </span>
+            }
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <input type="search"
+                   class="form-control form-control-sm"
+                   style="min-width: 260px;"
+                   placeholder="Search material, document, description..."
+                   @bind="_searchQuery"
+                   @bind:event="oninput" />
+            @if (_currentBatch is not null)
+            {
+                <button type="button" class="btn btn-outline-danger btn-sm" @onclick="ClearStoredReportAsync">
+                    Clear
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (_currentBatch is null || _currentBatch.Items.Count == 0)
+    {
+        <div class="card-body text-center text-muted py-5">
+            No stock report items are currently stored in memory. Upload and import an `.xlsx` file above.
+        </div>
+    }
+    else
+    {
+        IReadOnlyList<StockReportItem> filteredItems = GetFilteredItems();
+
+        <div class="card-body border-bottom bg-light py-2">
+            <div class="row text-center">
+                <div class="col-sm-3">
+                    <span class="text-muted small">Valid Rows:</span>
+                    <strong class="ms-1">@_currentBatch.TotalRows</strong>
+                    @if (filteredItems.Count != _currentBatch.TotalRows)
+                    {
+                        <span class="text-muted small">(showing @filteredItems.Count)</span>
+                    }
+                </div>
+                <div class="col-sm-3">
+                    <span class="text-muted small">Total Quantity:</span>
+                    <strong class="ms-1 text-primary">@_currentBatch.TotalQuantity.ToString("N3")</strong>
+                </div>
+                <div class="col-sm-3">
+                    <span class="text-muted small">Total Value:</span>
+                    <strong class="ms-1 text-success">@_currentBatch.TotalValue.ToString("N2")</strong>
+                </div>
+                <div class="col-sm-3">
+                    <span class="text-muted small">Imported At:</span>
+                    <strong class="ms-1">@_currentBatch.ImportedAtUtc.ToString("HH:mm:ss 'UTC'")</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive" style="max-height: 520px;">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light sticky-top">
+                    <tr>
+                        <th>Row</th>
+                        <th>MaterialDocumentNumber</th>
+                        <th>MaterialDocumentItem</th>
+                        <th>MaterialDocumentYear</th>
+                        <th>MaterialNumber</th>
+                        <th>MaterialDescription</th>
+                        <th class="text-end">MaterialQuantity</th>
+                        <th class="text-end">MaterialValue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (StockReportItem item in filteredItems)
+                    {
+                        <tr>
+                            <td class="text-muted small">@item.SourceRowNumber</td>
+                            <td><code>@item.MaterialDocumentNumber</code></td>
+                            <td><code>@item.MaterialDocumentItem</code></td>
+                            <td>@item.MaterialDocumentYear</td>
+                            <td><span class="fw-semibold">@item.MaterialNumber</span></td>
+                            <td>@item.MaterialDescription</td>
+                            <td class="text-end font-monospace">@item.MaterialQuantity.ToString("N3")</td>
+                            <td class="text-end font-monospace">@item.MaterialValue.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private const long MaxUploadFileSizeBytes = 25 * 1024 * 1024;
+    private const string LocalStorageKey = "scp.stockReport.lastColumnMapping.v1";
+
+    private byte[]? _fileBytes;
+    private string? _uploadedFileName;
+    private string? _selectedSheetName;
+    private int _headerRowNumber = 1;
+    private int _dataStartRowNumber = 2;
+    private bool _isBusy;
+    private string? _statusMessage;
+    private bool _isErrorStatus;
+    private string _searchQuery = string.Empty;
+
+    private StockReportInspectionDto? _inspection;
+    private Dictionary<StockReportField, int> _fieldColumnMap = new();
+    private StockReportImportResultDto? _lastImportResult;
+    private StockReportBatch? _currentBatch;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _currentBatch = await StockReportRepository.GetCurrentAsync();
+    }
+
+    private async Task OnFileSelectedAsync(InputFileChangeEventArgs args)
+    {
+        _isBusy = true;
+        _statusMessage = null;
+        _isErrorStatus = false;
+
+        try
+        {
+            IBrowserFile file = args.File;
+            await using Stream stream = file.OpenReadStream(MaxUploadFileSizeBytes);
+            using MemoryStream ms = new();
+            await stream.CopyToAsync(ms);
+
+            _fileBytes = ms.ToArray();
+            _uploadedFileName = file.Name;
+            _selectedSheetName = null;
+
+            InspectCurrentBytes();
+            _statusMessage = $"Inspected '{_uploadedFileName}' ({_inspection?.Columns.Count ?? 0} columns detected).";
+        }
+        catch (Exception ex)
+        {
+            _isErrorStatus = true;
+            _statusMessage = $"Failed to read Excel file: {ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private Task OnSheetChangedAsync(ChangeEventArgs args)
+    {
+        _selectedSheetName = args.Value?.ToString();
+        InspectCurrentBytes();
+        return Task.CompletedTask;
+    }
+
+    private void OnHeaderRowChanged(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out int parsed) && parsed >= 1)
+        {
+            _headerRowNumber = parsed;
+            if (_dataStartRowNumber <= _headerRowNumber)
+            {
+                _dataStartRowNumber = _headerRowNumber + 1;
+            }
+        }
+    }
+
+    private Task ReinspectCurrentFileAsync()
+    {
+        InspectCurrentBytes();
+        return Task.CompletedTask;
+    }
+
+    private void InspectCurrentBytes()
+    {
+        if (_fileBytes is null || string.IsNullOrWhiteSpace(_uploadedFileName))
+        {
+            return;
+        }
+
+        try
+        {
+            using MemoryStream ms = new(_fileBytes);
+            _inspection = ExcelInspector.Inspect(
+                ms,
+                _uploadedFileName,
+                _selectedSheetName,
+                _headerRowNumber,
+                _dataStartRowNumber);
+
+            _selectedSheetName = _inspection.ActiveSheetName;
+            _headerRowNumber = _inspection.HeaderRowNumber;
+            _dataStartRowNumber = _inspection.DataStartRowNumber;
+            ApplyAutoSuggestedMapping();
+        }
+        catch (Exception ex)
+        {
+            _isErrorStatus = true;
+            _statusMessage = $"Inspection error: {ex.Message}";
+        }
+    }
+
+    private void ApplyAutoSuggestedMapping()
+    {
+        _fieldColumnMap.Clear();
+        if (_inspection is null)
+        {
+            return;
+        }
+
+        foreach (KeyValuePair<StockReportField, int> pair in _inspection.SuggestedMapping)
+        {
+            _fieldColumnMap[pair.Key] = pair.Value;
+        }
+    }
+
+    private int GetSelectedColumn(StockReportField field)
+    {
+        return _fieldColumnMap.TryGetValue(field, out int colIndex) ? colIndex : 0;
+    }
+
+    private void OnFieldColumnChanged(StockReportField field, string? rawValue)
+    {
+        if (int.TryParse(rawValue, out int colIndex) && colIndex > 0)
+        {
+            _fieldColumnMap[field] = colIndex;
+        }
+        else
+        {
+            _fieldColumnMap.Remove(field);
+        }
+    }
+
+    private int GetMappedColumnCount()
+    {
+        return _fieldColumnMap.Values.Where(v => v > 0).Distinct().Count();
+    }
+
+    private IReadOnlyList<DetectedExcelColumnDto> GetIgnoredColumns()
+    {
+        if (_inspection is null)
+        {
+            return [];
+        }
+
+        HashSet<int> mapped = _fieldColumnMap.Values.Where(v => v > 0).ToHashSet();
+        return _inspection.Columns.Where(c => !mapped.Contains(c.ColumnIndex)).ToList();
+    }
+
+    private StockReportField? GetFieldForColumn(int columnIndex)
+    {
+        foreach (KeyValuePair<StockReportField, int> pair in _fieldColumnMap)
+        {
+            if (pair.Value == columnIndex)
+            {
+                return pair.Key;
+            }
+        }
+
+        return null;
+    }
+
+    private bool AreAllFieldsMapped()
+    {
+        foreach (StockReportFieldMetadata metadata in StockReportFieldCatalog.All)
+        {
+            if (!_fieldColumnMap.TryGetValue(metadata.Field, out int colIndex) || colIndex <= 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private async Task ExecuteImportAsync()
+    {
+        if (_fileBytes is null || string.IsNullOrWhiteSpace(_uploadedFileName))
+        {
+            return;
+        }
+
+        _isBusy = true;
+        _isErrorStatus = false;
+        _statusMessage = null;
+
+        try
+        {
+            StockReportColumnMappingDto mapping = new()
+            {
+                SheetName = _selectedSheetName,
+                HeaderRowNumber = _headerRowNumber,
+                DataStartRowNumber = Math.Max(_headerRowNumber + 1, _dataStartRowNumber),
+                FieldColumnMap = new Dictionary<StockReportField, int>(_fieldColumnMap)
+            };
+
+            using MemoryStream ms = new(_fileBytes);
+            _lastImportResult = ExcelParser.Parse(ms, _uploadedFileName, mapping);
+
+            List<StockReportItem> domainItems = _lastImportResult.Items
+                .Select(dto => new StockReportItem(
+                    dto.SourceRowNumber,
+                    dto.MaterialDocumentNumber,
+                    dto.MaterialDocumentItem,
+                    dto.MaterialDocumentYear,
+                    dto.MaterialNumber,
+                    dto.MaterialDescription,
+                    dto.MaterialQuantity,
+                    dto.MaterialValue))
+                .ToList();
+
+            StockReportBatch batch = new(
+                _lastImportResult.SourceFileName,
+                _lastImportResult.SheetName,
+                _lastImportResult.ImportedAtUtc,
+                domainItems);
+
+            await StockReportRepository.SaveCurrentAsync(batch);
+            _currentBatch = batch;
+
+            _statusMessage = $"Imported {_lastImportResult.ValidRowCount} valid rows from '{_lastImportResult.SourceFileName}' " +
+                             $"({_lastImportResult.IgnoredColumnIndices.Count} unmapped columns ignored, {_lastImportResult.ErrorRowCount} rows with errors).";
+        }
+        catch (Exception ex)
+        {
+            _isErrorStatus = true;
+            _statusMessage = $"Import failed: {ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task SaveMappingToStorageAsync()
+    {
+        try
+        {
+            StockReportColumnMappingDto dto = new()
+            {
+                SheetName = _selectedSheetName,
+                HeaderRowNumber = _headerRowNumber,
+                DataStartRowNumber = _dataStartRowNumber,
+                FieldColumnMap = new Dictionary<StockReportField, int>(_fieldColumnMap)
+            };
+
+            string json = JsonSerializer.Serialize(dto);
+            await JsRuntime.InvokeVoidAsync("localStorage.setItem", LocalStorageKey, json);
+            _isErrorStatus = false;
+            _statusMessage = "Column mapping saved in browser storage.";
+        }
+        catch (Exception ex)
+        {
+            _isErrorStatus = true;
+            _statusMessage = $"Could not save mapping: {ex.Message}";
+        }
+    }
+
+    private async Task LoadSavedMappingFromStorageAsync()
+    {
+        try
+        {
+            string? json = await JsRuntime.InvokeAsync<string?>("localStorage.getItem", LocalStorageKey);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                _isErrorStatus = true;
+                _statusMessage = "No saved column mapping found in browser storage.";
+                return;
+            }
+
+            StockReportColumnMappingDto? dto = JsonSerializer.Deserialize<StockReportColumnMappingDto>(json);
+            if (dto is null)
+            {
+                _isErrorStatus = true;
+                _statusMessage = "Saved mapping format was invalid.";
+                return;
+            }
+
+            _headerRowNumber = Math.Max(1, dto.HeaderRowNumber);
+            _dataStartRowNumber = Math.Max(_headerRowNumber + 1, dto.DataStartRowNumber);
+            _fieldColumnMap = new Dictionary<StockReportField, int>(dto.FieldColumnMap);
+            _isErrorStatus = false;
+            _statusMessage = "Loaded saved column mapping from browser storage.";
+        }
+        catch (Exception ex)
+        {
+            _isErrorStatus = true;
+            _statusMessage = $"Could not load saved mapping: {ex.Message}";
+        }
+    }
+
+    private async Task ClearStoredReportAsync()
+    {
+        await StockReportRepository.ClearAsync();
+        _currentBatch = null;
+        _lastImportResult = null;
+        _isErrorStatus = false;
+        _statusMessage = "Cleared current stored stock report.";
+    }
+
+    private IReadOnlyList<StockReportItem> GetFilteredItems()
+    {
+        if (_currentBatch is null)
+        {
+            return [];
+        }
+
+        if (string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            return _currentBatch.Items;
+        }
+
+        string q = _searchQuery.Trim();
+        return _currentBatch.Items
+            .Where(item =>
+                item.MaterialDocumentNumber.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                item.MaterialDocumentItem.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                item.MaterialNumber.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                item.MaterialDescription.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                item.MaterialDocumentYear.ToString().Contains(q, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+}

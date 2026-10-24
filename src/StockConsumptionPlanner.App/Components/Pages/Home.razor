@@ -1,0 +1,110 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject IStockReportRepository StockReportRepository
+
+<PageTitle>Stock Consumption Planner</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Stock Consumption Planner</h1>
+        <p class="text-muted mb-0">
+            Import current stock reports (.xlsx) with Ukrainian or English headers and map material document columns.
+        </p>
+    </div>
+    <a class="btn btn-primary" href="/stock-import">
+        Import Stock Report (.xlsx)
+    </a>
+</div>
+
+@if (_currentBatch is null)
+{
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h2 class="h5 mb-2">No Current Stock Report Loaded</h2>
+            <p class="text-muted mb-3">
+                Upload an Excel workbook (`.xlsx`) to inspect worksheet columns, configure header and data start rows,
+                map the 7 target material fields, and store the current stock report in memory.
+            </p>
+            <a class="btn btn-outline-primary" href="/stock-import">Go to Stock Report Import</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase fw-semibold">Source File</div>
+                    <div class="fs-5 fw-bold text-truncate" title="@_currentBatch.SourceFileName">@_currentBatch.SourceFileName</div>
+                    <div class="small text-muted">Sheet: @_currentBatch.SheetName</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase fw-semibold">Imported Rows</div>
+                    <div class="fs-4 fw-bold">@_currentBatch.TotalRows</div>
+                    <div class="small text-muted">@_currentBatch.ImportedAtUtc.ToString("yyyy-MM-dd HH:mm:ss 'UTC'")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase fw-semibold">Total Quantity</div>
+                    <div class="fs-4 fw-bold text-primary">@_currentBatch.TotalQuantity.ToString("N3")</div>
+                    <div class="small text-muted">Across all valid rows</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase fw-semibold">Total Value</div>
+                    <div class="fs-4 fw-bold text-success">@_currentBatch.TotalValue.ToString("N2")</div>
+                    <div class="small text-muted">Monetary stock value</div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h2 class="h6 mb-0">Target Material Document Fields</h2>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Field Key</th>
+                    <th>Ukrainian Label</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (StockReportFieldMetadata field in StockReportFieldCatalog.All)
+                {
+                    <tr>
+                        <td><code>@field.Key</code></td>
+                        <td>@field.UkrainianName</td>
+                        <td><span class="badge bg-secondary">@field.DataType</span></td>
+                        <td class="text-muted">@field.Description</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private StockReportBatch? _currentBatch;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _currentBatch = await StockReportRepository.GetCurrentAsync();
+    }
+}

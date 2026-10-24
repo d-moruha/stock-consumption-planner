@@ -1,0 +1,30 @@
+# Visual Studio / .NET build outputs
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+coverage*.json
+coverage*.xml
+coverage*.info
+
+# Local SQLite databases
+*.db
+*.db-shm
+*.db-wal
