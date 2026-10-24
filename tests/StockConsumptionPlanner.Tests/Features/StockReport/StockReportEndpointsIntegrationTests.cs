@@ -48,7 +48,7 @@ public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebAppl
     public async Task Inspect_Import_And_GetCurrent_EndToEndFlow_PersistsToSqliteWithCustomMappingAndTypoKey()
     {
         using HttpClient client = _factory.CreateClient();
-        using MemoryStream excelStream = ClosedXmlStockReportServiceTests.CreateUkrainianWorkbookWithPreamble();
+        using MemoryStream excelStream = OpenXmlStockReportServiceTests.CreateUkrainianWorkbookWithPreamble();
         byte[] fileBytes = excelStream.ToArray();
 
         using (MultipartFormDataContent inspectForm = new())

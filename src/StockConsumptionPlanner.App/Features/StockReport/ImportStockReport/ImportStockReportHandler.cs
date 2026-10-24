@@ -1,5 +1,4 @@
 using System.Globalization;
-using ClosedXML.Excel;
 using StockConsumptionPlanner.App.Features.StockReport.Shared;
 
 namespace StockConsumptionPlanner.App.Features.StockReport.ImportStockReport;
@@ -24,15 +23,12 @@ public sealed class ImportStockReportHandler : IStockReportExcelParser
 
         ValidateRequiredMappings(mapping);
 
-        using XLWorkbook workbook = new(excelStream);
-        IXLWorksheet worksheet = ExcelWorksheetHelper.ResolveWorksheet(workbook, mapping.SheetName);
-        IXLRange? usedRange = worksheet.RangeUsed();
-
-        if (usedRange is null)
+        OpenXmlWorksheetData worksheet = ExcelWorksheetHelper.ReadWorksheet(excelStream, mapping.SheetName);
+        if (!worksheet.HasData)
         {
             return new StockReportImportResultDto(
                 fileName,
-                worksheet.Name,
+                worksheet.SheetName,
                 DateTimeOffset.UtcNow,
                 0,
                 0,
@@ -44,9 +40,9 @@ public sealed class ImportStockReportHandler : IStockReportExcelParser
                 []);
         }
 
-        int firstCol = usedRange.FirstColumn().ColumnNumber();
-        int lastCol = usedRange.LastColumn().ColumnNumber();
-        int lastRow = usedRange.LastRow().RowNumber();
+        int firstCol = worksheet.FirstColumn;
+        int lastCol = worksheet.LastColumn;
+        int lastRow = worksheet.LastRow;
 
         int headerRow = Math.Max(1, mapping.HeaderRowNumber);
         int startRow = Math.Max(headerRow + 1, mapping.DataStartRowNumber);
@@ -70,15 +66,18 @@ public sealed class ImportStockReportHandler : IStockReportExcelParser
             totalRowsProcessed++;
             int errorCountBeforeRow = errors.Count;
 
-            string docNumber = ExcelWorksheetHelper.ReadStringPreservingFormat(
-                worksheet.Cell(rowNumber, mapping.FieldColumnMap[StockReportField.MaterialDocumentNumber]));
+            string docNumber = worksheet.GetCellString(
+                rowNumber,
+                mapping.FieldColumnMap[StockReportField.MaterialDocumentNumber]);
 
-            string docItem = ExcelWorksheetHelper.ReadStringPreservingFormat(
-                worksheet.Cell(rowNumber, mapping.FieldColumnMap[StockReportField.MaterialDocumentItem]));
+            string docItem = worksheet.GetCellString(
+                rowNumber,
+                mapping.FieldColumnMap[StockReportField.MaterialDocumentItem]);
 
-            IXLCell yearCell = worksheet.Cell(rowNumber, mapping.FieldColumnMap[StockReportField.MaterialDocumentYear]);
-            int docYear = 0;
-            if (!TryParseYear(yearCell, out docYear, out string? rawYear))
+            OpenXmlCellData? yearCell = worksheet.GetCell(
+                rowNumber,
+                mapping.FieldColumnMap[StockReportField.MaterialDocumentYear]);
+            if (!TryParseYear(yearCell, out int docYear, out string? rawYear))
             {
                 errors.Add(new StockReportRowErrorDto(
                     rowNumber,
@@ -87,11 +86,13 @@ public sealed class ImportStockReportHandler : IStockReportExcelParser
                     $"Invalid MaterialDocumentYear '{rawYear}'. Expected a 4-digit year."));
             }
 
-            string materialNumber = ExcelWorksheetHelper.ReadStringPreservingFormat(
-                worksheet.Cell(rowNumber, mapping.FieldColumnMap[StockReportField.MaterialNumber]));
+            string materialNumber = worksheet.GetCellString(
+                rowNumber,
+                mapping.FieldColumnMap[StockReportField.MaterialNumber]);
 
-            string materialDescription = ExcelWorksheetHelper.ReadCellDisplayString(
-                worksheet.Cell(rowNumber, mapping.FieldColumnMap[StockReportField.MaterialDescription]));
+            string materialDescription = worksheet.GetCellString(
+                rowNumber,
+                mapping.FieldColumnMap[StockReportField.MaterialDescription]);
 
             if (string.IsNullOrWhiteSpace(docNumber))
             {
@@ -111,9 +112,10 @@ public sealed class ImportStockReportHandler : IStockReportExcelParser
                     "MaterialNumber is required."));
             }
 
-            IXLCell qtyCell = worksheet.Cell(rowNumber, mapping.FieldColumnMap[StockReportField.MaterialQuantity]);
-            decimal quantity = 0m;
-            if (!TryParseDecimal(qtyCell, out quantity, out string? rawQty))
+            OpenXmlCellData? qtyCell = worksheet.GetCell(
+                rowNumber,
+                mapping.FieldColumnMap[StockReportField.MaterialQuantity]);
+            if (!TryParseDecimal(qtyCell, out decimal quantity, out string? rawQty))
             {
                 errors.Add(new StockReportRowErrorDto(
                     rowNumber,
@@ -122,9 +124,10 @@ public sealed class ImportStockReportHandler : IStockReportExcelParser
                     $"Invalid MaterialQuantity '{rawQty}'. Expected a valid decimal number."));
             }
 
-            IXLCell valCell = worksheet.Cell(rowNumber, mapping.FieldColumnMap[StockReportField.MaterialValue]);
-            decimal value = 0m;
-            if (!TryParseDecimal(valCell, out value, out string? rawVal))
+            OpenXmlCellData? valCell = worksheet.GetCell(
+                rowNumber,
+                mapping.FieldColumnMap[StockReportField.MaterialValue]);
+            if (!TryParseDecimal(valCell, out decimal value, out string? rawVal))
             {
                 errors.Add(new StockReportRowErrorDto(
                     rowNumber,
@@ -153,7 +156,7 @@ public sealed class ImportStockReportHandler : IStockReportExcelParser
 
         return new StockReportImportResultDto(
             fileName,
-            worksheet.Name,
+            worksheet.SheetName,
             DateTimeOffset.UtcNow,
             totalRowsProcessed,
             items.Count,
@@ -182,14 +185,13 @@ public sealed class ImportStockReportHandler : IStockReportExcelParser
     }
 
     private static bool IsMappedRowBlank(
-        IXLWorksheet worksheet,
+        OpenXmlWorksheetData worksheet,
         int rowNumber,
         IReadOnlyDictionary<StockReportField, int> fieldColumnMap)
     {
         foreach (int colIndex in fieldColumnMap.Values)
         {
-            IXLCell cell = worksheet.Cell(rowNumber, colIndex);
-            if (!cell.IsEmpty() && !string.IsNullOrWhiteSpace(ExcelWorksheetHelper.ReadCellDisplayString(cell)))
+            if (!string.IsNullOrWhiteSpace(worksheet.GetCellString(rowNumber, colIndex)))
             {
                 return false;
             }
@@ -198,18 +200,17 @@ public sealed class ImportStockReportHandler : IStockReportExcelParser
         return true;
     }
 
-    private static bool TryParseYear(IXLCell cell, out int year, out string? rawValue)
+    private static bool TryParseYear(OpenXmlCellData? cell, out int year, out string? rawValue)
     {
-        rawValue = ExcelWorksheetHelper.ReadCellDisplayString(cell);
-        if (cell.IsEmpty() || string.IsNullOrWhiteSpace(rawValue))
+        rawValue = cell?.DisplayText ?? string.Empty;
+        if (cell is null || string.IsNullOrWhiteSpace(rawValue))
         {
             year = 0;
             return false;
         }
 
-        if (cell.DataType == XLDataType.Number)
+        if (cell.NumericValue is double numeric)
         {
-            double numeric = cell.GetDouble();
             int candidate = (int)Math.Round(numeric);
             if (candidate is >= 1900 and <= 2999)
             {
@@ -229,18 +230,18 @@ public sealed class ImportStockReportHandler : IStockReportExcelParser
         return false;
     }
 
-    private static bool TryParseDecimal(IXLCell cell, out decimal result, out string? rawValue)
+    private static bool TryParseDecimal(OpenXmlCellData? cell, out decimal result, out string? rawValue)
     {
-        rawValue = ExcelWorksheetHelper.ReadCellDisplayString(cell);
-        if (cell.IsEmpty() || string.IsNullOrWhiteSpace(rawValue))
+        rawValue = cell?.DisplayText ?? string.Empty;
+        if (cell is null || string.IsNullOrWhiteSpace(rawValue))
         {
             result = 0m;
             return false;
         }
 
-        if (cell.DataType == XLDataType.Number)
+        if (cell.NumericValue is double numeric)
         {
-            result = Convert.ToDecimal(cell.GetDouble(), CultureInfo.InvariantCulture);
+            result = Convert.ToDecimal(numeric, CultureInfo.InvariantCulture);
             return true;
         }
 

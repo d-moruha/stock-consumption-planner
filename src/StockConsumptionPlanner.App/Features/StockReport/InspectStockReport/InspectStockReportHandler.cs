@@ -1,4 +1,3 @@
-using ClosedXML.Excel;
 using StockConsumptionPlanner.App.Features.StockReport.Shared;
 
 namespace StockConsumptionPlanner.App.Features.StockReport.InspectStockReport;
@@ -27,21 +26,13 @@ public sealed class InspectStockReportHandler : IStockReportExcelInspector
         int resolvedHeaderRow = Math.Max(1, headerRowNumber);
         int resolvedDataStartRow = Math.Max(resolvedHeaderRow + 1, dataStartRowNumber ?? (resolvedHeaderRow + 1));
 
-        using XLWorkbook workbook = new(excelStream);
-        List<string> sheetNames = workbook.Worksheets.Select(ws => ws.Name).ToList();
-        if (sheetNames.Count == 0)
-        {
-            throw new InvalidOperationException("The uploaded Excel workbook contains no worksheets.");
-        }
-
-        IXLWorksheet worksheet = ExcelWorksheetHelper.ResolveWorksheet(workbook, sheetName);
-        IXLRange? usedRange = worksheet.RangeUsed();
-        if (usedRange is null)
+        OpenXmlWorksheetData worksheet = ExcelWorksheetHelper.ReadWorksheet(excelStream, sheetName);
+        if (!worksheet.HasData)
         {
             return new StockReportInspectionDto(
                 fileName,
-                sheetNames,
-                worksheet.Name,
+                worksheet.AllSheetNames,
+                worksheet.SheetName,
                 resolvedHeaderRow,
                 resolvedDataStartRow,
                 0,
@@ -49,21 +40,20 @@ public sealed class InspectStockReportHandler : IStockReportExcelInspector
                 new Dictionary<StockReportField, int>());
         }
 
-        int firstCol = usedRange.FirstColumn().ColumnNumber();
-        int lastCol = usedRange.LastColumn().ColumnNumber();
-        int lastRow = usedRange.LastRow().RowNumber();
+        int firstCol = worksheet.FirstColumn;
+        int lastCol = worksheet.LastColumn;
+        int lastRow = worksheet.LastRow;
 
         List<DetectedExcelColumnDto> columns = new();
         for (int colIndex = firstCol; colIndex <= lastCol; colIndex++)
         {
-            IXLCell headerCell = worksheet.Cell(resolvedHeaderRow, colIndex);
-            string headerText = ExcelWorksheetHelper.ReadCellDisplayString(headerCell);
-            string colLetter = XLHelper.GetColumnLetterFromNumber(colIndex);
+            string headerText = worksheet.GetCellString(resolvedHeaderRow, colIndex);
+            string colLetter = ExcelWorksheetHelper.GetColumnLetterFromNumber(colIndex);
 
             List<string> samples = new();
             for (int rowIndex = resolvedDataStartRow; rowIndex <= lastRow && samples.Count < 3; rowIndex++)
             {
-                string sampleValue = ExcelWorksheetHelper.ReadCellDisplayString(worksheet.Cell(rowIndex, colIndex));
+                string sampleValue = worksheet.GetCellString(rowIndex, colIndex);
                 if (!string.IsNullOrWhiteSpace(sampleValue))
                 {
                     samples.Add(sampleValue);
@@ -84,8 +74,8 @@ public sealed class InspectStockReportHandler : IStockReportExcelInspector
 
         return new StockReportInspectionDto(
             fileName,
-            sheetNames,
-            worksheet.Name,
+            worksheet.AllSheetNames,
+            worksheet.SheetName,
             resolvedHeaderRow,
             resolvedDataStartRow,
             lastRow,

@@ -47,7 +47,7 @@ Stock and plans meet on one field: the material movement document id.
 ## Solution Structure (Vertical Slice Architecture)
 
 - `src/StockConsumptionPlanner.App` — Single runnable ASP.NET Core (.NET 10) project organized by feature slices under `Features/`:
-  - `Features/StockReport/InspectStockReport/` — `InspectStockReportEndpoint`, `InspectStockReportHandler` (`ClosedXML` inspection & Ukrainian/English header auto-suggestion), and inspection DTOs.
+  - `Features/StockReport/InspectStockReport/` — `InspectStockReportEndpoint`, `InspectStockReportHandler` (`DocumentFormat.OpenXml` inspection & Ukrainian/English header auto-suggestion), and inspection DTOs.
   - `Features/StockReport/ImportStockReport/` — `ImportStockReportEndpoint`, `ImportStockReportHandler` (mapped-only row parsing), and import/mapping DTOs.
   - `Features/StockReport/GetCurrentStockReport/` — `GetCurrentStockReportEndpoint` and `CurrentStockReportDto`.
   - `Features/StockReport/Shared/` — `StockReportField`, `StockReportFieldCatalog`, `StockReportBatch` / `StockReportItem` models (`StockLifecycleStatus`), `IStockReportRepository` (`EfCoreStockReportRepository` with `StockReportDbContext` for SQLite and PostgreSQL), and `ExcelWorksheetHelper`.
