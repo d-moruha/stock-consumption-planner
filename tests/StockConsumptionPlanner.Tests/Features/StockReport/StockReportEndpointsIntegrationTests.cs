@@ -9,6 +9,7 @@ using StockConsumptionPlanner.App.Features.StockReport.GetCurrentStockReport;
 using StockConsumptionPlanner.App.Features.StockReport.ImportStockReport;
 using StockConsumptionPlanner.App.Features.StockReport.InspectStockReport;
 using StockConsumptionPlanner.App.Features.StockReport.Shared;
+using StockConsumptionPlanner.App.Persistence;
 
 namespace StockConsumptionPlanner.Tests.Features.StockReport;
 
@@ -134,9 +135,9 @@ public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebAppl
             Assert.Equal("0049001234", current.Items[0].MaterialDocumentNumber);
             Assert.Equal("0001", current.Items[0].MaterialDocumentItem);
 
-            IDbContextFactory<StockReportDbContext> dbFactory =
-                factory.Services.GetRequiredService<IDbContextFactory<StockReportDbContext>>();
-            await using StockReportDbContext dbContext = await dbFactory.CreateDbContextAsync();
+            IDbContextFactory<PlannerDbContext> dbFactory =
+                factory.Services.GetRequiredService<IDbContextFactory<PlannerDbContext>>();
+            await using PlannerDbContext dbContext = await dbFactory.CreateDbContextAsync();
 
             StockReportBatchEntity dbBatch = await dbContext.StockReportBatches.SingleAsync();
             Assert.Equal(StockLifecycleStatus.Active, dbBatch.LifecycleStatus);
@@ -270,9 +271,9 @@ public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebAppl
             Assert.Equal(900.00m, current.TotalValue);
             Assert.Equal(65.50m, current.Items.Single(i => i.MaterialDocumentNumber == "0049001234").MaterialQuantity);
 
-            IDbContextFactory<StockReportDbContext> dbFactory =
-                factory.Services.GetRequiredService<IDbContextFactory<StockReportDbContext>>();
-            await using StockReportDbContext dbContext = await dbFactory.CreateDbContextAsync();
+            IDbContextFactory<PlannerDbContext> dbFactory =
+                factory.Services.GetRequiredService<IDbContextFactory<PlannerDbContext>>();
+            await using PlannerDbContext dbContext = await dbFactory.CreateDbContextAsync();
 
             Assert.Equal(1, await dbContext.StockReportBatches.CountAsync());
             Assert.Equal(2, await dbContext.StockReportItems.CountAsync());

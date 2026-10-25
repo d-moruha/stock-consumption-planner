@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using StockConsumptionPlanner.App.Persistence;
 
 namespace StockConsumptionPlanner.App.Features.StockReport.Shared;
 
@@ -12,7 +13,9 @@ public interface IStockReportRepository
     Task ClearAsync(CancellationToken cancellationToken = default);
 }
 
-public sealed class EfCoreStockReportRepository(IDbContextFactory<StockReportDbContext> dbContextFactory)
+public sealed class EfCoreStockReportRepository(
+    IDbContextFactory<PlannerDbContext> dbContextFactory,
+    IEnumerable<IStockPromotionParticipant> promotionParticipants)
     : IStockReportRepository
 {
     public const int DefaultChunkSize = 2000;
@@ -51,7 +54,7 @@ public sealed class EfCoreStockReportRepository(IDbContextFactory<StockReportDbC
         ArgumentNullException.ThrowIfNull(batch);
         int effectiveChunkSize = Math.Max(1, chunkSize);
 
-        await using StockReportDbContext dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using PlannerDbContext dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         StockReportBatchEntity batchEntity = new()
         {
@@ -107,7 +110,7 @@ public sealed class EfCoreStockReportRepository(IDbContextFactory<StockReportDbC
 
     public async Task PromoteStagedBatchAsync(int stagedBatchId, CancellationToken cancellationToken = default)
     {
-        await using StockReportDbContext dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using PlannerDbContext dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         await dbContext.StockReportItems
@@ -134,6 +137,11 @@ public sealed class EfCoreStockReportRepository(IDbContextFactory<StockReportDbC
                 setters => setters.SetProperty(b => b.LifecycleStatus, StockLifecycleStatus.Active),
                 cancellationToken);
 
+        foreach (IStockPromotionParticipant participant in promotionParticipants)
+        {
+            await participant.OnStockPromotedAsync(dbContext, stagedBatchId, cancellationToken);
+        }
+
         await transaction.CommitAsync(cancellationToken);
     }
 
@@ -141,7 +149,7 @@ public sealed class EfCoreStockReportRepository(IDbContextFactory<StockReportDbC
         int? excludeBatchId = null,
         CancellationToken cancellationToken = default)
     {
-        await using StockReportDbContext dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using PlannerDbContext dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         IQueryable<StockReportBatchEntity> query = dbContext.StockReportBatches
             .Where(b => b.LifecycleStatus == StockLifecycleStatus.Superseded ||
@@ -158,7 +166,7 @@ public sealed class EfCoreStockReportRepository(IDbContextFactory<StockReportDbC
 
     public async Task<StockReportBatch?> GetCurrentAsync(CancellationToken cancellationToken = default)
     {
-        await using StockReportDbContext dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using PlannerDbContext dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         StockReportBatchEntity? batchEntity = await dbContext.StockReportBatches
             .AsNoTracking()
@@ -198,7 +206,7 @@ public sealed class EfCoreStockReportRepository(IDbContextFactory<StockReportDbC
 
     public async Task ClearAsync(CancellationToken cancellationToken = default)
     {
-        await using StockReportDbContext dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using PlannerDbContext dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         await dbContext.StockReportBatches.ExecuteDeleteAsync(cancellationToken);
     }
