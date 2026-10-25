@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\StockConsumptionPlanner.App\StockConsumptionPlanner.App.csproj" />
+    <ProjectReference Include="..\..\tools\StockReportGenerator\StockReportGenerator.csproj" />
   </ItemGroup>
 
 </Project>
