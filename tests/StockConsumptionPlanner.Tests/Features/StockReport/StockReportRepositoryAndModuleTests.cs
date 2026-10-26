@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using StockConsumptionPlanner.App.Features.StockReport;
 using StockConsumptionPlanner.App.Features.StockReport.Shared;
+using StockConsumptionPlanner.App.Persistence;
 
 namespace StockConsumptionPlanner.Tests.Features.StockReport;
 
@@ -131,8 +132,8 @@ public sealed class StockReportRepositoryAndModuleTests
 
             EfCoreStockReportRepository repository = Assert.IsType<EfCoreStockReportRepository>(
                 provider.GetRequiredService<IStockReportRepository>());
-            IDbContextFactory<StockReportDbContext> dbFactory =
-                provider.GetRequiredService<IDbContextFactory<StockReportDbContext>>();
+            IDbContextFactory<PlannerDbContext> dbFactory =
+                provider.GetRequiredService<IDbContextFactory<PlannerDbContext>>();
 
             StockReportBatch report1 = new(
                 "report1.xlsx",
@@ -147,7 +148,7 @@ public sealed class StockReportRepositoryAndModuleTests
             int report1BatchId = await repository.StageBatchInChunksAsync(report1, chunkSize: 1);
             Assert.Null(await repository.GetCurrentAsync());
 
-            await using (StockReportDbContext db = await dbFactory.CreateDbContextAsync())
+            await using (PlannerDbContext db = await dbFactory.CreateDbContextAsync())
             {
                 StockReportBatchEntity stagedBatch = await db.StockReportBatches.SingleAsync(b => b.Id == report1BatchId);
                 Assert.Equal(StockLifecycleStatus.Staging, stagedBatch.LifecycleStatus);
@@ -180,7 +181,7 @@ public sealed class StockReportRepositoryAndModuleTests
                 purgeSupersededImmediately: false,
                 chunkSize: 1);
 
-            await using (StockReportDbContext db = await dbFactory.CreateDbContextAsync())
+            await using (PlannerDbContext db = await dbFactory.CreateDbContextAsync())
             {
                 StockReportBatchEntity oldBatch = await db.StockReportBatches.SingleAsync(b => b.Id == report1BatchId);
                 StockReportBatchEntity newBatch = await db.StockReportBatches.SingleAsync(b => b.Id == report2BatchId);
@@ -203,7 +204,7 @@ public sealed class StockReportRepositoryAndModuleTests
             int deletedBatches = await repository.PurgeNonActiveBatchesAsync();
             Assert.Equal(1, deletedBatches);
 
-            await using (StockReportDbContext db = await dbFactory.CreateDbContextAsync())
+            await using (PlannerDbContext db = await dbFactory.CreateDbContextAsync())
             {
                 Assert.Equal(1, await db.StockReportBatches.CountAsync());
                 Assert.Equal(1, await db.StockReportItems.CountAsync());
@@ -243,8 +244,8 @@ public sealed class StockReportRepositoryAndModuleTests
             }
 
             IStockReportRepository repository = provider.GetRequiredService<IStockReportRepository>();
-            IDbContextFactory<StockReportDbContext> dbFactory =
-                provider.GetRequiredService<IDbContextFactory<StockReportDbContext>>();
+            IDbContextFactory<PlannerDbContext> dbFactory =
+                provider.GetRequiredService<IDbContextFactory<PlannerDbContext>>();
 
             List<StockReportItem> initialItems = Enumerable.Range(1, 2000)
                 .Select(idx => new StockReportItem(
@@ -291,7 +292,7 @@ public sealed class StockReportRepositoryAndModuleTests
             Assert.Equal("5000000001", current.Items[0].MaterialDocumentNumber);
             Assert.Equal("5000002500", current.Items[^1].MaterialDocumentNumber);
 
-            await using (StockReportDbContext db = await dbFactory.CreateDbContextAsync())
+            await using (PlannerDbContext db = await dbFactory.CreateDbContextAsync())
             {
                 Assert.Equal(1, await db.StockReportBatches.CountAsync());
                 Assert.Equal(2500, await db.StockReportItems.CountAsync());
@@ -376,9 +377,9 @@ public sealed class StockReportRepositoryAndModuleTests
                 int purgedCount = await repo2.PurgeNonActiveBatchesAsync();
                 Assert.Equal(1, purgedCount);
 
-                IDbContextFactory<StockReportDbContext> dbFactory2 =
-                    provider2.GetRequiredService<IDbContextFactory<StockReportDbContext>>();
-                await using StockReportDbContext db = await dbFactory2.CreateDbContextAsync();
+                IDbContextFactory<PlannerDbContext> dbFactory2 =
+                    provider2.GetRequiredService<IDbContextFactory<PlannerDbContext>>();
+                await using PlannerDbContext db = await dbFactory2.CreateDbContextAsync();
                 Assert.Equal(1, await db.StockReportBatches.CountAsync());
                 Assert.Equal(1, await db.StockReportItems.CountAsync());
             }
@@ -410,8 +411,8 @@ public sealed class StockReportRepositoryAndModuleTests
         IStockReportRepository repository = provider.GetRequiredService<IStockReportRepository>();
         Assert.IsType<EfCoreStockReportRepository>(repository);
 
-        IDbContextFactory<StockReportDbContext> factory = provider.GetRequiredService<IDbContextFactory<StockReportDbContext>>();
-        using StockReportDbContext dbContext = factory.CreateDbContext();
+        IDbContextFactory<PlannerDbContext> factory = provider.GetRequiredService<IDbContextFactory<PlannerDbContext>>();
+        using PlannerDbContext dbContext = factory.CreateDbContext();
         Assert.Equal("Npgsql.EntityFrameworkCore.PostgreSQL", dbContext.Database.ProviderName);
     }
 

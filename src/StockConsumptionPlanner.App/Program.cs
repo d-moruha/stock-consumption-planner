@@ -1,4 +1,5 @@
 using StockConsumptionPlanner.App.Components;
+using StockConsumptionPlanner.App.Features.ConsumptionPlans;
 using StockConsumptionPlanner.App.Features.StockReport;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddStockReportFeature(builder.Configuration);
+builder.Services.AddConsumptionPlansFeature(builder.Configuration);
 
 WebApplication app = builder.Build();
 
@@ -28,6 +30,7 @@ app.MapGet("/healthz", (StockReportPersistenceOptions persistenceOptions) =>
     }));
 
 app.MapStockReportEndpoints();
+app.MapConsumptionPlanEndpoints();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()

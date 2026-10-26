@@ -4,6 +4,7 @@ using StockConsumptionPlanner.App.Features.StockReport.GetCurrentStockReport;
 using StockConsumptionPlanner.App.Features.StockReport.ImportStockReport;
 using StockConsumptionPlanner.App.Features.StockReport.InspectStockReport;
 using StockConsumptionPlanner.App.Features.StockReport.Shared;
+using StockConsumptionPlanner.App.Persistence;
 
 namespace StockConsumptionPlanner.App.Features.StockReport;
 
@@ -42,30 +43,26 @@ public static class StockReportFeatureExtensions
             case "sqlite":
             {
                 string sqliteConn = ResolveSqliteConnectionString(options, configuration);
-                services.AddDbContextFactory<StockReportDbContext>((sp, builder) =>
+                services.AddDbContextFactory<PlannerDbContext>((sp, builder) =>
                 {
                     IConfiguration runtimeConfig = sp.GetService<IConfiguration>() ?? configuration;
                     StockReportPersistenceOptions runtimeOptions = ResolvePersistenceOptions(runtimeConfig);
                     string runtimeSqliteConn = ResolveSqliteConnectionString(runtimeOptions, runtimeConfig);
                     builder.UseSqlite(runtimeSqliteConn);
                 });
-                services.AddSingleton<IStockReportRepository, EfCoreStockReportRepository>();
-                services.AddHostedService<StockReportDatabaseInitializerHostedService>();
                 break;
             }
 
             case "postgres":
             {
                 string postgresConn = ResolvePostgresConnectionString(options, configuration);
-                services.AddDbContextFactory<StockReportDbContext>((sp, builder) =>
+                services.AddDbContextFactory<PlannerDbContext>((sp, builder) =>
                 {
                     IConfiguration runtimeConfig = sp.GetService<IConfiguration>() ?? configuration;
                     StockReportPersistenceOptions runtimeOptions = ResolvePersistenceOptions(runtimeConfig);
                     string runtimePostgresConn = ResolvePostgresConnectionString(runtimeOptions, runtimeConfig);
                     builder.UseNpgsql(runtimePostgresConn);
                 });
-                services.AddSingleton<IStockReportRepository, EfCoreStockReportRepository>();
-                services.AddHostedService<StockReportDatabaseInitializerHostedService>();
                 break;
             }
 
@@ -73,6 +70,9 @@ public static class StockReportFeatureExtensions
                 throw new InvalidOperationException(
                     $"Unsupported Persistence:Provider '{options.Provider}'. Allowed values: Sqlite, Postgres.");
         }
+
+        services.AddSingleton<IStockReportRepository, EfCoreStockReportRepository>();
+        services.AddHostedService<PlannerDatabaseInitializerHostedService>();
 
         return services;
     }
@@ -191,16 +191,4 @@ public static class StockReportFeatureExtensions
             // Ignore malformed connection strings during directory pre-creation; EF/SQLite will validate on connect.
         }
     }
-}
-
-public sealed class StockReportDatabaseInitializerHostedService(
-    IDbContextFactory<StockReportDbContext> dbContextFactory) : IHostedService
-{
-    public async Task StartAsync(CancellationToken cancellationToken)
-    {
-        await using StockReportDbContext dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
-        await dbContext.Database.EnsureCreatedAsync(cancellationToken);
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
