@@ -94,6 +94,19 @@ public sealed class ConsumptionPlanEndpointsIntegrationTests : IClassFixture<Web
             Assert.NotNull(sheet);
             Assert.Equal(2, sheet.Rows.TotalCount);
             Assert.Equal(5m, sheet.Rows.Items.Single(r => r.MaterialDocumentNumber == "0049000001").Plan?.PlannedQuantity);
+            Assert.Equal(
+                ["0049000002", "0049000001"],
+                sheet.Rows.Items.Select(r => r.MaterialDocumentNumber));
+            Assert.Equal(20m, sheet.Rows.Items[0].UnplannedQuantity);
+            Assert.Equal(200m, sheet.Rows.Items[0].TotalStockValue);
+            Assert.Equal(5m, sheet.Rows.Items[1].UnplannedQuantity);
+
+            PlanningSheetDto? valueAscending = await client.GetFromJsonAsync<PlanningSheetDto>(
+                "/api/consumption-plans/planning-sheet?year=2026&month=12" +
+                "&sort=StockValueAscending");
+            Assert.Equal(
+                ["0049000001", "0049000002"],
+                valueAscending!.Rows.Items.Select(r => r.MaterialDocumentNumber));
 
             PlanningSheetDto? oldestFirst = await client.GetFromJsonAsync<PlanningSheetDto>(
                 "/api/consumption-plans/planning-sheet?year=2026&month=12&sort=StockAgeDescending");

@@ -6,7 +6,9 @@ public enum PlanningSheetSort
 {
     SourceRow,
     StockAgeAscending,
-    StockAgeDescending
+    StockAgeDescending,
+    StockValueAscending,
+    StockValueDescending
 }
 
 public sealed record PlanningSheetQuery(
@@ -15,7 +17,7 @@ public sealed record PlanningSheetQuery(
     string? Search = null,
     int? Page = null,
     int? PageSize = null,
-    PlanningSheetSort Sort = PlanningSheetSort.SourceRow);
+    PlanningSheetSort Sort = PlanningSheetSort.StockValueDescending);
 
 public sealed record PlanningSheetRowDto(
     int SourceRowNumber,
@@ -24,7 +26,9 @@ public sealed record PlanningSheetRowDto(
     string MaterialDocumentItem,
     string MaterialNumber,
     string MaterialDescription,
-    decimal CurrentStockQuantity,
+    decimal? CurrentStockQuantity,
+    decimal? UnplannedQuantity,
+    decimal? TotalStockValue,
     ConsumptionPlanDto? Plan,
     IReadOnlyList<ConsumptionPlanDto> Plans,
     DateOnly? GoodsReceiptDate,

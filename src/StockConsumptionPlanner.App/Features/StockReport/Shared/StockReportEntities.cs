@@ -46,11 +46,11 @@ public sealed class StockReportItemEntity
 
     public string? MovementType { get; set; }
 
-    public decimal TotalStockQuantity { get; set; }
+    public decimal? TotalStockQuantity { get; set; }
 
     public string? BaseUnitOfMeasure { get; set; }
 
-    public decimal TotalStockValue { get; set; }
+    public decimal? TotalStockValue { get; set; }
 
     public string? LocalCurrency { get; set; }
 

@@ -5,7 +5,10 @@ using StockConsumptionPlanner.App.Persistence;
 
 namespace StockConsumptionPlanner.App.Features.ConsumptionPlans.Shared;
 
-public sealed record ActiveStockRow(decimal TotalStockQuantity, string MaterialNumber, string MaterialDescription);
+public sealed record ActiveStockRow(
+    decimal? TotalStockQuantity,
+    string MaterialNumber,
+    string MaterialDescription);
 
 public static class ActiveStockQueries
 {
@@ -44,13 +47,19 @@ public static class ActiveStockQueries
         };
     }
 
-    public static ConsumptionPlanError? EnsureWithinStock(decimal plannedQuantity, ActiveStockRow stock)
+    public static ConsumptionPlanError? EnsureWithinStock(
+        decimal plannedQuantity,
+        ActiveStockRow stock)
     {
-        return plannedQuantity > stock.TotalStockQuantity
-            ? new ConsumptionPlanError(
-                ConsumptionPlanErrorCode.QuantityExceedsStock,
-                $"Planned quantity {FormatQuantity(plannedQuantity)} exceeds the current stock quantity {FormatQuantity(stock.TotalStockQuantity)}.")
-            : null;
+        if (stock.TotalStockQuantity is not decimal quantity || plannedQuantity <= quantity)
+        {
+            return null;
+        }
+
+        return new ConsumptionPlanError(
+            ConsumptionPlanErrorCode.QuantityExceedsStock,
+            "Planned quantity " + FormatQuantity(plannedQuantity) +
+            " exceeds the current stock quantity " + FormatQuantity(quantity) + ".");
     }
 
     private static string FormatQuantity(decimal value) => value.ToString("0.####", CultureInfo.InvariantCulture);

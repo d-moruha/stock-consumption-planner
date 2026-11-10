@@ -143,6 +143,15 @@
   <data name="SortByStockAge" xml:space="preserve">
     <value>Sort by stock age</value>
   </data>
+  <data name="ColumnUnplannedQuantity" xml:space="preserve">
+    <value>Unplanned Quantity</value>
+  </data>
+  <data name="ColumnStockValue" xml:space="preserve">
+    <value>Stock Value</value>
+  </data>
+  <data name="SortByStockValue" xml:space="preserve">
+    <value>Sort by stock value</value>
+  </data>
   <data name="ColumnPlanned" xml:space="preserve">
     <value>Planned</value>
   </data>

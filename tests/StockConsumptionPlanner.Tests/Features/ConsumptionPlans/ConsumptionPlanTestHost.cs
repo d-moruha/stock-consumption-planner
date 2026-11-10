@@ -1,9 +1,11 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using StockConsumptionPlanner.App.Features.ConsumptionPlans;
 using StockConsumptionPlanner.App.Features.StockReport;
 using StockConsumptionPlanner.App.Features.StockReport.Shared;
+using StockConsumptionPlanner.App.Persistence;
 
 namespace StockConsumptionPlanner.Tests.Features.ConsumptionPlans;
 
@@ -78,6 +80,18 @@ internal sealed class ConsumptionPlanTestHost : IAsyncDisposable
     public Task ImportAsync(params StockReportItem[] items)
     {
         return Repository.SaveCurrentAsync(new StockReportBatch("test.xlsx", "Sheet1", Clock.GetUtcNow(), items));
+    }
+
+    public async Task SetStockFiguresAsync(string documentNumber, decimal? quantity, decimal? value)
+    {
+        await using PlannerDbContext dbContext = await Get<IDbContextFactory<PlannerDbContext>>()
+            .CreateDbContextAsync();
+        StockReportItemEntity item = await dbContext.StockReportItems.SingleAsync(
+            i => i.MaterialDocumentNumber == documentNumber &&
+                 i.LifecycleStatus == StockLifecycleStatus.Active);
+        item.TotalStockQuantity = quantity;
+        item.TotalStockValue = value;
+        await dbContext.SaveChangesAsync();
     }
 
     public static StockReportItem Stock(

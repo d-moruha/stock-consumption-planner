@@ -82,6 +82,20 @@ else
                         <th>@L["ColumnMaterial"]</th>
                         <th>@L["ColumnDescription"]</th>
                         <th class="text-end">@L["ColumnStock"]</th>
+                        <th class="text-end">@L["ColumnUnplannedQuantity"]</th>
+                        <th class="text-end" aria-sort="@StockValueAriaSort">
+                            <button type="button"
+                                    id="stockValueSortButton"
+                                    class="btn btn-link p-0 fw-bold text-body
+                                           text-decoration-none text-end"
+                                    title="@L["SortByStockValue"]"
+                                    disabled="@_isBusy"
+                                    @onclick="ToggleStockValueSortAsync">
+                                @L["ColumnStockValue"]
+                                <span class="@(IsStockValueSort ? null : "text-muted")"
+                                      aria-hidden="true">@StockValueSortIndicator</span>
+                            </button>
+                        </th>
                         <th>@L["ColumnGoodsReceiptDate"]</th>
                         <th>@L["ColumnStockCreationDate"]</th>
                         <th class="text-end" aria-sort="@StockAgeAriaSort">
@@ -92,7 +106,7 @@ else
                                     disabled="@_isBusy"
                                     @onclick="ToggleStockAgeSortAsync">
                                 @L["ColumnStockAge"]
-                                <span class="@(_sort == PlanningSheetSort.SourceRow ? "text-muted" : null)"
+                                <span class="@(IsStockAgeSort ? null : "text-muted")"
                                       aria-hidden="true">@StockAgeSortIndicator</span>
                             </button>
                         </th>
@@ -113,6 +127,8 @@ else
                             <td>@row.MaterialNumber</td>
                             <td class="text-truncate" style="max-width: 18rem;" title="@row.MaterialDescription">@row.MaterialDescription</td>
                             <td class="text-end">@FormatQuantity(row.CurrentStockQuantity)</td>
+                            <td class="text-end">@FormatQuantity(row.UnplannedQuantity)</td>
+                            <td class="text-end">@FormatMoney(row.TotalStockValue)</td>
                             <td class="text-nowrap">@ConsumptionPlanDisplay.FormatDate(row.GoodsReceiptDate)</td>
                             <td class="text-nowrap">@ConsumptionPlanDisplay.FormatDate(row.StockCreationDate)</td>
                             <td class="text-end">@ConsumptionPlanDisplay.FormatDays(row.StockAgeDays)</td>
@@ -138,7 +154,7 @@ else
                         @if (isExpanded)
                         {
                             <tr @key="plansId" id="@plansId">
-                                <td colspan="11" class="bg-body-tertiary px-4 py-2">
+                                <td colspan="13" class="bg-body-tertiary px-4 py-2">
                                     @RenderPlans(row)
                                 </td>
                             </tr>
@@ -179,7 +195,7 @@ else
 
 @code {
     private string? _search;
-    private PlanningSheetSort _sort = PlanningSheetSort.SourceRow;
+    private PlanningSheetSort _sort = PlanningSheetSort.StockValueDescending;
     private int _page = 1;
     private PlanningSheetDto? _sheet;
     private readonly HashSet<StockDocumentKey> _expanded = new();
@@ -194,6 +210,26 @@ else
         "badge bg-warning-subtle text-warning-emphasis border border-warning-subtle";
 
     private PlanTargetMonth EarliestCreatePeriod => EditPolicy.CurrentMonth.Next();
+
+    private bool IsStockAgeSort =>
+        _sort is PlanningSheetSort.StockAgeAscending or PlanningSheetSort.StockAgeDescending;
+
+    private bool IsStockValueSort =>
+        _sort is PlanningSheetSort.StockValueAscending or PlanningSheetSort.StockValueDescending;
+
+    private string StockValueAriaSort => _sort switch
+    {
+        PlanningSheetSort.StockValueAscending => "ascending",
+        PlanningSheetSort.StockValueDescending => "descending",
+        _ => "none"
+    };
+
+    private string StockValueSortIndicator => _sort switch
+    {
+        PlanningSheetSort.StockValueAscending => "▲",
+        PlanningSheetSort.StockValueDescending => "▼",
+        _ => "↕"
+    };
 
     private string StockAgeAriaSort => _sort switch
     {
@@ -301,6 +337,18 @@ else
             PlanningSheetSort.StockAgeAscending => PlanningSheetSort.StockAgeDescending,
             PlanningSheetSort.StockAgeDescending => PlanningSheetSort.SourceRow,
             _ => PlanningSheetSort.StockAgeAscending
+        };
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task ToggleStockValueSortAsync()
+    {
+        _sort = _sort switch
+        {
+            PlanningSheetSort.StockValueAscending => PlanningSheetSort.StockValueDescending,
+            PlanningSheetSort.StockValueDescending => PlanningSheetSort.SourceRow,
+            _ => PlanningSheetSort.StockValueAscending
         };
         _page = 1;
         await LoadAsync();
@@ -421,5 +469,13 @@ else
 
     private string FormatLocal(DateTimeOffset utc) => ConsumptionPlanDisplay.FormatBusinessTime(EditPolicy, utc);
 
-    private static string FormatQuantity(decimal value) => ConsumptionPlanDisplay.FormatQuantity(value);
+    private static string FormatQuantity(decimal? value)
+    {
+        return ConsumptionPlanDisplay.FormatQuantity(value);
+    }
+
+    private static string FormatMoney(decimal? value)
+    {
+        return ConsumptionPlanDisplay.FormatMoney(value);
+    }
 }

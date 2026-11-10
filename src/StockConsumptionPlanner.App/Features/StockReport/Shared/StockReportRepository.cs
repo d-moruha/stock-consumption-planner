@@ -238,8 +238,8 @@ public sealed class EfCoreStockReportRepository(
             entity.MaterialDocumentYear,
             entity.MaterialNumber,
             entity.MaterialDescription,
-            entity.TotalStockQuantity,
-            entity.TotalStockValue,
+            entity.TotalStockQuantity ?? 0m,
+            entity.TotalStockValue ?? 0m,
             entity.LifecycleStatus)
         {
             WbsElement = entity.WbsElement,

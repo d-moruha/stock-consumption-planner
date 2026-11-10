@@ -20,6 +20,26 @@ public sealed class ConsumptionPlanDisplayTests
     }
 
     [Theory]
+    [InlineData(PlannerCultures.Ukrainian, "15\u00A0400,75")]
+    [InlineData(PlannerCultures.English, "15,400.75")]
+    public void FormatMoney_FollowsCurrentCulture(string culture, string expected)
+    {
+        using CultureScope _ = new(culture);
+
+        Assert.Equal(expected, ConsumptionPlanDisplay.FormatMoney(15400.75m));
+        Assert.Equal("—", ConsumptionPlanDisplay.FormatMoney(null));
+        Assert.Equal("—", ConsumptionPlanDisplay.FormatQuantity(null));
+    }
+
+    [Fact]
+    public void FormatQuantity_KeepsTheSignWhenUnplannedIsNegative()
+    {
+        using CultureScope _ = new(PlannerCultures.English);
+
+        Assert.Equal("-2", ConsumptionPlanDisplay.FormatQuantity(-2m));
+    }
+
+    [Theory]
     [InlineData(PlannerCultures.Ukrainian, "План змінив інший користувач. Натисніть «Пошук», щоб оновити дані.")]
     [InlineData(PlannerCultures.English, "The plan was changed by someone else. Use Search to reload.")]
     public void LocalizeError_TranslatesByErrorCode(string culture, string expected)
