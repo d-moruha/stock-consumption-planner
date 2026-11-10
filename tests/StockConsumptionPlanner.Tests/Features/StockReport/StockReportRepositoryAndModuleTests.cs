@@ -42,7 +42,6 @@ public sealed class StockReportRepositoryAndModuleTests
                 })
                 .Build();
 
-            services.AddLogging();
             services.AddStockReportFeature(configuration);
 
             await using ServiceProvider provider = services.BuildServiceProvider();
@@ -123,7 +122,6 @@ public sealed class StockReportRepositoryAndModuleTests
                 })
                 .Build();
 
-            services.AddLogging();
             services.AddStockReportFeature(configuration);
 
             await using ServiceProvider provider = services.BuildServiceProvider();
@@ -197,7 +195,6 @@ public sealed class StockReportRepositoryAndModuleTests
                 })
                 .Build();
 
-            services.AddLogging();
             services.AddStockReportFeature(configuration);
 
             await using ServiceProvider provider = services.BuildServiceProvider();
@@ -311,7 +308,6 @@ public sealed class StockReportRepositoryAndModuleTests
                 })
                 .Build();
 
-            services.AddLogging();
             services.AddStockReportFeature(configuration);
 
             await using ServiceProvider provider = services.BuildServiceProvider();
@@ -402,7 +398,6 @@ public sealed class StockReportRepositoryAndModuleTests
             // Host instance 1: initialize schema, import an Active batch, and leave an interrupted Staging batch.
             {
                 ServiceCollection services1 = new();
-                services1.AddLogging();
                 services1.AddStockReportFeature(configuration);
 
                 await using ServiceProvider provider1 = services1.BuildServiceProvider();
@@ -435,7 +430,6 @@ public sealed class StockReportRepositoryAndModuleTests
             // Host instance 2: connect to the same SQLite DB file, verify only Active batch is returned, and purge stale Staging.
             {
                 ServiceCollection services2 = new();
-                services2.AddLogging();
                 services2.AddStockReportFeature(configuration);
 
                 await using ServiceProvider provider2 = services2.BuildServiceProvider();
