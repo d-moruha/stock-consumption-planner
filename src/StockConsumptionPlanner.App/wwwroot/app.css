@@ -58,3 +58,48 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.scroll-table-card thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.scroll-table-card .table-responsive {
+    max-height: 32.5rem;
+}
+
+@media (min-width: 641px) {
+    main:has(.scroll-table-card .table-responsive) {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    main:has(.scroll-table-card .table-responsive) > .content {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        min-height: 0;
+        overflow-y: auto;
+        padding-bottom: 1rem;
+    }
+
+    .scroll-table-card:has(.table-responsive),
+    .scroll-table-card :has(> .table-responsive) {
+        display: flex;
+        flex: 1 1 0;
+        flex-direction: column;
+    }
+
+    .scroll-table-card > .card-body:not(:has(> .table-responsive)) {
+        flex: 0 0 auto;
+    }
+
+    .scroll-table-card .table-responsive {
+        flex: 1 1 0;
+        min-height: 10rem;
+        max-height: none;
+        contain: size;
+    }
+}
