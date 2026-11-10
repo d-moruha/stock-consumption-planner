@@ -51,7 +51,7 @@
     <value>Огляд</value>
   </data>
   <data name="NavStockImport" xml:space="preserve">
-    <value>Імпорт звіту про запаси</value>
+    <value>Імпорт залишків</value>
   </data>
   <data name="NavConsumptionPlans" xml:space="preserve">
     <value>Плани споживання</value>
