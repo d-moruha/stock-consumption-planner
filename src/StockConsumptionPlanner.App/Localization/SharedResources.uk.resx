@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppName" xml:space="preserve">
+    <value>Планувальник споживання запасів</value>
+  </data>
+  <data name="NavigationMenu" xml:space="preserve">
+    <value>Меню навігації</value>
+  </data>
+  <data name="NavOverview" xml:space="preserve">
+    <value>Огляд</value>
+  </data>
+  <data name="NavStockImport" xml:space="preserve">
+    <value>Імпорт звіту про запаси</value>
+  </data>
+  <data name="NavConsumptionPlans" xml:space="preserve">
+    <value>Плани споживання</value>
+  </data>
+  <data name="LanguageSwitchLabel" xml:space="preserve">
+    <value>Мова інтерфейсу</value>
+  </data>
+  <data name="UnhandledError" xml:space="preserve">
+    <value>Сталася неочікувана помилка.</value>
+  </data>
+  <data name="Reload" xml:space="preserve">
+    <value>Перезавантажити</value>
+  </data>
+  <data name="UtcTimestamp" xml:space="preserve">
+    <value>{0:G} UTC</value>
+  </data>
+  <data name="HomeIntro" xml:space="preserve">
+    <value>Імпортуйте поточні звіти про запаси (.xlsx) з українськими або англійськими заголовками та зіставте стовпці документів матеріалів.</value>
+  </data>
+  <data name="HomeImportButton" xml:space="preserve">
+    <value>Імпортувати звіт про запаси (.xlsx)</value>
+  </data>
+  <data name="HomeNoReportTitle" xml:space="preserve">
+    <value>Поточний звіт про запаси не завантажено</value>
+  </data>
+  <data name="HomeNoReportText" xml:space="preserve">
+    <value>Завантажте книгу Excel (.xlsx), щоб переглянути стовпці аркуша, налаштувати рядок заголовків і перший рядок даних, зіставити обов’язкові поля матеріалу та зберегти її як поточний звіт про запаси.</value>
+  </data>
+  <data name="GoToStockImport" xml:space="preserve">
+    <value>Перейти до імпорту звіту</value>
+  </data>
+  <data name="HomeSourceFile" xml:space="preserve">
+    <value>Вихідний файл</value>
+  </data>
+  <data name="HomeSheet" xml:space="preserve">
+    <value>Аркуш: {0}</value>
+  </data>
+  <data name="HomeImportedRows" xml:space="preserve">
+    <value>Імпортовано рядків</value>
+  </data>
+  <data name="HomeTotalQuantity" xml:space="preserve">
+    <value>Загальна кількість</value>
+  </data>
+  <data name="HomeAcrossValidRows" xml:space="preserve">
+    <value>За всіма коректними рядками</value>
+  </data>
+  <data name="HomeTotalValue" xml:space="preserve">
+    <value>Загальна вартість</value>
+  </data>
+  <data name="HomeMonetaryValue" xml:space="preserve">
+    <value>Грошова вартість запасів</value>
+  </data>
+  <data name="HomeFieldsTitle" xml:space="preserve">
+    <value>Цільові поля документа матеріалу</value>
+  </data>
+  <data name="HomeFieldKey" xml:space="preserve">
+    <value>Ключ поля</value>
+  </data>
+  <data name="HomeFieldName" xml:space="preserve">
+    <value>Назва</value>
+  </data>
+  <data name="HomeFieldType" xml:space="preserve">
+    <value>Тип</value>
+  </data>
+  <data name="HomeFieldDescription" xml:space="preserve">
+    <value>Опис</value>
+  </data>
+</root>

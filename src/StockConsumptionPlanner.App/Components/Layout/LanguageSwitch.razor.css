@@ -1,0 +1,7 @@
+.language-switch .btn {
+    margin-left: 0;
+}
+
+    .language-switch .btn:hover {
+        text-decoration: none;
+    }
