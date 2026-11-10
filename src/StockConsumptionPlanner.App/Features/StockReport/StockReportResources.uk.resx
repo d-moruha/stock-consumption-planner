@@ -251,6 +251,18 @@
   <data name="StatusReportCleared" xml:space="preserve">
     <value>Поточний збережений звіт про запаси очищено.</value>
   </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Скасувати</value>
+  </data>
+  <data name="ClearReportDialogTitle" xml:space="preserve">
+    <value>Очистити звіт про запаси?</value>
+  </data>
+  <data name="ClearReportDialogMessage" xml:space="preserve">
+    <value>Збережений звіт про запаси «{0}» (рядків: {1}) буде остаточно видалено. Щоб продовжити роботу із запасами, потрібно буде імпортувати звіт знову.</value>
+  </data>
+  <data name="ClearReportConfirm" xml:space="preserve">
+    <value>Очистити звіт</value>
+  </data>
   <data name="FieldDescription_MaterialDocumentNumber" xml:space="preserve">
     <value>Номер документа матеріалу (MB51). Частина ключа запасу; провідні нулі зберігаються.</value>
   </data>

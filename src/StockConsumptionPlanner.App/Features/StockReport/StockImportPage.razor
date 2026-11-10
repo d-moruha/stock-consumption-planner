@@ -269,7 +269,9 @@
                    @bind:event="oninput" />
             @if (_currentBatch is not null)
             {
-                <button type="button" class="btn btn-outline-danger btn-sm" @onclick="ClearStoredReportAsync">
+                <button type="button"
+                        class="btn btn-outline-danger btn-sm"
+                        @onclick="OpenClearDialog">
                     @L["Clear"]
                 </button>
             }
@@ -339,6 +341,14 @@
     }
 </div>
 
+@if (_isClearDialogOpen && _currentBatch is not null)
+{
+    <ClearStockReportDialog FileName="@_currentBatch.SourceFileName"
+                            RowCount="_currentBatch.TotalRows"
+                            OnConfirm="ClearStoredReportAsync"
+                            OnClose="CloseClearDialog" />
+}
+
 @code {
     private const long MaxUploadFileSizeBytes = 25 * 1024 * 1024;
     private const string LocalStorageKey = "scp.stockReport.lastColumnMapping.v2";
@@ -357,6 +367,7 @@
     private Dictionary<StockReportField, int> _fieldColumnMap = new();
     private StockReportImportResultDto? _lastImportResult;
     private StockReportBatch? _currentBatch;
+    private bool _isClearDialogOpen;
 
     protected override async Task OnInitializedAsync()
     {
@@ -625,9 +636,20 @@
         }
     }
 
+    private void OpenClearDialog()
+    {
+        _isClearDialogOpen = true;
+    }
+
+    private void CloseClearDialog()
+    {
+        _isClearDialogOpen = false;
+    }
+
     private async Task ClearStoredReportAsync()
     {
         await StockReportRepository.ClearAsync();
+        _isClearDialogOpen = false;
         _currentBatch = null;
         _lastImportResult = null;
         _isErrorStatus = false;
