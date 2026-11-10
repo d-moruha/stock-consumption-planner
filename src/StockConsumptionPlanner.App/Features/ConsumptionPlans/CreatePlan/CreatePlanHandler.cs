@@ -28,8 +28,7 @@ public sealed class CreatePlanHandler(
         PlanTargetMonth target = new(request.TargetYear, request.TargetMonth);
         if (!target.IsValid)
         {
-            return ConsumptionPlanError.Validation(
-                $"Target month must be a month 1–12 of a year {PlanTargetMonth.MinYear}–{PlanTargetMonth.MaxYear}.");
+            return ConsumptionPlanError.InvalidTarget();
         }
 
         if (ConsumptionPlan.ValidatePlannedQuantity(request.PlannedQuantity) is { } quantityError)
@@ -39,9 +38,7 @@ public sealed class CreatePlanHandler(
 
         if (!editPolicy.CanCreate(target))
         {
-            return new ConsumptionPlanError(
-                ConsumptionPlanErrorCode.TargetMonthInPast,
-                $"Plans cannot be created for {target}, which has already ended.");
+            return ConsumptionPlanError.TargetMonthInPast(target);
         }
 
         await using PlannerDbContext dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -57,9 +54,9 @@ public sealed class CreatePlanHandler(
             return stockError;
         }
 
-        if (await PlanExistsAsync(dbContext, key, target, cancellationToken))
+        if (await dbContext.PlanExistsAsync(key, target, cancellationToken))
         {
-            return DuplicatePlan(key, target);
+            return ConsumptionPlanError.DuplicatePlan(key, target);
         }
 
         ConsumptionPlan plan = ConsumptionPlan.Create(
@@ -78,36 +75,14 @@ public sealed class CreatePlanHandler(
         catch (DbUpdateException)
         {
             dbContext.ChangeTracker.Clear();
-            if (await PlanExistsAsync(dbContext, key, target, cancellationToken))
+            if (await dbContext.PlanExistsAsync(key, target, cancellationToken))
             {
-                return DuplicatePlan(key, target);
+                return ConsumptionPlanError.DuplicatePlan(key, target);
             }
 
             throw;
         }
 
         return ConsumptionPlanResult<ConsumptionPlanDto>.Success(readModel.ToDto(plan, stock.Value.TotalStockQuantity));
-    }
-
-    private static Task<bool> PlanExistsAsync(
-        PlannerDbContext dbContext,
-        StockDocumentKey key,
-        PlanTargetMonth target,
-        CancellationToken cancellationToken)
-    {
-        return dbContext.ConsumptionPlans.AsNoTracking().AnyAsync(
-            p => p.MaterialDocumentYear == key.MaterialDocumentYear &&
-                 p.MaterialDocumentNumber == key.MaterialDocumentNumber &&
-                 p.MaterialDocumentItem == key.MaterialDocumentItem &&
-                 p.TargetYear == target.Year &&
-                 p.TargetMonth == target.Month,
-            cancellationToken);
-    }
-
-    private static ConsumptionPlanError DuplicatePlan(StockDocumentKey key, PlanTargetMonth target)
-    {
-        return new ConsumptionPlanError(
-            ConsumptionPlanErrorCode.DuplicatePlan,
-            $"A plan for stock record {key} in {target} already exists.");
     }
 }

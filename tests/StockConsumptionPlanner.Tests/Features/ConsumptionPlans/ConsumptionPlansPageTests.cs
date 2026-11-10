@@ -81,9 +81,9 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         page.WaitForElement("table");
 
         page.Find("tbody .btn-primary").Click();
-        page.Find("#newPlanMonthInput").Change("лютий");
-        page.Find("#newPlanYearInput").Change("2027");
-        page.Find("#newPlanQuantityInput").Change("4");
+        page.Find("#planDialogMonthInput").Change("лютий");
+        page.Find("#planDialogYearInput").Change("2027");
+        page.Find("#planDialogQuantityInput").Change("4");
         page.Find(".modal-footer .btn-primary").Click();
 
         page.WaitForAssertion(() => Assert.Empty(page.FindAll(".modal")));
@@ -92,8 +92,8 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         Assert.Equal(["лютий 2027\u202Fр."], PlanPeriods(page));
 
         page.Find("tbody .btn-primary").Click();
-        Assert.Equal("Грудень", page.Find("#newPlanMonthInput").GetAttribute("value"));
-        page.Find("#newPlanQuantityInput").Change("3");
+        Assert.Equal("Грудень", page.Find("#planDialogMonthInput").GetAttribute("value"));
+        page.Find("#planDialogQuantityInput").Change("3");
         page.Find(".modal-footer .btn-primary").Click();
 
         page.WaitForAssertion(() => Assert.Equal(
@@ -103,8 +103,8 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         Assert.Equal("3", page.FindAll("tbody > tr")[0].Children[6].TextContent.Trim());
 
         page.Find("tbody .btn-primary").Click();
-        Assert.Equal("2027", page.Find("#newPlanYearInput").GetAttribute("value"));
-        Assert.Equal("Січень", page.Find("#newPlanMonthInput").GetAttribute("value"));
+        Assert.Equal("2027", page.Find("#planDialogYearInput").GetAttribute("value"));
+        Assert.Equal("Січень", page.Find("#planDialogMonthInput").GetAttribute("value"));
         page.Find(".modal-footer .btn-outline-secondary").Click();
         Assert.Empty(page.FindAll(".modal"));
 
@@ -121,7 +121,7 @@ public sealed class ConsumptionPlansPageTests : BunitContext
     }
 
     [Fact]
-    public async Task PlanInRowDropdown_CanBeUpdatedAndDeleted()
+    public async Task PlanInRowDropdown_IsEditedInDialogAndCanBeDeleted()
     {
         using CultureScope _ = new(PlannerCultures.English);
         await using ConsumptionPlanTestHost host = await StartAsync(November10);
@@ -132,13 +132,24 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         page.WaitForElement("table");
 
         page.Find("tbody .dropdown-toggle").Click();
-        page.Find("#plans-2 input").Change("6");
+        Assert.Empty(page.FindAll("#plans-2 input"));
+        Assert.Equal("Edit", page.Find("#plans-2 .btn-primary").TextContent.Trim());
         page.Find("#plans-2 .btn-primary").Click();
 
-        page.WaitForAssertion(() => Assert.Equal(
-            "6",
-            page.Find("#plans-2 input").GetAttribute("value")));
-        Assert.Equal(6m, Assert.Single(await PlansAsync(host)).PlannedQuantity);
+        Assert.Equal("Edit consumption plan", page.Find("#planDialogTitle").TextContent.Trim());
+        Assert.Equal("January", page.Find("#planDialogMonthInput").GetAttribute("value"));
+        Assert.Equal("2", page.Find("#planDialogQuantityInput").GetAttribute("value"));
+        page.Find("#planDialogMonthInput").Change("March");
+        page.Find("#planDialogQuantityInput").Change("6");
+        page.Find(".modal-footer .btn-primary").Click();
+
+        page.WaitForAssertion(() => Assert.Empty(page.FindAll(".modal")));
+        Assert.Equal(["March 2027"], PlanPeriods(page));
+        Assert.Equal("6", page.Find("#plans-2 table td:nth-child(2)").TextContent.Trim());
+        ConsumptionPlanDto updated = Assert.Single(await PlansAsync(host));
+        Assert.Equal(
+            (2027, 3, 6m),
+            (updated.TargetYear, updated.TargetMonth, updated.PlannedQuantity));
 
         page.Find("#plans-2 .btn-outline-danger").Click();
 

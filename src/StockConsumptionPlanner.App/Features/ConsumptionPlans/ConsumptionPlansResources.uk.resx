@@ -194,6 +194,12 @@
   <data name="QuantityExceedsStock" xml:space="preserve">
     <value>Запланована кількість не може перевищувати поточний залишок ({0}).</value>
   </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Редагувати</value>
+  </data>
+  <data name="EditPlanTitle" xml:space="preserve">
+    <value>Редагування плану споживання</value>
+  </data>
   <data name="Save" xml:space="preserve">
     <value>Зберегти</value>
   </data>
@@ -211,9 +217,6 @@
   </data>
   <data name="LoadFailed" xml:space="preserve">
     <value>Не вдалося завантажити плани на {0}.</value>
-  </data>
-  <data name="EnterPlannedQuantity" xml:space="preserve">
-    <value>Введіть заплановану кількість для запису {0}.</value>
   </data>
   <data name="PlanSaved" xml:space="preserve">
     <value>План для запису {0} на {1} збережено.</value>

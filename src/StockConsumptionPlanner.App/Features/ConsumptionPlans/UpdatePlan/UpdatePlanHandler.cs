@@ -21,6 +21,20 @@ public sealed class UpdatePlanHandler(
             return ConsumptionPlanError.Validation(quantityError);
         }
 
+        if (request.TargetYear.HasValue != request.TargetMonth.HasValue)
+        {
+            return ConsumptionPlanError.Validation("Target year and month must be given together.");
+        }
+
+        PlanTargetMonth? requestedTarget =
+            request.TargetYear is int year && request.TargetMonth is int month
+                ? new PlanTargetMonth(year, month)
+                : null;
+        if (requestedTarget is { IsValid: false })
+        {
+            return ConsumptionPlanError.InvalidTarget();
+        }
+
         await using PlannerDbContext dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         ConsumptionPlan? plan = await dbContext.ConsumptionPlans.SingleOrDefaultAsync(p => p.Id == id, cancellationToken);
@@ -59,6 +73,22 @@ public sealed class UpdatePlanHandler(
             return stockError;
         }
 
+        PlanTargetMonth target = requestedTarget ?? plan.Target;
+        if (target != plan.Target)
+        {
+            if (!editPolicy.CanCreate(target))
+            {
+                return ConsumptionPlanError.TargetMonthInPast(target);
+            }
+
+            if (await dbContext.PlanExistsAsync(plan.Key, target, cancellationToken))
+            {
+                return ConsumptionPlanError.DuplicatePlan(plan.Key, target);
+            }
+
+            plan.MoveTo(target);
+        }
+
         plan.UpdateQuantity(
             request.PlannedQuantity,
             stock.Value!.MaterialNumber,
@@ -72,6 +102,16 @@ public sealed class UpdatePlanHandler(
         catch (DbUpdateConcurrencyException)
         {
             return ConsumptionPlanError.StaleVersion();
+        }
+        catch (DbUpdateException)
+        {
+            dbContext.ChangeTracker.Clear();
+            if (await dbContext.PlanExistsAsync(plan.Key, target, cancellationToken))
+            {
+                return ConsumptionPlanError.DuplicatePlan(plan.Key, target);
+            }
+
+            throw;
         }
 
         return ConsumptionPlanResult<ConsumptionPlanDto>.Success(readModel.ToDto(plan, stock.Value.TotalStockQuantity));

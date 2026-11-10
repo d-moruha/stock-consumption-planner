@@ -194,6 +194,12 @@
   <data name="QuantityExceedsStock" xml:space="preserve">
     <value>The planned quantity cannot exceed the current stock ({0}).</value>
   </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="EditPlanTitle" xml:space="preserve">
+    <value>Edit consumption plan</value>
+  </data>
   <data name="Save" xml:space="preserve">
     <value>Save</value>
   </data>
@@ -211,9 +217,6 @@
   </data>
   <data name="LoadFailed" xml:space="preserve">
     <value>Could not load plans for {0}.</value>
-  </data>
-  <data name="EnterPlannedQuantity" xml:space="preserve">
-    <value>Enter a planned quantity for {0}.</value>
   </data>
   <data name="PlanSaved" xml:space="preserve">
     <value>Plan for {0} in {1} saved.</value>

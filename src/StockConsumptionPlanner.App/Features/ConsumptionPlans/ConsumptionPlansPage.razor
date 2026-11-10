@@ -1,6 +1,5 @@
 @page "/consumption-plans"
 @rendermode InteractiveServer
-@using System.Globalization
 @inject GetPlanningSheetHandler PlanningSheetHandler
 @inject UpdatePlanHandler UpdateHandler
 @inject DeletePlanHandler DeleteHandler
@@ -140,7 +139,7 @@ else
                                 <button type="button"
                                         class="btn btn-sm btn-primary"
                                         disabled="@_isBusy"
-                                        @onclick="() => _createFor = row">
+                                        @onclick="() => OpenDialog(row, null)">
                                     @L["CreatePlan"]
                                 </button>
                             </td>
@@ -169,14 +168,15 @@ else
     </div>
 }
 
-@if (_createFor is not null)
+@if (_dialogRow is not null)
 {
-    <CreatePlanDialog Row="_createFor"
-                      InitialPeriod="DefaultCreatePeriod(_createFor)"
-                      Earliest="EarliestCreatePeriod"
-                      CurrentYear="EditPolicy.CurrentMonth.Year"
-                      OnCreated="OnPlanCreatedAsync"
-                      OnClose="() => _createFor = null" />
+    <PlanDialog Row="_dialogRow"
+                Plan="_dialogPlan"
+                InitialPeriod="DialogPeriod(_dialogRow, _dialogPlan)"
+                Earliest="DialogEarliest(_dialogPlan)"
+                CurrentYear="EditPolicy.CurrentMonth.Year"
+                OnSaved="OnPlanSavedAsync"
+                OnClose="CloseDialog" />
 }
 
 @code {
@@ -184,9 +184,9 @@ else
     private string? _search;
     private int _page = 1;
     private PlanningSheetDto? _sheet;
-    private readonly Dictionary<int, string> _drafts = new();
     private readonly HashSet<StockDocumentKey> _expanded = new();
-    private PlanningSheetRowDto? _createFor;
+    private PlanningSheetRowDto? _dialogRow;
+    private ConsumptionPlanDto? _dialogPlan;
     private bool _isBusy;
     private string? _statusMessage;
     private bool _isErrorStatus;
@@ -216,23 +216,15 @@ else
                 </tr>
                 @foreach (ConsumptionPlanDto plan in row.Plans)
                 {
-                    PlanTargetMonth period = new(plan.TargetYear, plan.TargetMonth);
                     <tr @key="plan.Id">
-                        <td class="bg-transparent @(period == _target ? "fw-semibold" : null)">
-                            @ConsumptionPlanDisplay.FormatMonth(plan.TargetYear, plan.TargetMonth)
+                        <td class="bg-transparent @(IsSelected(plan) ? "fw-semibold" : null)">
+                            @FormatPeriod(plan)
                         </td>
                         <td class="bg-transparent">
-                            <input type="number"
-                                   min="0"
-                                   step="any"
-                                   class="form-control form-control-sm"
-                                   aria-label="@L["ColumnPlanned"]"
-                                   disabled="@(!plan.IsEditable || _isBusy)"
-                                   value="@GetDraft(plan)"
-                                   @onchange="args => SetDraft(plan, args)" />
+                            @FormatQuantity(plan.PlannedQuantity)
                             @if (plan.ExceedsStock)
                             {
-                                <span class="@ExceedsStockBadge mt-1">@L["ExceedsStock"]</span>
+                                <span class="@ExceedsStockBadge ms-1">@L["ExceedsStock"]</span>
                             }
                         </td>
                         <td class="bg-transparent small text-muted">
@@ -242,8 +234,8 @@ else
                             <button type="button"
                                     class="btn btn-sm btn-primary"
                                     disabled="@(!plan.IsEditable || _isBusy)"
-                                    @onclick="() => SaveAsync(plan)">
-                                @L["Save"]
+                                    @onclick="() => OpenDialog(row, plan)">
+                                @L["Edit"]
                             </button>
                             <button type="button"
                                     class="btn btn-sm btn-outline-danger ms-1"
@@ -272,7 +264,6 @@ else
             if (result.IsSuccess)
             {
                 _sheet = result.Value;
-                _drafts.Clear();
             }
             else
             {
@@ -325,8 +316,25 @@ else
         }
     }
 
-    private PlanTargetMonth DefaultCreatePeriod(PlanningSheetRowDto row)
+    private void OpenDialog(PlanningSheetRowDto row, ConsumptionPlanDto? plan)
     {
+        _dialogRow = row;
+        _dialogPlan = plan;
+    }
+
+    private void CloseDialog()
+    {
+        _dialogRow = null;
+        _dialogPlan = null;
+    }
+
+    private PlanTargetMonth DialogPeriod(PlanningSheetRowDto row, ConsumptionPlanDto? plan)
+    {
+        if (plan is not null)
+        {
+            return PlanPeriod(plan);
+        }
+
         PlanTargetMonth period = _isPeriodValid && _target.CompareTo(EarliestCreatePeriod) > 0
             ? _target
             : EarliestCreatePeriod;
@@ -338,61 +346,21 @@ else
         return period;
     }
 
-    private async Task OnPlanCreatedAsync(ConsumptionPlanDto plan)
+    private PlanTargetMonth DialogEarliest(ConsumptionPlanDto? plan)
+    {
+        return plan is not null && PlanPeriod(plan).CompareTo(EarliestCreatePeriod) < 0
+            ? PlanPeriod(plan)
+            : EarliestCreatePeriod;
+    }
+
+    private async Task OnPlanSavedAsync(ConsumptionPlanDto plan)
     {
         StockDocumentKey key = PlanKey(plan);
-        _createFor = null;
+        CloseDialog();
         _expanded.Add(key);
         _isErrorStatus = false;
         _statusMessage = L["PlanSaved", key.ToString(), FormatPeriod(plan)];
         await LoadAsync();
-    }
-
-    private void SetDraft(ConsumptionPlanDto plan, ChangeEventArgs args)
-    {
-        _drafts[plan.Id] = args.Value?.ToString() ?? string.Empty;
-    }
-
-    private string GetDraft(ConsumptionPlanDto plan)
-    {
-        return _drafts.TryGetValue(plan.Id, out string? draft)
-            ? draft
-            : plan.PlannedQuantity.ToString("0.####", CultureInfo.InvariantCulture);
-    }
-
-    private async Task SaveAsync(ConsumptionPlanDto plan)
-    {
-        StockDocumentKey key = PlanKey(plan);
-        string text = GetDraft(plan).Trim().Replace(',', '.');
-        if (!decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal quantity))
-        {
-            _isErrorStatus = true;
-            _statusMessage = L["EnterPlannedQuantity", key.ToString()];
-            return;
-        }
-
-        _isBusy = true;
-        try
-        {
-            ConsumptionPlanResult<ConsumptionPlanDto> result = await UpdateHandler.HandleAsync(
-                plan.Id,
-                new UpdateConsumptionPlanRequest(quantity, plan.Version));
-
-            if (result.IsSuccess)
-            {
-                _isErrorStatus = false;
-                _statusMessage = L["PlanSaved", key.ToString(), FormatPeriod(plan)];
-                await LoadAsync();
-            }
-            else
-            {
-                ShowError(result.Error!, plan, quantity);
-            }
-        }
-        finally
-        {
-            _isBusy = false;
-        }
     }
 
     private async Task DeleteAsync(ConsumptionPlanDto plan)
@@ -418,18 +386,14 @@ else
         }
     }
 
-    private void ShowError(
-        ConsumptionPlanError error,
-        ConsumptionPlanDto plan,
-        decimal? plannedQuantity = null)
+    private void ShowError(ConsumptionPlanError error, ConsumptionPlanDto plan)
     {
         _isErrorStatus = true;
         _statusMessage = ConsumptionPlanDisplay.LocalizeError(
             L,
             error,
             PlanKey(plan),
-            new PlanTargetMonth(plan.TargetYear, plan.TargetMonth),
-            plannedQuantity);
+            PlanPeriod(plan));
     }
 
     private static StockDocumentKey RowKey(PlanningSheetRowDto row) =>
@@ -437,6 +401,11 @@ else
 
     private static StockDocumentKey PlanKey(ConsumptionPlanDto plan) =>
         new(plan.MaterialDocumentYear, plan.MaterialDocumentNumber, plan.MaterialDocumentItem);
+
+    private bool IsSelected(ConsumptionPlanDto plan) => PlanPeriod(plan) == _target;
+
+    private static PlanTargetMonth PlanPeriod(ConsumptionPlanDto plan) =>
+        new(plan.TargetYear, plan.TargetMonth);
 
     private static string FormatPeriod(ConsumptionPlanDto plan) =>
         ConsumptionPlanDisplay.FormatMonth(plan.TargetYear, plan.TargetMonth);

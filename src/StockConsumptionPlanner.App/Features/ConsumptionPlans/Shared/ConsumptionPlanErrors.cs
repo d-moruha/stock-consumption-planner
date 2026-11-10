@@ -40,6 +40,23 @@ public sealed record ConsumptionPlanError(ConsumptionPlanErrorCode Code, string 
 
     public static ConsumptionPlanError StaleVersion() =>
         new(ConsumptionPlanErrorCode.StaleVersion, "The plan was changed by someone else. Reload it and try again.");
+
+    public static ConsumptionPlanError DuplicatePlan(
+        StockDocumentKey key,
+        PlanTargetMonth target) =>
+        new(
+            ConsumptionPlanErrorCode.DuplicatePlan,
+            $"A plan for stock record {key} in {target} already exists.");
+
+    public static ConsumptionPlanError TargetMonthInPast(PlanTargetMonth target) =>
+        new(
+            ConsumptionPlanErrorCode.TargetMonthInPast,
+            $"Plans cannot be created for {target}, which has already ended.");
+
+    public static ConsumptionPlanError InvalidTarget() =>
+        Validation(
+            "Target month must be a month 1–12 of a year "
+            + $"{PlanTargetMonth.MinYear}–{PlanTargetMonth.MaxYear}.");
 }
 
 public sealed record ConsumptionPlanResult<T>(T? Value, ConsumptionPlanError? Error)
