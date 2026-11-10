@@ -143,6 +143,15 @@
   <data name="SortByStockAge" xml:space="preserve">
     <value>Сортувати за віком запасу</value>
   </data>
+  <data name="ColumnUnplannedQuantity" xml:space="preserve">
+    <value>Незапланована кількість</value>
+  </data>
+  <data name="ColumnStockValue" xml:space="preserve">
+    <value>Вартість запасу</value>
+  </data>
+  <data name="SortByStockValue" xml:space="preserve">
+    <value>Сортувати за вартістю запасу</value>
+  </data>
   <data name="ColumnPlanned" xml:space="preserve">
     <value>Заплановано</value>
   </data>

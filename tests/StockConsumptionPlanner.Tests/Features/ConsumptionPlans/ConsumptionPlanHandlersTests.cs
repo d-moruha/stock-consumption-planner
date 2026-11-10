@@ -244,7 +244,7 @@ public sealed class ConsumptionPlanHandlersTests
         await CreateAsync(host, "0049000003", 2027, 1, 6m);
 
         ConsumptionPlanResult<PlanningSheetDto> result = await host.Get<GetPlanningSheetHandler>()
-            .HandleAsync(new PlanningSheetQuery(2026, 12));
+            .HandleAsync(new PlanningSheetQuery(2026, 12, Sort: PlanningSheetSort.SourceRow));
 
         Assert.True(result.IsSuccess, result.Error?.Message);
         PlanningSheetDto sheet = result.Value!;
@@ -325,7 +325,10 @@ public sealed class ConsumptionPlanHandlersTests
         await CreateAsync(host, "0049000002", 2027, 1, 2m);
 
         PlanningSheetDto sheet = (await host.Get<GetPlanningSheetHandler>()
-            .HandleAsync(new PlanningSheetQuery(2027, 1))).Value!;
+            .HandleAsync(new PlanningSheetQuery(
+                2027,
+                1,
+                Sort: PlanningSheetSort.SourceRow))).Value!;
 
         Assert.Equal(
             ["0049000001", "0049000002", "0049000003"],

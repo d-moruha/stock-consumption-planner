@@ -94,6 +94,17 @@ public sealed class GetPlanningSheetHandler(
                 .ThenBy(i => i.StockCreationDate)
                 .ThenBy(i => i.SourceRowNumber)
                 .ThenBy(i => i.Id),
+            // SQLite's decimal ORDER BY uses the current culture and throws for uk-UA.
+            PlanningSheetSort.StockValueAscending => stock
+                .OrderBy(i => i.TotalStockValue == null)
+                .ThenBy(i => (long?)(i.TotalStockValue * 100m))
+                .ThenBy(i => i.SourceRowNumber)
+                .ThenBy(i => i.Id),
+            PlanningSheetSort.StockValueDescending => stock
+                .OrderBy(i => i.TotalStockValue == null)
+                .ThenByDescending(i => (long?)(i.TotalStockValue * 100m))
+                .ThenBy(i => i.SourceRowNumber)
+                .ThenBy(i => i.Id),
             _ => stock
                 .OrderBy(i => i.SourceRowNumber)
                 .ThenBy(i => i.Id)
@@ -113,6 +124,9 @@ public sealed class GetPlanningSheetHandler(
             .Select(p => readModel.ToDto(p, item.TotalStockQuantity))
             .ToList();
 
+        decimal plannedQuantity = chronological.Sum(p => p.PlannedQuantity);
+        decimal? unplannedQuantity = item.TotalStockQuantity - plannedQuantity;
+
         return new PlanningSheetRowDto(
             item.SourceRowNumber,
             item.MaterialDocumentYear,
@@ -121,6 +135,8 @@ public sealed class GetPlanningSheetHandler(
             item.MaterialNumber,
             item.MaterialDescription,
             item.TotalStockQuantity,
+            unplannedQuantity,
+            item.TotalStockValue,
             chronological.FirstOrDefault(
                 p => p.TargetYear == target.Year && p.TargetMonth == target.Month),
             chronological,

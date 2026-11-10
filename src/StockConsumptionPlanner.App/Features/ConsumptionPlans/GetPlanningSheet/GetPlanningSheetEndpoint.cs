@@ -27,7 +27,7 @@ public static class GetPlanningSheetEndpoint
                 search,
                 page,
                 pageSize,
-                sort ?? PlanningSheetSort.SourceRow),
+                sort ?? PlanningSheetSort.StockValueDescending),
             cancellationToken);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToHttpResult();
     }

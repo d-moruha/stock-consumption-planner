@@ -40,6 +40,7 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         Assert.Equal(
             [
                 "Документ", "Позиція", "Рік", "Матеріал", "Опис", "Залишок",
+                "Незапланована кількість", "Вартість запасу ▼",
                 "Дата надходження", "Дата утворення запасу", "Вік запасу (дн.) ↕", "Плани", "Дії"
             ],
             page.FindAll("thead th").Select(th => CollapseWhitespace(th.TextContent)));
@@ -182,13 +183,94 @@ public sealed class ConsumptionPlansPageTests : BunitContext
             page, "none", "↕", ["0049000001", "0049000002", "0049000003"]));
     }
 
+    [Theory]
+    [InlineData(PlannerCultures.Ukrainian, "Незапланована кількість", "Вартість запасу")]
+    [InlineData(PlannerCultures.English, "Unplanned Quantity", "Stock Value")]
+    public async Task Rows_ShowUnplannedQuantityAndStockValue_AndValueSortCycles(
+        string culture,
+        string unplannedHeader,
+        string valueHeader)
+    {
+        using CultureScope _ = new(culture);
+        await using ConsumptionPlanTestHost host = await StartAsync(November10);
+        await host.ImportAsync(
+            Stock("0049000001", 10m, sourceRow: 2) with { TotalStockValue = 100m },
+            Stock("0049000002", 4m, sourceRow: 3) with { TotalStockValue = 50m },
+            Stock("0049000003", 7m, sourceRow: 4) with { TotalStockValue = 1m });
+        await host.Get<CreatePlanHandler>().HandleAsync(
+            new CreateConsumptionPlanRequest(2026, "0049000001", "0001", 2026, 12, 6m));
+        await host.Get<CreatePlanHandler>().HandleAsync(
+            new CreateConsumptionPlanRequest(2026, "0049000001", "0001", 2027, 1, 6m));
+        await host.SetStockFiguresAsync("0049000003", null, null);
+        IRenderedComponent<ConsumptionPlansPage> page = RenderPage(host);
+        page.WaitForElement("table");
+
+        string headers = CollapseWhitespace(page.Find("thead").TextContent);
+        Assert.Contains(unplannedHeader, headers);
+        Assert.Contains(valueHeader, headers);
+        AssertValueSort(page, "descending", "▼", ["0049000001", "0049000002", "0049000003"]);
+        Assert.Equal(
+            [
+                [FormatQuantity(10m), FormatQuantity(-2m), FormatMoney(100m)],
+                [FormatQuantity(4m), FormatQuantity(4m), FormatMoney(50m)],
+                ["—", "—", "—"]
+            ],
+            FigureCells(page));
+
+        page.Find("#stockValueSortButton").Click();
+        page.WaitForAssertion(() => AssertValueSort(
+            page, "none", "↕", ["0049000001", "0049000002", "0049000003"]));
+
+        page.Find("#stockValueSortButton").Click();
+        page.WaitForAssertion(() => AssertValueSort(
+            page, "ascending", "▲", ["0049000002", "0049000001", "0049000003"]));
+
+        page.Find("#stockValueSortButton").Click();
+        page.WaitForAssertion(() => AssertValueSort(
+            page, "descending", "▼", ["0049000001", "0049000002", "0049000003"]));
+    }
+
+    private static void AssertValueSort(
+        IRenderedComponent<ConsumptionPlansPage> page,
+        string ariaSort,
+        string indicator,
+        string[] documents)
+    {
+        Assert.Equal(
+            ariaSort,
+            page.Find("#stockValueSortButton").ParentElement!.GetAttribute("aria-sort"));
+        Assert.Equal(indicator, page.Find("#stockValueSortButton span").TextContent);
+        Assert.Equal(
+            documents,
+            page.FindAll("tbody > tr > td:first-child").Select(td => td.TextContent.Trim()));
+    }
+
+    private static List<string[]> FigureCells(IRenderedComponent<ConsumptionPlansPage> page)
+    {
+        return [.. page.FindAll("tbody > tr").Select(row => new[]
+        {
+            row.QuerySelector("td:nth-child(6)")!.TextContent.Trim(),
+            row.QuerySelector("td:nth-child(7)")!.TextContent.Trim(),
+            row.QuerySelector("td:nth-child(8)")!.TextContent.Trim()
+        })];
+    }
+
+    private static string FormatQuantity(decimal value)
+    {
+        return ConsumptionPlanDisplay.FormatQuantity(value);
+    }
+
+    private static string FormatMoney(decimal value) => ConsumptionPlanDisplay.FormatMoney(value);
+
     private static void AssertStockAgeSort(
         IRenderedComponent<ConsumptionPlansPage> page,
         string ariaSort,
         string indicator,
         string[] documents)
     {
-        Assert.Equal(ariaSort, page.Find("th[aria-sort]").GetAttribute("aria-sort"));
+        Assert.Equal(
+            ariaSort,
+            page.Find("#stockAgeSortButton").ParentElement!.GetAttribute("aria-sort"));
         Assert.Equal(indicator, page.Find("#stockAgeSortButton span").TextContent);
         Assert.Equal(
             documents,
@@ -199,9 +281,9 @@ public sealed class ConsumptionPlansPageTests : BunitContext
     {
         return [.. page.FindAll("tbody > tr").Select(row => new[]
         {
-            row.QuerySelector("td:nth-child(7)")!.TextContent.Trim(),
-            row.QuerySelector("td:nth-child(8)")!.TextContent.Trim(),
-            row.QuerySelector("td:nth-child(9)")!.TextContent.Trim()
+            row.QuerySelector("td:nth-child(9)")!.TextContent.Trim(),
+            row.QuerySelector("td:nth-child(10)")!.TextContent.Trim(),
+            row.QuerySelector("td:nth-child(11)")!.TextContent.Trim()
         })];
     }
 
