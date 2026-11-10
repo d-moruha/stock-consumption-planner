@@ -40,7 +40,16 @@ public sealed class ConsumptionPlanEndpointsIntegrationTests : IClassFixture<Web
                 "plans.xlsx",
                 "Sheet1",
                 October25,
-                [Stock("0049000001", 10m), Stock("0049000002", 20m, sourceRow: 3)]));
+                [
+                    Stock("0049000001", 10m) with
+                    {
+                        StockCreationDate = new DateOnly(2026, 10, 1)
+                    },
+                    Stock("0049000002", 20m, sourceRow: 3) with
+                    {
+                        StockCreationDate = new DateOnly(2026, 9, 1)
+                    }
+                ]));
 
             HttpResponseMessage created = await client.PostAsJsonAsync(
                 "/api/consumption-plans",
@@ -85,6 +94,18 @@ public sealed class ConsumptionPlanEndpointsIntegrationTests : IClassFixture<Web
             Assert.NotNull(sheet);
             Assert.Equal(2, sheet.Rows.TotalCount);
             Assert.Equal(5m, sheet.Rows.Items.Single(r => r.MaterialDocumentNumber == "0049000001").Plan?.PlannedQuantity);
+
+            PlanningSheetDto? oldestFirst = await client.GetFromJsonAsync<PlanningSheetDto>(
+                "/api/consumption-plans/planning-sheet?year=2026&month=12&sort=StockAgeDescending");
+            (string, DateOnly?, int?)[] expectedOldestFirst =
+            [
+                ("0049000002", new DateOnly(2026, 9, 1), 54),
+                ("0049000001", new DateOnly(2026, 10, 1), 24)
+            ];
+            Assert.Equal(
+                expectedOldestFirst,
+                oldestFirst!.Rows.Items.Select(
+                    r => (r.MaterialDocumentNumber, r.StockCreationDate, r.StockAgeDays)));
 
             clock.UtcNow = new DateTimeOffset(2026, 11, 16, 22, 0, 0, TimeSpan.Zero);
             HttpResponseMessage closed = await client.PutAsJsonAsync(

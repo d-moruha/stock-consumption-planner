@@ -157,6 +157,7 @@ public sealed class StockReportItemEntityConfiguration : IEntityTypeConfiguratio
             i.MaterialDocumentYear
         });
         entity.HasIndex(i => new { i.LifecycleStatus, i.MaterialNumber });
+        entity.HasIndex(i => new { i.LifecycleStatus, i.StockCreationDate });
     }
 
     private static int MaxLength(StockReportField field)

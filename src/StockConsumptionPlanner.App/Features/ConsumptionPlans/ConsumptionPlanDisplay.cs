@@ -22,6 +22,16 @@ public static class ConsumptionPlanDisplay
         return value.ToString("#,0.####", CultureInfo.CurrentCulture);
     }
 
+    public static string FormatDate(DateOnly? date)
+    {
+        return date?.ToString("d", CultureInfo.CurrentCulture) ?? "—";
+    }
+
+    public static string FormatDays(int? days)
+    {
+        return days?.ToString("#,0", CultureInfo.CurrentCulture) ?? "—";
+    }
+
     public static string FormatBusinessTime(PlanEditPolicy editPolicy, DateTimeOffset? utc)
     {
         ArgumentNullException.ThrowIfNull(editPolicy);

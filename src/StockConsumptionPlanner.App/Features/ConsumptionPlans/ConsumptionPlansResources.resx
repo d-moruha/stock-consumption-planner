@@ -131,6 +131,18 @@
   <data name="ColumnStock" xml:space="preserve">
     <value>Stock</value>
   </data>
+  <data name="ColumnGoodsReceiptDate" xml:space="preserve">
+    <value>Goods Receipt Date</value>
+  </data>
+  <data name="ColumnStockCreationDate" xml:space="preserve">
+    <value>Stock Creation Date</value>
+  </data>
+  <data name="ColumnStockAge" xml:space="preserve">
+    <value>Stock Age (Days)</value>
+  </data>
+  <data name="SortByStockAge" xml:space="preserve">
+    <value>Sort by stock age</value>
+  </data>
   <data name="ColumnPlanned" xml:space="preserve">
     <value>Planned</value>
   </data>

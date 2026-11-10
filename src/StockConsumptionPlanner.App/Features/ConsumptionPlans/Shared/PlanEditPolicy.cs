@@ -40,6 +40,8 @@ public sealed class PlanEditPolicy
         }
     }
 
+    public DateOnly Today => DateOnly.FromDateTime(ToBusinessTime(UtcNow).DateTime);
+
     public DateTimeOffset GetMonthStartUtc(PlanTargetMonth month)
     {
         return LocalMidnightToUtc(new DateTime(month.Year, month.Month, 1));
