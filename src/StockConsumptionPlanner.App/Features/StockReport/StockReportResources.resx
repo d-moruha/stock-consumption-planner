@@ -251,4 +251,16 @@
   <data name="StatusReportCleared" xml:space="preserve">
     <value>Cleared current stored stock report.</value>
   </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="ClearReportDialogTitle" xml:space="preserve">
+    <value>Clear the stock report?</value>
+  </data>
+  <data name="ClearReportDialogMessage" xml:space="preserve">
+    <value>The stored stock report “{0}” ({1} rows) will be permanently deleted. To continue working with stock, you will need to import a report again.</value>
+  </data>
+  <data name="ClearReportConfirm" xml:space="preserve">
+    <value>Clear report</value>
+  </data>
 </root>
