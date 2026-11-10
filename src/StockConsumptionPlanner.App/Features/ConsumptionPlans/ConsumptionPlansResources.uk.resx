@@ -131,6 +131,18 @@
   <data name="ColumnStock" xml:space="preserve">
     <value>Залишок</value>
   </data>
+  <data name="ColumnGoodsReceiptDate" xml:space="preserve">
+    <value>Дата надходження</value>
+  </data>
+  <data name="ColumnStockCreationDate" xml:space="preserve">
+    <value>Дата утворення запасу</value>
+  </data>
+  <data name="ColumnStockAge" xml:space="preserve">
+    <value>Вік запасу (дн.)</value>
+  </data>
+  <data name="SortByStockAge" xml:space="preserve">
+    <value>Сортувати за віком запасу</value>
+  </data>
   <data name="ColumnPlanned" xml:space="preserve">
     <value>Заплановано</value>
   </data>

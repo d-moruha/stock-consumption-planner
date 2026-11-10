@@ -17,10 +17,17 @@ public static class GetPlanningSheetEndpoint
         string? search,
         int? page,
         int? pageSize,
+        PlanningSheetSort? sort,
         CancellationToken cancellationToken)
     {
         ConsumptionPlanResult<PlanningSheetDto> result = await handler.HandleAsync(
-            new PlanningSheetQuery(year, month, search, page, pageSize),
+            new PlanningSheetQuery(
+                year,
+                month,
+                search,
+                page,
+                pageSize,
+                sort ?? PlanningSheetSort.SourceRow),
             cancellationToken);
         return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToHttpResult();
     }

@@ -38,8 +38,11 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         Assert.Empty(page.FindAll("#planYearInput"));
         Assert.Empty(page.FindAll("#planMonthInput"));
         Assert.Equal(
-            ["Документ", "Позиція", "Рік", "Матеріал", "Опис", "Залишок", "Плани", "Дії"],
-            page.FindAll("thead th").Select(th => th.TextContent.Trim()));
+            [
+                "Документ", "Позиція", "Рік", "Матеріал", "Опис", "Залишок",
+                "Дата надходження", "Дата утворення запасу", "Вік запасу (дн.) ↕", "Плани", "Дії"
+            ],
+            page.FindAll("thead th").Select(th => CollapseWhitespace(th.TextContent)));
         Assert.All(
             page.FindAll("tbody .dropdown-toggle"),
             toggle => Assert.True(toggle.HasAttribute("disabled")));
@@ -129,6 +132,81 @@ public sealed class ConsumptionPlansPageTests : BunitContext
 
         page.WaitForAssertion(() => Assert.Empty(page.FindAll("#plans-2")));
         Assert.Empty(await PlansAsync(host));
+    }
+
+    [Theory]
+    [InlineData(PlannerCultures.English, "10/28/2026", "11/1/2026", "11/10/2025")]
+    [InlineData(PlannerCultures.Ukrainian, "28.10.2026", "01.11.2026", "10.11.2025")]
+    public async Task StockRows_ShowDatesInUiCulture_AndAgeHeaderCyclesServerSort(
+        string culture,
+        string received,
+        string created,
+        string createdYearAgo)
+    {
+        using CultureScope _ = new(culture);
+        await using ConsumptionPlanTestHost host = await StartAsync(November10);
+        await host.ImportAsync(
+            Stock("0049000001", 10m, sourceRow: 2) with
+            {
+                GoodsReceiptDate = new DateOnly(2026, 10, 28),
+                StockCreationDate = new DateOnly(2026, 11, 1)
+            },
+            Stock("0049000002", 10m, sourceRow: 3),
+            Stock("0049000003", 10m, sourceRow: 4) with
+            {
+                StockCreationDate = new DateOnly(2025, 11, 10)
+            });
+        IRenderedComponent<ConsumptionPlansPage> page = RenderPage(host);
+        page.WaitForElement("table");
+
+        Assert.Equal(
+            [
+                [received, created, "9"],
+                ["—", "—", "—"],
+                ["—", createdYearAgo, "365"]
+            ],
+            StockDateCells(page));
+        AssertStockAgeSort(page, "none", "↕", ["0049000001", "0049000002", "0049000003"]);
+
+        page.Find("#stockAgeSortButton").Click();
+        page.WaitForAssertion(() => AssertStockAgeSort(
+            page, "ascending", "▲", ["0049000001", "0049000003", "0049000002"]));
+
+        page.Find("#stockAgeSortButton").Click();
+        page.WaitForAssertion(() => AssertStockAgeSort(
+            page, "descending", "▼", ["0049000003", "0049000001", "0049000002"]));
+
+        page.Find("#stockAgeSortButton").Click();
+        page.WaitForAssertion(() => AssertStockAgeSort(
+            page, "none", "↕", ["0049000001", "0049000002", "0049000003"]));
+    }
+
+    private static void AssertStockAgeSort(
+        IRenderedComponent<ConsumptionPlansPage> page,
+        string ariaSort,
+        string indicator,
+        string[] documents)
+    {
+        Assert.Equal(ariaSort, page.Find("th[aria-sort]").GetAttribute("aria-sort"));
+        Assert.Equal(indicator, page.Find("#stockAgeSortButton span").TextContent);
+        Assert.Equal(
+            documents,
+            page.FindAll("tbody > tr > td:first-child").Select(td => td.TextContent.Trim()));
+    }
+
+    private static List<string[]> StockDateCells(IRenderedComponent<ConsumptionPlansPage> page)
+    {
+        return [.. page.FindAll("tbody > tr").Select(row => new[]
+        {
+            row.QuerySelector("td:nth-child(7)")!.TextContent.Trim(),
+            row.QuerySelector("td:nth-child(8)")!.TextContent.Trim(),
+            row.QuerySelector("td:nth-child(9)")!.TextContent.Trim()
+        })];
+    }
+
+    private static string CollapseWhitespace(string text)
+    {
+        return string.Join(' ', text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
     }
 
     private static async Task<IReadOnlyList<ConsumptionPlanDto>> PlansAsync(

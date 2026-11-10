@@ -24,6 +24,11 @@ public sealed class GetPlanningSheetHandler(
                 $"Target month must be a month 1–12 of a year {PlanTargetMonth.MinYear}–{PlanTargetMonth.MaxYear}.");
         }
 
+        if (!Enum.IsDefined(query.Sort))
+        {
+            return ConsumptionPlanError.Validation($"Unknown sort '{query.Sort}'.");
+        }
+
         (int page, int pageSize) = PagedResult<PlanningSheetRowDto>.Normalize(query.Page, query.PageSize);
 
         await using PlannerDbContext dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -40,9 +45,7 @@ public sealed class GetPlanningSheetHandler(
 
         int totalCount = await stock.CountAsync(cancellationToken);
 
-        List<StockWithPlan> rows = await stock
-            .OrderBy(i => i.SourceRowNumber)
-            .ThenBy(i => i.Id)
+        List<StockWithPlan> rows = await Order(stock, query.Sort)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .GroupJoin(
@@ -55,11 +58,15 @@ public sealed class GetPlanningSheetHandler(
                 (x, plan) => new StockWithPlan(x.Item, plan))
             .ToListAsync(cancellationToken);
 
-        List<PlanningSheetRowDto> items = rows
-            .GroupBy(r => r.Item.Id)
-            .OrderBy(group => group.First().Item.SourceRowNumber)
-            .ThenBy(group => group.Key)
-            .Select(group => ToRow(group.First().Item, group.Select(r => r.Plan), target))
+        ILookup<int, ConsumptionPlan?> plansByItem = rows.ToLookup(r => r.Item.Id, r => r.Plan);
+        IQueryable<StockReportItemEntity> pageItems = rows
+            .Select(r => r.Item)
+            .DistinctBy(i => i.Id)
+            .AsQueryable();
+        DateOnly today = editPolicy.Today;
+        List<PlanningSheetRowDto> items = Order(pageItems, query.Sort)
+            .AsEnumerable()
+            .Select(item => ToRow(item, plansByItem[item.Id], target, today))
             .ToList();
 
         return ConsumptionPlanResult<PlanningSheetDto>.Success(new PlanningSheetDto(
@@ -71,10 +78,33 @@ public sealed class GetPlanningSheetHandler(
             new PagedResult<PlanningSheetRowDto>(items, totalCount, page, pageSize)));
     }
 
+    private static IOrderedQueryable<StockReportItemEntity> Order(
+        IQueryable<StockReportItemEntity> stock,
+        PlanningSheetSort sort)
+    {
+        return sort switch
+        {
+            PlanningSheetSort.StockAgeAscending => stock
+                .OrderBy(i => i.StockCreationDate == null)
+                .ThenByDescending(i => i.StockCreationDate)
+                .ThenBy(i => i.SourceRowNumber)
+                .ThenBy(i => i.Id),
+            PlanningSheetSort.StockAgeDescending => stock
+                .OrderBy(i => i.StockCreationDate == null)
+                .ThenBy(i => i.StockCreationDate)
+                .ThenBy(i => i.SourceRowNumber)
+                .ThenBy(i => i.Id),
+            _ => stock
+                .OrderBy(i => i.SourceRowNumber)
+                .ThenBy(i => i.Id)
+        };
+    }
+
     private PlanningSheetRowDto ToRow(
         StockReportItemEntity item,
         IEnumerable<ConsumptionPlan?> plans,
-        PlanTargetMonth target)
+        PlanTargetMonth target,
+        DateOnly today)
     {
         List<ConsumptionPlanDto> chronological = plans
             .OfType<ConsumptionPlan>()
@@ -93,7 +123,10 @@ public sealed class GetPlanningSheetHandler(
             item.TotalStockQuantity,
             chronological.FirstOrDefault(
                 p => p.TargetYear == target.Year && p.TargetMonth == target.Month),
-            chronological);
+            chronological,
+            item.GoodsReceiptDate,
+            item.StockCreationDate,
+            item.StockCreationDate is { } created ? today.DayNumber - created.DayNumber : null);
     }
 
     private sealed record StockWithPlan(StockReportItemEntity Item, ConsumptionPlan? Plan);
