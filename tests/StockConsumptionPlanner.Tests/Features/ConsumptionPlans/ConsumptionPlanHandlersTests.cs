@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using StockConsumptionPlanner.App.Features.ConsumptionPlans.CreatePlan;
 using StockConsumptionPlanner.App.Features.ConsumptionPlans.DeletePlan;
 using StockConsumptionPlanner.App.Features.ConsumptionPlans.GetPlanningSheet;
+using StockConsumptionPlanner.App.Features.ConsumptionPlans.GetPlans;
 using StockConsumptionPlanner.App.Features.ConsumptionPlans.Shared;
 using StockConsumptionPlanner.App.Features.ConsumptionPlans.UpdatePlan;
 using StockConsumptionPlanner.App.Persistence;
@@ -259,6 +260,85 @@ public sealed class ConsumptionPlanHandlersTests
             .HandleAsync(new PlanningSheetQuery(2026, 12, Search: "0049000002", Page: 1, PageSize: 1));
         Assert.Equal(1, paged.Value!.Rows.TotalCount);
         Assert.Equal("0049000002", Assert.Single(paged.Value.Rows.Items).MaterialDocumentNumber);
+    }
+
+    [Fact]
+    public async Task Update_WithTargetMonth_MovesPlanAndKeepsCreationTime()
+    {
+        await using ConsumptionPlanTestHost host = await StartAsync(October25);
+        await host.ImportAsync(Stock("0049000001", 10m));
+        ConsumptionPlanDto plan = (await CreateAsync(host, "0049000001", 2026, 12, 1m)).Value!;
+
+        ConsumptionPlanResult<ConsumptionPlanDto> result = await host.Get<UpdatePlanHandler>()
+            .HandleAsync(plan.Id, new UpdateConsumptionPlanRequest(2m, plan.Version, 2027, 2));
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        ConsumptionPlanDto moved = result.Value!;
+        Assert.Equal(
+            (plan.Id, 2027, 2, 2m),
+            (moved.Id, moved.TargetYear, moved.TargetMonth, moved.PlannedQuantity));
+        Assert.Equal(October25, moved.CreatedAtUtc);
+        Assert.Equal(
+            host.Get<PlanEditPolicy>().GetLockBeforeMonthUtc(new PlanTargetMonth(2027, 2)),
+            moved.EditableUntilUtc);
+        Assert.Equal(plan.Version + 1, moved.Version);
+    }
+
+    [Theory]
+    [InlineData(2027, 1, ConsumptionPlanErrorCode.DuplicatePlan)]
+    [InlineData(2026, 9, ConsumptionPlanErrorCode.TargetMonthInPast)]
+    [InlineData(2026, 13, ConsumptionPlanErrorCode.Validation)]
+    [InlineData(2026, null, ConsumptionPlanErrorCode.Validation)]
+    public async Task Update_WithInvalidTargetMonth_ReturnsErrorAndKeepsPlan(
+        int? targetYear,
+        int? targetMonth,
+        ConsumptionPlanErrorCode expected)
+    {
+        await using ConsumptionPlanTestHost host = await StartAsync(October25);
+        await host.ImportAsync(Stock("0049000001", 10m));
+        ConsumptionPlanDto plan = (await CreateAsync(host, "0049000001", 2026, 12, 1m)).Value!;
+        await CreateAsync(host, "0049000001", 2027, 1, 1m);
+
+        ConsumptionPlanResult<ConsumptionPlanDto> result = await host.Get<UpdatePlanHandler>()
+            .HandleAsync(
+                plan.Id,
+                new UpdateConsumptionPlanRequest(2m, plan.Version, targetYear, targetMonth));
+
+        Assert.Equal(expected, result.Error?.Code);
+        ConsumptionPlanDto? unchanged = await host.Get<GetPlansHandler>().GetByIdAsync(plan.Id);
+        Assert.Equal(
+            (2026, 12, 1m),
+            (unchanged!.TargetYear, unchanged.TargetMonth, unchanged.PlannedQuantity));
+    }
+
+    [Fact]
+    public async Task PlanningSheet_ListsEveryPlanOfEachStockRowChronologically()
+    {
+        await using ConsumptionPlanTestHost host = await StartAsync(October25);
+        await host.ImportAsync(
+            Stock("0049000001", 10m, sourceRow: 2),
+            Stock("0049000002", 20m, sourceRow: 3),
+            Stock("0049000003", 30m, sourceRow: 4));
+        await CreateAsync(host, "0049000002", 2027, 3, 3m);
+        await CreateAsync(host, "0049000002", 2026, 12, 1m);
+        await CreateAsync(host, "0049000003", 2026, 11, 4m);
+        await CreateAsync(host, "0049000002", 2027, 1, 2m);
+
+        PlanningSheetDto sheet = (await host.Get<GetPlanningSheetHandler>()
+            .HandleAsync(new PlanningSheetQuery(2027, 1))).Value!;
+
+        Assert.Equal(
+            ["0049000001", "0049000002", "0049000003"],
+            sheet.Rows.Items.Select(r => r.MaterialDocumentNumber));
+        Assert.Empty(sheet.Rows.Items[0].Plans);
+        Assert.Equal(
+            [(2026, 12, 1m), (2027, 1, 2m), (2027, 3, 3m)],
+            sheet.Rows.Items[1].Plans.Select(
+                p => (p.TargetYear, p.TargetMonth, p.PlannedQuantity)));
+        Assert.Equal(2m, sheet.Rows.Items[1].Plan?.PlannedQuantity);
+        Assert.Equal((2026, 11), Assert.Single(
+            sheet.Rows.Items[2].Plans.Select(p => (p.TargetYear, p.TargetMonth))));
+        Assert.Null(sheet.Rows.Items[2].Plan);
     }
 
     private static Task<ConsumptionPlanResult<ConsumptionPlanDto>> CreateAsync(

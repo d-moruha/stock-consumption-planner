@@ -93,7 +93,18 @@ public sealed class ConsumptionPlanEndpointsIntegrationTests : IClassFixture<Web
             await AssertProblemAsync(closed, HttpStatusCode.UnprocessableEntity, ConsumptionPlanErrorCode.EditPeriodClosed);
 
             clock.UtcNow = October25;
-            HttpResponseMessage deleted = await client.DeleteAsync($"/api/consumption-plans/{plan.Id}?version=2");
+            HttpResponseMessage moved = await client.PutAsJsonAsync(
+                $"/api/consumption-plans/{plan.Id}",
+                new UpdateConsumptionPlanRequest(4m, 2, 2027, 3));
+            Assert.Equal(HttpStatusCode.OK, moved.StatusCode);
+            ConsumptionPlanDto movedPlan =
+                (await moved.Content.ReadFromJsonAsync<ConsumptionPlanDto>())!;
+            Assert.Equal(
+                (2027, 3, 4m),
+                (movedPlan.TargetYear, movedPlan.TargetMonth, movedPlan.PlannedQuantity));
+
+            HttpResponseMessage deleted =
+                await client.DeleteAsync($"/api/consumption-plans/{plan.Id}?version=3");
             Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
 
             HttpResponseMessage missing = await client.GetAsync($"/api/consumption-plans/{plan.Id}");

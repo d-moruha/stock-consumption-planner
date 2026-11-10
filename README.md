@@ -36,6 +36,7 @@ Rules:
 - **Planned quantity** must be greater than zero and no more than the current stock quantity when saved. If a later import lowers the stock below the plan, the plan is kept and flagged as exceeding stock.
 - **Create:** allowed for the current month and any future month.
 - **Update and delete:** allowed during the first 7 days after the plan was created, or otherwise while more than 14 days remain before the target month starts. Month boundaries use the `Europe/Kyiv` time zone.
+- **Changing the target month:** an update may move the plan to another month under the create rule, if the stock record has no plan for that month yet. The creation time is kept, so the edit window follows the new month.
 - **Orphaning:** after each stock import, plans without an Active stock record are marked orphaned. Orphaned plans are read-only (they can still be deleted under the rule above) and re-link automatically when their stock record appears in a later import.
 - **Cleanup:** a background job deletes plans that have been orphaned for 6 months or more. It runs at startup and then daily.
 
@@ -135,7 +136,7 @@ Columns of the SAP stock report (a custom MB51-based transaction), in export ord
 - `GET /api/consumption-plans/{id}` — Returns one plan.
 - `GET /api/consumption-plans/planning-sheet?year=&month=&search=&page=&pageSize=` — Returns current stock rows with each row's plan for the month, plus whether new plans are allowed.
 - `POST /api/consumption-plans` — Creates a plan `{ materialDocumentYear, materialDocumentNumber, materialDocumentItem, targetYear, targetMonth, plannedQuantity }`.
-- `PUT /api/consumption-plans/{id}` — Updates `{ plannedQuantity, version }`.
+- `PUT /api/consumption-plans/{id}` — Updates `{ plannedQuantity, version, targetYear?, targetMonth? }`; the target month is optional and moves the plan when given.
 - `DELETE /api/consumption-plans/{id}?version=` — Deletes a plan.
 - Plan errors are returned as ProblemDetails with a `code` field: 400 `Validation`, 404 `NotFound`, 409 `DuplicatePlan` / `StaleVersion`, 422 `EditPeriodClosed`, `TargetMonthInPast`, `StockNotActive`, `AmbiguousStock`, `QuantityExceedsStock`, `PlanOrphaned`.
 - `GET /healthz` — Returns service health and active persistence provider (`Sqlite` by default, or `Postgres`).

@@ -40,17 +40,13 @@ public sealed class GetPlanningSheetHandler(
 
         int totalCount = await stock.CountAsync(cancellationToken);
 
-        IQueryable<ConsumptionPlan> monthPlans = dbContext.ConsumptionPlans
-            .AsNoTracking()
-            .Where(p => p.TargetYear == target.Year && p.TargetMonth == target.Month);
-
         List<StockWithPlan> rows = await stock
             .OrderBy(i => i.SourceRowNumber)
             .ThenBy(i => i.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .GroupJoin(
-                monthPlans,
+                dbContext.ConsumptionPlans.AsNoTracking(),
                 i => new { i.MaterialDocumentYear, i.MaterialDocumentNumber, i.MaterialDocumentItem },
                 p => new { p.MaterialDocumentYear, p.MaterialDocumentNumber, p.MaterialDocumentItem },
                 (i, plans) => new { Item = i, Plans = plans })
@@ -60,17 +56,10 @@ public sealed class GetPlanningSheetHandler(
             .ToListAsync(cancellationToken);
 
         List<PlanningSheetRowDto> items = rows
-            .OrderBy(r => r.Item.SourceRowNumber)
-            .ThenBy(r => r.Item.Id)
-            .Select(r => new PlanningSheetRowDto(
-                r.Item.SourceRowNumber,
-                r.Item.MaterialDocumentYear,
-                r.Item.MaterialDocumentNumber,
-                r.Item.MaterialDocumentItem,
-                r.Item.MaterialNumber,
-                r.Item.MaterialDescription,
-                r.Item.TotalStockQuantity,
-                r.Plan is null ? null : readModel.ToDto(r.Plan, r.Item.TotalStockQuantity)))
+            .GroupBy(r => r.Item.Id)
+            .OrderBy(group => group.First().Item.SourceRowNumber)
+            .ThenBy(group => group.Key)
+            .Select(group => ToRow(group.First().Item, group.Select(r => r.Plan), target))
             .ToList();
 
         return ConsumptionPlanResult<PlanningSheetDto>.Success(new PlanningSheetDto(
@@ -80,6 +69,31 @@ public sealed class GetPlanningSheetHandler(
             editPolicy.GetMonthStartUtc(target),
             editPolicy.GetLockBeforeMonthUtc(target),
             new PagedResult<PlanningSheetRowDto>(items, totalCount, page, pageSize)));
+    }
+
+    private PlanningSheetRowDto ToRow(
+        StockReportItemEntity item,
+        IEnumerable<ConsumptionPlan?> plans,
+        PlanTargetMonth target)
+    {
+        List<ConsumptionPlanDto> chronological = plans
+            .OfType<ConsumptionPlan>()
+            .OrderBy(p => p.TargetYear)
+            .ThenBy(p => p.TargetMonth)
+            .Select(p => readModel.ToDto(p, item.TotalStockQuantity))
+            .ToList();
+
+        return new PlanningSheetRowDto(
+            item.SourceRowNumber,
+            item.MaterialDocumentYear,
+            item.MaterialDocumentNumber,
+            item.MaterialDocumentItem,
+            item.MaterialNumber,
+            item.MaterialDescription,
+            item.TotalStockQuantity,
+            chronological.FirstOrDefault(
+                p => p.TargetYear == target.Year && p.TargetMonth == target.Month),
+            chronological);
     }
 
     private sealed record StockWithPlan(StockReportItemEntity Item, ConsumptionPlan? Plan);

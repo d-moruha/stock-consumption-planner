@@ -17,7 +17,8 @@ public sealed record PlanningSheetRowDto(
     string MaterialNumber,
     string MaterialDescription,
     decimal CurrentStockQuantity,
-    ConsumptionPlanDto? Plan);
+    ConsumptionPlanDto? Plan,
+    IReadOnlyList<ConsumptionPlanDto> Plans);
 
 public sealed record PlanningSheetDto(
     int TargetYear,

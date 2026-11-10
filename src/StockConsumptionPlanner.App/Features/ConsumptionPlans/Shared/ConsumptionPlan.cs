@@ -80,6 +80,12 @@ public sealed class ConsumptionPlan
         Version++;
     }
 
+    public void MoveTo(PlanTargetMonth target)
+    {
+        TargetYear = target.Year;
+        TargetMonth = target.Month;
+    }
+
     public static string? ValidatePlannedQuantity(decimal plannedQuantity)
     {
         if (plannedQuantity <= 0m)

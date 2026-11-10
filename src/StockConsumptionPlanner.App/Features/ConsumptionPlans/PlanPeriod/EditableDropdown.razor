@@ -1,0 +1,123 @@
+<div class="dropdown" @onfocusout="Close">
+    <div class="input-group has-validation">
+        <input @ref="_input"
+               id="@Id"
+               type="text"
+               class="form-control @(IsInvalid ? "is-invalid" : null)"
+               role="combobox"
+               autocomplete="off"
+               inputmode="@InputMode"
+               aria-autocomplete="list"
+               aria-controls="@ListId"
+               aria-expanded="@(_isOpen ? "true" : "false")"
+               aria-invalid="@(IsInvalid ? "true" : null)"
+               aria-describedby="@(IsInvalid ? ErrorId : null)"
+               value="@Text"
+               @onchange="OnInputChangedAsync"
+               @onkeydown="OnKeyDown"
+               @onkeydown:stopPropagation="_isOpen" />
+        <button type="button"
+                class="btn btn-outline-secondary dropdown-toggle"
+                tabindex="-1"
+                aria-label="@ToggleLabel"
+                aria-controls="@ListId"
+                aria-expanded="@(_isOpen ? "true" : "false")"
+                @onmousedown:preventDefault
+                @onclick="ToggleAsync"></button>
+        @if (IsInvalid)
+        {
+            <div id="@ErrorId" class="invalid-feedback">@ErrorMessage</div>
+        }
+    </div>
+    <ul id="@ListId" class="dropdown-menu w-100 @(_isOpen ? "show" : null)" role="listbox">
+        @foreach (string option in Options)
+        {
+            bool isSelected = IsSelected(option);
+            <li>
+                <button type="button"
+                        class="dropdown-item @(isSelected ? "active" : null)"
+                        role="option"
+                        tabindex="-1"
+                        aria-selected="@(isSelected ? "true" : "false")"
+                        @onmousedown:preventDefault
+                        @onclick="() => SelectAsync(option)">
+                    @option
+                </button>
+            </li>
+        }
+    </ul>
+</div>
+
+@code {
+    private ElementReference _input;
+    private bool _isOpen;
+
+    [Parameter, EditorRequired]
+    public string Id { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Text { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> TextChanged { get; set; }
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<string> Options { get; set; } = [];
+
+    [Parameter]
+    public string? ErrorMessage { get; set; }
+
+    [Parameter]
+    public string? ToggleLabel { get; set; }
+
+    [Parameter]
+    public string? InputMode { get; set; }
+
+    private bool IsInvalid => !string.IsNullOrEmpty(ErrorMessage);
+
+    private string ListId => $"{Id}-options";
+
+    private string ErrorId => $"{Id}-error";
+
+    private bool IsSelected(string option)
+    {
+        return string.Equals(option, Text?.Trim(), StringComparison.CurrentCultureIgnoreCase);
+    }
+
+    private async Task OnInputChangedAsync(ChangeEventArgs args)
+    {
+        await TextChanged.InvokeAsync(args.Value?.ToString() ?? string.Empty);
+    }
+
+    private void OnKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            _isOpen = false;
+        }
+        else if (args.Key == "ArrowDown")
+        {
+            _isOpen = true;
+        }
+    }
+
+    private async Task ToggleAsync()
+    {
+        _isOpen = !_isOpen;
+        if (_isOpen)
+        {
+            await _input.FocusAsync();
+        }
+    }
+
+    private async Task SelectAsync(string option)
+    {
+        _isOpen = false;
+        await TextChanged.InvokeAsync(option);
+    }
+
+    private void Close()
+    {
+        _isOpen = false;
+    }
+}
