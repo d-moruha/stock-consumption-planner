@@ -1,3 +1,4 @@
+using AngleSharp.Dom;
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using StockConsumptionPlanner.App.Features.ConsumptionPlans;
@@ -216,6 +217,13 @@ public sealed class ConsumptionPlansPageTests : BunitContext
                 ["—", "—", "—"]
             ],
             FigureCells(page));
+        AssertBalanceBar(page.FindAll("tbody > tr")[0], "83.33%", null, "16.67%");
+        AssertBalanceBar(page.FindAll("tbody > tr")[1], null, "100%", null);
+        Assert.Null(page.FindAll("tbody > tr")[2].QuerySelector(".stock-split"));
+        string legend = CollapseWhitespace(page.Find(".stock-split-legend").TextContent);
+        Assert.Contains(
+            culture == PlannerCultures.Ukrainian ? "Понад залишок" : "Over stock",
+            legend);
 
         page.Find("#stockValueSortButton").Click();
         page.WaitForAssertion(() => AssertValueSort(
@@ -243,6 +251,30 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         Assert.Equal(
             documents,
             page.FindAll("tbody > tr > td:first-child").Select(td => td.TextContent.Trim()));
+    }
+
+    private static void AssertBalanceBar(
+        IElement row,
+        string? planned,
+        string? unplanned,
+        string? over)
+    {
+        AssertSegment(row, "stock-split-planned", planned);
+        AssertSegment(row, "stock-split-unplanned", unplanned);
+        AssertSegment(row, "stock-split-over", over);
+    }
+
+    private static void AssertSegment(IElement row, string className, string? width)
+    {
+        IElement? segment = row.QuerySelector("." + className);
+        if (width is null)
+        {
+            Assert.Null(segment);
+            return;
+        }
+
+        Assert.NotNull(segment);
+        Assert.Contains("width:" + width, segment.GetAttribute("style"));
     }
 
     private static List<string[]> FigureCells(IRenderedComponent<ConsumptionPlansPage> page)
