@@ -79,7 +79,9 @@ Persistence is configured via `Persistence:Provider` in `appsettings.json` or en
   - `Persistence:Provider`: `"Postgres"`
   - `ConnectionStrings:Postgres`: `"Host=postgres;Port=5432;Database=stock_planner;Username=postgres;Password=postgres"`
 
-The schema is created on startup with `EnsureCreated`, which does nothing if any table already exists. A database created by an older build (before consumption plans) must be deleted once — the SQLite `.db` file or the `sqlite_data` / `postgres_data` Docker volumes — so it is recreated with the new tables.
+The schema is created on startup with `EnsureCreated`; there are no migrations. A SHA-256 hash of the model's create script is stored in the `__PlannerSchemaVersion` table. When an existing database has a different (or no) stored hash — e.g. it was created by an older build — the app logs a warning, **drops the database (all data is deleted)** and recreates it from the current model.
+
+To run the PostgreSQL integration tests, set `PLANNER_TEST_POSTGRES` to a connection string of a server where the user may create databases (e.g. `Host=localhost;Port=5432;Username=postgres;Password=postgres`); otherwise they are skipped.
 
 ## Consumption Plan Configuration (`ConsumptionPlans`)
 
