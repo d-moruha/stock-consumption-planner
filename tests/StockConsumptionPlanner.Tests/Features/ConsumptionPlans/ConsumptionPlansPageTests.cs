@@ -12,41 +12,12 @@ namespace StockConsumptionPlanner.Tests.Features.ConsumptionPlans;
 
 public sealed class ConsumptionPlansPageTests : BunitContext
 {
-    private const string UkrainianNotice =
-        "Виправте період плану, щоб переглянути та створити плани.";
-
-    private const string EnglishNotice = "Correct the plan period to view and create plans.";
-
     private static readonly DateTimeOffset November10 = new(2026, 11, 10, 12, 0, 0, TimeSpan.Zero);
 
     public ConsumptionPlansPageTests()
     {
         Services.AddLocalization();
         JSInterop.Mode = JSRuntimeMode.Loose;
-    }
-
-    [Theory]
-    [InlineData(PlannerCultures.Ukrainian, UkrainianNotice)]
-    [InlineData(PlannerCultures.English, EnglishNotice)]
-    public async Task InvalidPeriod_HidesPlanningSheetUntilCorrected(string culture, string notice)
-    {
-        using CultureScope _ = new(culture);
-        await using ConsumptionPlanTestHost host = await StartAsync(November10);
-        await host.ImportAsync(Stock("0049000001", 10m));
-        IRenderedComponent<ConsumptionPlansPage> page = RenderPage(host);
-        page.WaitForElement("table");
-
-        page.Find("#planYearInput").Change("20x6");
-
-        Assert.Empty(page.FindAll("table"));
-        Assert.Equal(notice, page.Find(".alert-warning").TextContent);
-        Assert.True(page.Find(".btn.btn-primary.w-100").HasAttribute("disabled"));
-
-        page.Find("#planYearInput").Change("2027");
-
-        page.WaitForElement("table");
-        Assert.Empty(page.FindAll(".alert-warning"));
-        Assert.False(page.Find(".btn.btn-primary.w-100").HasAttribute("disabled"));
     }
 
     [Fact]
@@ -64,7 +35,11 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         Assert.All(
             page.FindAll("tbody > tr .btn-primary"),
             button => Assert.Equal("Створити план", button.TextContent.Trim()));
-        Assert.Contains("Заплановано на грудень 2026\u202Fр.", page.Find("thead").TextContent);
+        Assert.Empty(page.FindAll("#planYearInput"));
+        Assert.Empty(page.FindAll("#planMonthInput"));
+        Assert.Equal(
+            ["Документ", "Позиція", "Рік", "Матеріал", "Опис", "Залишок", "Плани", "Дії"],
+            page.FindAll("thead th").Select(th => th.TextContent.Trim()));
         Assert.All(
             page.FindAll("tbody .dropdown-toggle"),
             toggle => Assert.True(toggle.HasAttribute("disabled")));
@@ -100,7 +75,6 @@ public sealed class ConsumptionPlansPageTests : BunitContext
             ["грудень 2026\u202Fр.", "лютий 2027\u202Fр."],
             PlanPeriods(page)));
         Assert.Equal("Плани (2)", page.Find("tbody .dropdown-toggle").TextContent.Trim());
-        Assert.Equal("3", page.FindAll("tbody > tr")[0].Children[6].TextContent.Trim());
 
         page.Find("tbody .btn-primary").Click();
         Assert.Equal("2027", page.Find("#planDialogYearInput").GetAttribute("value"));

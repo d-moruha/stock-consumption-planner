@@ -71,9 +71,6 @@
   <data name="ShowMonths" xml:space="preserve">
     <value>Show months</value>
   </data>
-  <data name="PlanPeriodInvalid" xml:space="preserve">
-    <value>Correct the plan period to view and create plans.</value>
-  </data>
   <data name="PlanPeriodError_YearRequired" xml:space="preserve">
     <value>Enter a year.</value>
   </data>
@@ -98,11 +95,8 @@
   <data name="SearchPlaceholder" xml:space="preserve">
     <value>Material number, description, or document number</value>
   </data>
-  <data name="EditRulePrefix" xml:space="preserve">
-    <value>A plan can be changed for {0} days after it is created, and otherwise until</value>
-  </data>
-  <data name="EditRuleSuffix" xml:space="preserve">
-    <value>({0} days before {1}). Times are in {2}.</value>
+  <data name="EditRule" xml:space="preserve">
+    <value>A plan can be changed for {0} days after it is created, and otherwise while more than {1} days remain before its month starts. Times are in {2}.</value>
   </data>
   <data name="Loading" xml:space="preserve">
     <value>Loading…</value>
@@ -167,9 +161,6 @@
   <data name="Cancel" xml:space="preserve">
     <value>Cancel</value>
   </data>
-  <data name="ColumnPlannedFor" xml:space="preserve">
-    <value>Planned for {0}</value>
-  </data>
   <data name="ColumnPlans" xml:space="preserve">
     <value>Plans</value>
   </data>
@@ -216,7 +207,7 @@
     <value>Next</value>
   </data>
   <data name="LoadFailed" xml:space="preserve">
-    <value>Could not load plans for {0}.</value>
+    <value>Could not load plans.</value>
   </data>
   <data name="PlanSaved" xml:space="preserve">
     <value>Plan for {0} in {1} saved.</value>

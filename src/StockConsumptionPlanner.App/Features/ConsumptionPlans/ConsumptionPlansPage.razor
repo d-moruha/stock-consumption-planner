@@ -29,13 +29,8 @@
 
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
-        <div class="row g-3 align-items-start">
-            <div class="col-md-5">
-                <PlanPeriodPicker Period="_target"
-                                  CurrentYear="EditPolicy.CurrentMonth.Year"
-                                  PeriodChanged="OnPeriodChangedAsync" />
-            </div>
-            <div class="col-md-5">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-6">
                 <label class="form-label fw-semibold" for="planSearchInput">@L["Search"]</label>
                 <input id="planSearchInput"
                        type="search"
@@ -44,32 +39,21 @@
                        @bind="_search" />
             </div>
             <div class="col-md-2">
-                <span class="form-label d-none d-md-block" aria-hidden="true">&nbsp;</span>
-                <button type="button"
-                        class="btn btn-primary w-100"
-                        disabled="@(_isBusy || !_isPeriodValid)"
-                        @onclick="SearchAsync">
-                    @L["Search"]
-                </button>
+                <button type="button" class="btn btn-primary w-100" disabled="@_isBusy" @onclick="SearchAsync">@L["Search"]</button>
             </div>
         </div>
 
-        @if (_sheet is not null && _isPeriodValid)
-        {
-            <div class="small text-muted mt-3">
-                @L["EditRulePrefix", PlanOptions.EditDaysAfterCreation]
-                <strong>@FormatLocal(_sheet.LockBeforeMonthUtc)</strong>
-                @L["EditRuleSuffix", PlanOptions.LockDaysBeforeTargetMonth, ConsumptionPlanDisplay.FormatMonth(_target), EditPolicy.TimeZone.Id]
-            </div>
-        }
+        <div class="small text-muted mt-3">
+            @L[
+                "EditRule",
+                PlanOptions.EditDaysAfterCreation,
+                PlanOptions.LockDaysBeforeTargetMonth,
+                EditPolicy.TimeZone.Id]
+        </div>
     </div>
 </div>
 
-@if (!_isPeriodValid)
-{
-    <div class="alert alert-warning" role="status">@L["PlanPeriodInvalid"]</div>
-}
-else if (_sheet is null)
+@if (_sheet is null)
 {
     <p class="text-muted">@L["Loading"]</p>
 }
@@ -98,9 +82,6 @@ else
                         <th>@L["ColumnMaterial"]</th>
                         <th>@L["ColumnDescription"]</th>
                         <th class="text-end">@L["ColumnStock"]</th>
-                        <th class="text-end">
-                            @L["ColumnPlannedFor", ConsumptionPlanDisplay.FormatMonth(_target)]
-                        </th>
                         <th>@L["ColumnPlans"]</th>
                         <th class="text-end">@L["ColumnActions"]</th>
                     </tr>
@@ -118,13 +99,6 @@ else
                             <td>@row.MaterialNumber</td>
                             <td class="text-truncate" style="max-width: 18rem;" title="@row.MaterialDescription">@row.MaterialDescription</td>
                             <td class="text-end">@FormatQuantity(row.CurrentStockQuantity)</td>
-                            <td class="text-end">
-                                @(row.Plan is null ? "—" : FormatQuantity(row.Plan.PlannedQuantity))
-                                @if (row.Plan?.ExceedsStock == true)
-                                {
-                                    <span class="@ExceedsStockBadge ms-1">@L["ExceedsStock"]</span>
-                                }
-                            </td>
                             <td>
                                 <button type="button"
                                         class="btn btn-sm btn-outline-secondary dropdown-toggle"
@@ -147,7 +121,7 @@ else
                         @if (isExpanded)
                         {
                             <tr @key="plansId" id="@plansId">
-                                <td colspan="9" class="bg-body-tertiary px-4 py-2">
+                                <td colspan="8" class="bg-body-tertiary px-4 py-2">
                                     @RenderPlans(row)
                                 </td>
                             </tr>
@@ -180,7 +154,6 @@ else
 }
 
 @code {
-    private PlanTargetMonth _target;
     private string? _search;
     private int _page = 1;
     private PlanningSheetDto? _sheet;
@@ -190,7 +163,6 @@ else
     private bool _isBusy;
     private string? _statusMessage;
     private bool _isErrorStatus;
-    private bool _isPeriodValid = true;
 
     private const string ExceedsStockBadge =
         "badge bg-warning-subtle text-warning-emphasis border border-warning-subtle";
@@ -199,7 +171,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        _target = EditPolicy.CurrentMonth.Next();
         await LoadAsync();
     }
 
@@ -217,7 +188,7 @@ else
                 @foreach (ConsumptionPlanDto plan in row.Plans)
                 {
                     <tr @key="plan.Id">
-                        <td class="bg-transparent @(IsSelected(plan) ? "fw-semibold" : null)">
+                        <td class="bg-transparent">
                             @FormatPeriod(plan)
                         </td>
                         <td class="bg-transparent">
@@ -251,16 +222,15 @@ else
 
     private async Task LoadAsync()
     {
-        if (!_isPeriodValid)
-        {
-            return;
-        }
-
         _isBusy = true;
         try
         {
             ConsumptionPlanResult<PlanningSheetDto> result = await PlanningSheetHandler.HandleAsync(
-                new PlanningSheetQuery(_target.Year, _target.Month, _search, _page));
+                new PlanningSheetQuery(
+                    EarliestCreatePeriod.Year,
+                    EarliestCreatePeriod.Month,
+                    _search,
+                    _page));
             if (result.IsSuccess)
             {
                 _sheet = result.Value;
@@ -268,32 +238,13 @@ else
             else
             {
                 _isErrorStatus = true;
-                _statusMessage = L["LoadFailed", ConsumptionPlanDisplay.FormatMonth(_target)];
+                _statusMessage = L["LoadFailed"];
             }
         }
         finally
         {
             _isBusy = false;
         }
-    }
-
-    private async Task OnPeriodChangedAsync(PlanTargetMonth? period)
-    {
-        if (period is null)
-        {
-            _isPeriodValid = false;
-            return;
-        }
-
-        if (_isPeriodValid && period.Value == _target)
-        {
-            return;
-        }
-
-        _target = period.Value;
-        _isPeriodValid = true;
-        _page = 1;
-        await LoadAsync();
     }
 
     private async Task SearchAsync()
@@ -335,9 +286,7 @@ else
             return PlanPeriod(plan);
         }
 
-        PlanTargetMonth period = _isPeriodValid && _target.CompareTo(EarliestCreatePeriod) > 0
-            ? _target
-            : EarliestCreatePeriod;
+        PlanTargetMonth period = EarliestCreatePeriod;
         while (row.Plans.Any(p => p.TargetYear == period.Year && p.TargetMonth == period.Month))
         {
             period = period.Next();
@@ -401,8 +350,6 @@ else
 
     private static StockDocumentKey PlanKey(ConsumptionPlanDto plan) =>
         new(plan.MaterialDocumentYear, plan.MaterialDocumentNumber, plan.MaterialDocumentItem);
-
-    private bool IsSelected(ConsumptionPlanDto plan) => PlanPeriod(plan) == _target;
 
     private static PlanTargetMonth PlanPeriod(ConsumptionPlanDto plan) =>
         new(plan.TargetYear, plan.TargetMonth);

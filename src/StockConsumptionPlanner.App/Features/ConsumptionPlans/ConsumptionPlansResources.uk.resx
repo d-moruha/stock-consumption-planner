@@ -71,9 +71,6 @@
   <data name="ShowMonths" xml:space="preserve">
     <value>Показати місяці</value>
   </data>
-  <data name="PlanPeriodInvalid" xml:space="preserve">
-    <value>Виправте період плану, щоб переглянути та створити плани.</value>
-  </data>
   <data name="PlanPeriodError_YearRequired" xml:space="preserve">
     <value>Введіть рік.</value>
   </data>
@@ -98,11 +95,8 @@
   <data name="SearchPlaceholder" xml:space="preserve">
     <value>Номер матеріалу, опис або номер документа</value>
   </data>
-  <data name="EditRulePrefix" xml:space="preserve">
-    <value>План можна змінювати протягом {0} дн. після створення, а також до</value>
-  </data>
-  <data name="EditRuleSuffix" xml:space="preserve">
-    <value>(за {0} дн. до початку місяця «{1}»). Час указано для часового поясу {2}.</value>
+  <data name="EditRule" xml:space="preserve">
+    <value>План можна змінювати протягом {0} дн. після створення, а також доти, доки до початку його місяця лишається понад {1} дн. Час указано для часового поясу {2}.</value>
   </data>
   <data name="Loading" xml:space="preserve">
     <value>Завантаження…</value>
@@ -167,9 +161,6 @@
   <data name="Cancel" xml:space="preserve">
     <value>Скасувати</value>
   </data>
-  <data name="ColumnPlannedFor" xml:space="preserve">
-    <value>Заплановано на {0}</value>
-  </data>
   <data name="ColumnPlans" xml:space="preserve">
     <value>Плани</value>
   </data>
@@ -216,7 +207,7 @@
     <value>Далі</value>
   </data>
   <data name="LoadFailed" xml:space="preserve">
-    <value>Не вдалося завантажити плани на {0}.</value>
+    <value>Не вдалося завантажити плани.</value>
   </data>
   <data name="PlanSaved" xml:space="preserve">
     <value>План для запису {0} на {1} збережено.</value>
