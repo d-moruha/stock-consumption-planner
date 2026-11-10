@@ -126,6 +126,7 @@ public sealed class ConsumptionPlansPageTests : BunitContext
             (updated.TargetYear, updated.TargetMonth, updated.PlannedQuantity));
 
         page.Find("#plans-2 .btn-outline-danger").Click();
+        page.Find(".modal-footer .btn-danger").Click();
 
         page.WaitForAssertion(() => Assert.Empty(page.FindAll("#plans-2")));
         Assert.Empty(await PlansAsync(host));

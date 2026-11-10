@@ -1,0 +1,104 @@
+@inject IStringLocalizer<ConsumptionPlansResources> L
+
+<div class="modal d-block"
+     tabindex="-1"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="deletePlanDialogTitle"
+     aria-describedby="deletePlanDialogMessage"
+     @onclick="CloseAsync"
+     @onkeydown="OnKeyDownAsync">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="deletePlanDialogTitle">
+                    @L["DeletePlanDialogTitle"]
+                </h2>
+                <button type="button"
+                        class="btn-close"
+                        aria-label="@L["Close"]"
+                        @onclick="CloseAsync"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0" id="deletePlanDialogMessage">
+                    @L[
+                        "DeletePlanDialogMessage",
+                        PlanKey.ToString(),
+                        ConsumptionPlanDisplay.FormatMonth(Plan.TargetYear, Plan.TargetMonth),
+                        ConsumptionPlanDisplay.FormatQuantity(Plan.PlannedQuantity)]
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button @ref="_cancelButton"
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        @onclick="CloseAsync">
+                    @L["Cancel"]
+                </button>
+                <button type="button"
+                        class="btn btn-danger"
+                        disabled="@_isDeleting"
+                        @onclick="ConfirmAsync">
+                    @L["DeletePlanConfirm"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop show"></div>
+
+@code {
+    private ElementReference _cancelButton;
+    private bool _isDeleting;
+
+    [Parameter, EditorRequired]
+    public ConsumptionPlanDto Plan { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnConfirm { get; set; }
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    private StockDocumentKey PlanKey =>
+        new(Plan.MaterialDocumentYear, Plan.MaterialDocumentNumber, Plan.MaterialDocumentItem);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await _cancelButton.FocusAsync();
+        }
+    }
+
+    private async Task ConfirmAsync()
+    {
+        _isDeleting = true;
+        try
+        {
+            await OnConfirm.InvokeAsync();
+        }
+        finally
+        {
+            _isDeleting = false;
+        }
+    }
+
+    private async Task OnKeyDownAsync(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            await CloseAsync();
+        }
+    }
+
+    private async Task CloseAsync()
+    {
+        if (_isDeleting)
+        {
+            return;
+        }
+
+        await OnClose.InvokeAsync();
+    }
+}

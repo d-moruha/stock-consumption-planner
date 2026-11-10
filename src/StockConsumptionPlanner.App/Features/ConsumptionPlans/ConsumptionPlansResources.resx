@@ -197,6 +197,15 @@
   <data name="Delete" xml:space="preserve">
     <value>Delete</value>
   </data>
+  <data name="DeletePlanDialogTitle" xml:space="preserve">
+    <value>Delete the consumption plan?</value>
+  </data>
+  <data name="DeletePlanDialogMessage" xml:space="preserve">
+    <value>The plan for stock record {0} for {1} ({2} planned) will be permanently deleted.</value>
+  </data>
+  <data name="DeletePlanConfirm" xml:space="preserve">
+    <value>Delete plan</value>
+  </data>
   <data name="RowsRange" xml:space="preserve">
     <value>Rows {0}–{1} of {2}</value>
   </data>

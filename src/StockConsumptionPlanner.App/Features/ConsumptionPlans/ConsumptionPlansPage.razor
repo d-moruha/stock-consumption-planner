@@ -153,6 +153,13 @@ else
                 OnClose="CloseDialog" />
 }
 
+@if (_deletePlan is not null)
+{
+    <DeletePlanDialog Plan="_deletePlan"
+                      OnConfirm="ConfirmDeleteAsync"
+                      OnClose="() => _deletePlan = null" />
+}
+
 @code {
     private string? _search;
     private int _page = 1;
@@ -160,6 +167,7 @@ else
     private readonly HashSet<StockDocumentKey> _expanded = new();
     private PlanningSheetRowDto? _dialogRow;
     private ConsumptionPlanDto? _dialogPlan;
+    private ConsumptionPlanDto? _deletePlan;
     private bool _isBusy;
     private string? _statusMessage;
     private bool _isErrorStatus;
@@ -211,7 +219,7 @@ else
                             <button type="button"
                                     class="btn btn-sm btn-outline-danger ms-1"
                                     disabled="@(!plan.CanDelete || _isBusy)"
-                                    @onclick="() => DeleteAsync(plan)">
+                                    @onclick="() => _deletePlan = plan">
                                 @L["Delete"]
                             </button>
                         </td>
@@ -310,6 +318,15 @@ else
         _isErrorStatus = false;
         _statusMessage = L["PlanSaved", key.ToString(), FormatPeriod(plan)];
         await LoadAsync();
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_deletePlan is { } plan)
+        {
+            await DeleteAsync(plan);
+            _deletePlan = null;
+        }
     }
 
     private async Task DeleteAsync(ConsumptionPlanDto plan)

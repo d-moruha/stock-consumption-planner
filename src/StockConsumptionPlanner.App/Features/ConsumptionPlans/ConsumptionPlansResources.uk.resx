@@ -197,6 +197,15 @@
   <data name="Delete" xml:space="preserve">
     <value>Видалити</value>
   </data>
+  <data name="DeletePlanDialogTitle" xml:space="preserve">
+    <value>Видалити план споживання?</value>
+  </data>
+  <data name="DeletePlanDialogMessage" xml:space="preserve">
+    <value>План для запису {0} на {1} (заплановано: {2}) буде остаточно видалено.</value>
+  </data>
+  <data name="DeletePlanConfirm" xml:space="preserve">
+    <value>Видалити план</value>
+  </data>
   <data name="RowsRange" xml:space="preserve">
     <value>Рядки {0}–{1} з {2}</value>
   </data>
