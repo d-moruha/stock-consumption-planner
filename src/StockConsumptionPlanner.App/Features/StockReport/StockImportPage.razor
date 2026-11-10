@@ -114,7 +114,7 @@
 
 @if (_inspection is not null)
 {
-    <div class="card border-0 shadow-sm mb-4">
+    <div class="card border-0 shadow-sm mb-4 scroll-table-card">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
             <span class="fw-semibold">@L["Step2Title", StockReportFieldCatalog.All.Count]</span>
             <span class="small text-muted">
@@ -225,7 +225,7 @@
         </div>
         <div class="table-responsive" style="max-height: 240px;">
             <table class="table table-sm table-striped align-middle mb-0">
-                <thead>
+                <thead class="sticky-top">
                     <tr>
                         <th>@L["RowNumber"]</th>
                         <th>@L["Field"]</th>
@@ -249,7 +249,7 @@
     </div>
 }
 
-<div class="card border-0 shadow-sm">
+<div class="card border-0 shadow-sm scroll-table-card">
     <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div>
             <span class="fw-semibold">@L["Step3Title"]</span>
@@ -311,7 +311,7 @@
             </div>
         </div>
 
-        <div class="table-responsive" style="max-height: 520px;">
+        <div class="table-responsive">
             <table class="table table-sm table-hover align-middle mb-0">
                 <thead class="table-light sticky-top">
                     <tr>
