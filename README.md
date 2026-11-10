@@ -116,7 +116,7 @@ Columns of the SAP stock report (a custom MB51-based transaction), in export ord
 | `ClientLevelDeletionFlag` | МВ на рівні мандата | `MARA-LVORM` | `bool` |  |
 | `PlantLevelDeletionFlag` | МВ на рівні заводу | `MARC-LVORM` | `bool` |  |
 | `StockCreationDate` | Дата утворення запасу | `custom` | `date` |  |
-| `StockType` | Тип запасу | `LBBSA_SID / INSMK` | `string` |  |
+| `StockType` | Тип запасу | `INSMK` (`F`/`X`/`S`, plus `T` in transit) | `string` |  |
 | `StockTypeDescription` | Опис типу запасу | `stock type text` | `string` |  |
 | `PurchaseOrder` | Документ закупівлі | `EBELN` | `string` |  |
 | `PurchaseOrderItem` | Позиція | `EBELP` | `string` |  |

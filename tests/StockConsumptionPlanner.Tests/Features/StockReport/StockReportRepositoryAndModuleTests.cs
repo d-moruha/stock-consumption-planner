@@ -146,7 +146,7 @@ public sealed class StockReportRepositoryAndModuleTests
                 ClientLevelDeletionFlag = true,
                 PlantLevelDeletionFlag = true,
                 StockCreationDate = new DateOnly(2026, 10, 24),
-                StockType = "01",
+                StockType = "F",
                 StockTypeDescription = "Вільний для використання",
                 PurchaseOrder = "4500000123",
                 PurchaseOrderItem = "00010",

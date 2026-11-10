@@ -35,9 +35,10 @@ public static class StockReportWorkbookGenerator
 
     private static readonly (string Code, string Description)[] StockTypes =
     [
-        ("01", "Вільний для використання"),
-        ("02", "Контроль якості"),
-        ("07", "Блокований")
+        ("F", "Вільний для використання"),
+        ("X", "Контроль якості"),
+        ("S", "Блокований запас"),
+        ("T", "Запас у дорозі")
     ];
 
     private static readonly string[] VendorNames =

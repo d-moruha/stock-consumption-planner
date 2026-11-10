@@ -40,7 +40,7 @@ public sealed class SapStockReportImportTests
         Assert.True(item.ClientLevelDeletionFlag);
         Assert.False(item.PlantLevelDeletionFlag);
         Assert.Equal(new DateOnly(2026, 10, 24), item.StockCreationDate);
-        Assert.Equal("01", item.StockType);
+        Assert.Equal("F", item.StockType);
         Assert.Equal("Вільний для використання", item.StockTypeDescription);
         Assert.Equal("4500000123", item.PurchaseOrder);
         Assert.Equal("00010", item.PurchaseOrderItem);
@@ -132,7 +132,7 @@ public sealed class SapStockReportImportTests
         [
             "4900001234", "0001", 2026, "UA-01-0001.01", "0000012345", "000000000010000123",
             "Труба сталева ДУ-50", "1000", "101", "1 234,500", "М", "15 400,75", "UAH", "Q", "Z1", "",
-            "X", "", "24.10.2026", "01", "Вільний для використання", "4500000123", "00010", "3700001234",
+            "X", "", "24.10.2026", "F", "Вільний для використання", "4500000123", "00010", "3700001234",
             "00020", new DateTime(2026, 10, 20).ToOADate(), "0000100234", "ТОВ «Металопрокат»"
         ];
 

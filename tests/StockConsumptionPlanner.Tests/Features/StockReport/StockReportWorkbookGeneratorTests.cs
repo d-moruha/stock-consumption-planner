@@ -62,6 +62,7 @@ public sealed class StockReportWorkbookGeneratorTests
             Assert.Matches("^[0-9]{10}$", item.Vendor!);
             Assert.Equal(item.MaterialDocumentYear, item.GoodsReceiptDate!.Value.Year);
             Assert.Equal(item.SpecialStockIndicator == "Q", item.WbsElement is not null);
+            Assert.Contains(item.StockType, new[] { "F", "X", "S", "T" });
         }
     }
 
