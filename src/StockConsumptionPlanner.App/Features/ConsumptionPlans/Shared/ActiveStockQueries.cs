@@ -5,7 +5,7 @@ using StockConsumptionPlanner.App.Persistence;
 
 namespace StockConsumptionPlanner.App.Features.ConsumptionPlans.Shared;
 
-public sealed record ActiveStockRow(decimal MaterialQuantity, string MaterialNumber, string MaterialDescription);
+public sealed record ActiveStockRow(decimal TotalStockQuantity, string MaterialNumber, string MaterialDescription);
 
 public static class ActiveStockQueries
 {
@@ -28,7 +28,7 @@ public static class ActiveStockQueries
                         i.MaterialDocumentNumber == key.MaterialDocumentNumber &&
                         i.MaterialDocumentItem == key.MaterialDocumentItem)
             .OrderBy(i => i.Id)
-            .Select(i => new ActiveStockRow(i.MaterialQuantity, i.MaterialNumber, i.MaterialDescription))
+            .Select(i => new ActiveStockRow(i.TotalStockQuantity, i.MaterialNumber, i.MaterialDescription))
             .Take(2)
             .ToListAsync(cancellationToken);
 
@@ -46,10 +46,10 @@ public static class ActiveStockQueries
 
     public static ConsumptionPlanError? EnsureWithinStock(decimal plannedQuantity, ActiveStockRow stock)
     {
-        return plannedQuantity > stock.MaterialQuantity
+        return plannedQuantity > stock.TotalStockQuantity
             ? new ConsumptionPlanError(
                 ConsumptionPlanErrorCode.QuantityExceedsStock,
-                $"Planned quantity {FormatQuantity(plannedQuantity)} exceeds the current stock quantity {FormatQuantity(stock.MaterialQuantity)}.")
+                $"Planned quantity {FormatQuantity(plannedQuantity)} exceeds the current stock quantity {FormatQuantity(stock.TotalStockQuantity)}.")
             : null;
     }
 

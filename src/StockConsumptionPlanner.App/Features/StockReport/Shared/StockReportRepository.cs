@@ -79,19 +79,7 @@ public sealed class EfCoreStockReportRepository(
                     List<StockReportItemEntity> chunkEntities = new(chunk.Length);
                     foreach (StockReportItem item in chunk)
                     {
-                        chunkEntities.Add(new StockReportItemEntity
-                        {
-                            BatchId = newBatchId,
-                            SourceRowNumber = item.SourceRowNumber,
-                            MaterialDocumentNumber = item.MaterialDocumentNumber,
-                            MaterialDocumentItem = item.MaterialDocumentItem,
-                            MaterialDocumentYear = item.MaterialDocumentYear,
-                            MaterialNumber = item.MaterialNumber,
-                            MaterialDescription = item.MaterialDescription,
-                            MaterialQuantity = item.MaterialQuantity,
-                            MaterialValue = item.MaterialValue,
-                            LifecycleStatus = StockLifecycleStatus.Staging
-                        });
+                        chunkEntities.Add(ToEntity(item, newBatchId));
                     }
 
                     dbContext.StockReportItems.AddRange(chunkEntities);
@@ -179,22 +167,14 @@ public sealed class EfCoreStockReportRepository(
             return null;
         }
 
-        List<StockReportItem> items = await dbContext.StockReportItems
+        List<StockReportItemEntity> itemEntities = await dbContext.StockReportItems
             .AsNoTracking()
             .Where(i => i.BatchId == batchEntity.Id && i.LifecycleStatus == StockLifecycleStatus.Active)
             .OrderBy(i => i.SourceRowNumber)
             .ThenBy(i => i.Id)
-            .Select(i => new StockReportItem(
-                i.SourceRowNumber,
-                i.MaterialDocumentNumber,
-                i.MaterialDocumentItem,
-                i.MaterialDocumentYear,
-                i.MaterialNumber,
-                i.MaterialDescription,
-                i.MaterialQuantity,
-                i.MaterialValue,
-                i.LifecycleStatus))
             .ToListAsync(cancellationToken);
+
+        List<StockReportItem> items = itemEntities.Select(ToDomain).ToList();
 
         return new StockReportBatch(
             batchEntity.SourceFileName,
@@ -209,5 +189,80 @@ public sealed class EfCoreStockReportRepository(
         await using PlannerDbContext dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         await dbContext.StockReportBatches.ExecuteDeleteAsync(cancellationToken);
+    }
+
+    private static StockReportItemEntity ToEntity(StockReportItem item, int batchId)
+    {
+        return new StockReportItemEntity
+        {
+            BatchId = batchId,
+            SourceRowNumber = item.SourceRowNumber,
+            MaterialDocumentNumber = item.MaterialDocumentNumber,
+            MaterialDocumentItem = item.MaterialDocumentItem,
+            MaterialDocumentYear = item.MaterialDocumentYear,
+            WbsElement = item.WbsElement,
+            BatchNumber = item.BatchNumber,
+            MaterialNumber = item.MaterialNumber,
+            MaterialDescription = item.MaterialDescription,
+            StorageLocation = item.StorageLocation,
+            MovementType = item.MovementType,
+            TotalStockQuantity = item.TotalStockQuantity,
+            BaseUnitOfMeasure = item.BaseUnitOfMeasure,
+            TotalStockValue = item.TotalStockValue,
+            LocalCurrency = item.LocalCurrency,
+            SpecialStockIndicator = item.SpecialStockIndicator,
+            CrossPlantMaterialStatus = item.CrossPlantMaterialStatus,
+            PlantSpecificMaterialStatus = item.PlantSpecificMaterialStatus,
+            ClientLevelDeletionFlag = item.ClientLevelDeletionFlag,
+            PlantLevelDeletionFlag = item.PlantLevelDeletionFlag,
+            StockCreationDate = item.StockCreationDate,
+            StockType = item.StockType,
+            StockTypeDescription = item.StockTypeDescription,
+            PurchaseOrder = item.PurchaseOrder,
+            PurchaseOrderItem = item.PurchaseOrderItem,
+            PurchaseRequisition = item.PurchaseRequisition,
+            PurchaseRequisitionItem = item.PurchaseRequisitionItem,
+            GoodsReceiptDate = item.GoodsReceiptDate,
+            Vendor = item.Vendor,
+            VendorName = item.VendorName,
+            LifecycleStatus = StockLifecycleStatus.Staging
+        };
+    }
+
+    private static StockReportItem ToDomain(StockReportItemEntity entity)
+    {
+        return new StockReportItem(
+            entity.SourceRowNumber,
+            entity.MaterialDocumentNumber,
+            entity.MaterialDocumentItem,
+            entity.MaterialDocumentYear,
+            entity.MaterialNumber,
+            entity.MaterialDescription,
+            entity.TotalStockQuantity,
+            entity.TotalStockValue,
+            entity.LifecycleStatus)
+        {
+            WbsElement = entity.WbsElement,
+            BatchNumber = entity.BatchNumber,
+            StorageLocation = entity.StorageLocation,
+            MovementType = entity.MovementType,
+            BaseUnitOfMeasure = entity.BaseUnitOfMeasure,
+            LocalCurrency = entity.LocalCurrency,
+            SpecialStockIndicator = entity.SpecialStockIndicator,
+            CrossPlantMaterialStatus = entity.CrossPlantMaterialStatus,
+            PlantSpecificMaterialStatus = entity.PlantSpecificMaterialStatus,
+            ClientLevelDeletionFlag = entity.ClientLevelDeletionFlag,
+            PlantLevelDeletionFlag = entity.PlantLevelDeletionFlag,
+            StockCreationDate = entity.StockCreationDate,
+            StockType = entity.StockType,
+            StockTypeDescription = entity.StockTypeDescription,
+            PurchaseOrder = entity.PurchaseOrder,
+            PurchaseOrderItem = entity.PurchaseOrderItem,
+            PurchaseRequisition = entity.PurchaseRequisition,
+            PurchaseRequisitionItem = entity.PurchaseRequisitionItem,
+            GoodsReceiptDate = entity.GoodsReceiptDate,
+            Vendor = entity.Vendor,
+            VendorName = entity.VendorName
+        };
     }
 }

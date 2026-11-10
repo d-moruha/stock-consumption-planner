@@ -14,7 +14,7 @@ public sealed class OpenXmlStockReportServiceTests
     private readonly ImportStockReportHandler _parser = new();
 
     [Fact]
-    public void Inspect_UkrainianHeadersWithCustomHeaderRow_AutoSuggestsAllSevenFields()
+    public void Inspect_UkrainianHeadersWithCustomHeaderRow_AutoSuggestsRequiredFields()
     {
         using MemoryStream stream = CreateUkrainianWorkbookWithPreamble();
 
@@ -37,8 +37,8 @@ public sealed class OpenXmlStockReportServiceTests
         Assert.Equal(4, inspection.SuggestedMapping[StockReportField.MaterialDocumentYear]);
         Assert.Equal(6, inspection.SuggestedMapping[StockReportField.MaterialNumber]);
         Assert.Equal(7, inspection.SuggestedMapping[StockReportField.MaterialDescription]);
-        Assert.Equal(8, inspection.SuggestedMapping[StockReportField.MaterialQuantity]);
-        Assert.Equal(9, inspection.SuggestedMapping[StockReportField.MaterialValue]);
+        Assert.Equal(8, inspection.SuggestedMapping[StockReportField.TotalStockQuantity]);
+        Assert.Equal(9, inspection.SuggestedMapping[StockReportField.TotalStockValue]);
     }
 
     [Fact]
@@ -55,8 +55,8 @@ public sealed class OpenXmlStockReportServiceTests
                     (3, "MaterialDccoumentYear"),
                     (4, "MaterialNumber"),
                     (5, "MaterialDescription"),
-                    (6, "MaterialQuantity"),
-                    (7, "MaterialValue")
+                    (6, "TotalStockQuantity"),
+                    (7, "TotalStockValue")
                 ],
                 [2] =
                 [
@@ -92,8 +92,8 @@ public sealed class OpenXmlStockReportServiceTests
                 [StockReportField.MaterialDocumentYear] = 4,
                 [StockReportField.MaterialNumber] = 6,
                 [StockReportField.MaterialDescription] = 7,
-                [StockReportField.MaterialQuantity] = 8,
-                [StockReportField.MaterialValue] = 9
+                [StockReportField.TotalStockQuantity] = 8,
+                [StockReportField.TotalStockValue] = 9
             }
         };
 
@@ -115,8 +115,11 @@ public sealed class OpenXmlStockReportServiceTests
         Assert.Equal(2026, first.MaterialDocumentYear);
         Assert.Equal("000000105500", first.MaterialNumber);
         Assert.Equal("Труба сталева ДУ-50", first.MaterialDescription);
-        Assert.Equal(12.500m, first.MaterialQuantity);
-        Assert.Equal(15400.75m, first.MaterialValue);
+        Assert.Equal(12.500m, first.TotalStockQuantity);
+        Assert.Equal(15400.75m, first.TotalStockValue);
+        Assert.Null(first.WbsElement);
+        Assert.Null(first.PurchaseOrderItem);
+        Assert.False(first.ClientLevelDeletionFlag);
 
         StockReportItemDto second = result.Items[1];
         Assert.Equal(6, second.SourceRowNumber);
@@ -125,8 +128,8 @@ public sealed class OpenXmlStockReportServiceTests
         Assert.Equal(2025, second.MaterialDocumentYear);
         Assert.Equal("000000208800", second.MaterialNumber);
         Assert.Equal("Фланець плоский ПН16", second.MaterialDescription);
-        Assert.Equal(3.250m, second.MaterialQuantity);
-        Assert.Equal(4599.25m, second.MaterialValue);
+        Assert.Equal(3.250m, second.TotalStockQuantity);
+        Assert.Equal(4599.25m, second.TotalStockValue);
 
         Assert.Equal(15.750m, result.TotalQuantity);
         Assert.Equal(20000.00m, result.TotalValue);
@@ -146,8 +149,8 @@ public sealed class OpenXmlStockReportServiceTests
                     (3, "MaterialDocumentYear"),
                     (4, "MaterialNumber"),
                     (5, "MaterialDescription"),
-                    (6, "MaterialQuantity"),
-                    (7, "MaterialValue")
+                    (6, "TotalStockQuantity"),
+                    (7, "TotalStockValue")
                 ],
                 [2] =
                 [
@@ -182,8 +185,8 @@ public sealed class OpenXmlStockReportServiceTests
                 [StockReportField.MaterialDocumentYear] = 3,
                 [StockReportField.MaterialNumber] = 4,
                 [StockReportField.MaterialDescription] = 5,
-                [StockReportField.MaterialQuantity] = 6,
-                [StockReportField.MaterialValue] = 7
+                [StockReportField.TotalStockQuantity] = 6,
+                [StockReportField.TotalStockValue] = 7
             }
         };
 

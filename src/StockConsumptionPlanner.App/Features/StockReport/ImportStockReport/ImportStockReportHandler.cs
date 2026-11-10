@@ -64,95 +64,22 @@ public sealed class ImportStockReportHandler : IStockReportExcelParser
             }
 
             totalRowsProcessed++;
-            int errorCountBeforeRow = errors.Count;
+            StockReportRowReader row = new(worksheet, rowNumber, mapping.FieldColumnMap);
+            StockReportItemDto item = ReadItem(row);
 
-            string docNumber = worksheet.GetCellString(
-                rowNumber,
-                mapping.FieldColumnMap[StockReportField.MaterialDocumentNumber]);
-
-            string docItem = worksheet.GetCellString(
-                rowNumber,
-                mapping.FieldColumnMap[StockReportField.MaterialDocumentItem]);
-
-            OpenXmlCellData? yearCell = worksheet.GetCell(
-                rowNumber,
-                mapping.FieldColumnMap[StockReportField.MaterialDocumentYear]);
-            if (!TryParseYear(yearCell, out int docYear, out string? rawYear))
+            if (row.Errors.Count == 0)
             {
-                errors.Add(new StockReportRowErrorDto(
-                    rowNumber,
-                    nameof(StockReportField.MaterialDocumentYear),
-                    rawYear,
-                    $"Invalid MaterialDocumentYear '{rawYear}'. Expected a 4-digit year."));
+                items.Add(item);
             }
-
-            string materialNumber = worksheet.GetCellString(
-                rowNumber,
-                mapping.FieldColumnMap[StockReportField.MaterialNumber]);
-
-            string materialDescription = worksheet.GetCellString(
-                rowNumber,
-                mapping.FieldColumnMap[StockReportField.MaterialDescription]);
-
-            if (string.IsNullOrWhiteSpace(docNumber))
+            else
             {
-                errors.Add(new StockReportRowErrorDto(
-                    rowNumber,
-                    nameof(StockReportField.MaterialDocumentNumber),
-                    docNumber,
-                    "MaterialDocumentNumber is required."));
-            }
-
-            if (string.IsNullOrWhiteSpace(materialNumber))
-            {
-                errors.Add(new StockReportRowErrorDto(
-                    rowNumber,
-                    nameof(StockReportField.MaterialNumber),
-                    materialNumber,
-                    "MaterialNumber is required."));
-            }
-
-            OpenXmlCellData? qtyCell = worksheet.GetCell(
-                rowNumber,
-                mapping.FieldColumnMap[StockReportField.MaterialQuantity]);
-            if (!TryParseDecimal(qtyCell, out decimal quantity, out string? rawQty))
-            {
-                errors.Add(new StockReportRowErrorDto(
-                    rowNumber,
-                    nameof(StockReportField.MaterialQuantity),
-                    rawQty,
-                    $"Invalid MaterialQuantity '{rawQty}'. Expected a valid decimal number."));
-            }
-
-            OpenXmlCellData? valCell = worksheet.GetCell(
-                rowNumber,
-                mapping.FieldColumnMap[StockReportField.MaterialValue]);
-            if (!TryParseDecimal(valCell, out decimal value, out string? rawVal))
-            {
-                errors.Add(new StockReportRowErrorDto(
-                    rowNumber,
-                    nameof(StockReportField.MaterialValue),
-                    rawVal,
-                    $"Invalid MaterialValue '{rawVal}'. Expected a valid decimal number."));
-            }
-
-            if (errors.Count == errorCountBeforeRow)
-            {
-                items.Add(new StockReportItemDto(
-                    rowNumber,
-                    docNumber,
-                    docItem,
-                    docYear,
-                    materialNumber,
-                    materialDescription,
-                    quantity,
-                    value));
+                errors.AddRange(row.Errors);
             }
         }
 
         int errorRowCount = errors.Select(e => e.RowNumber).Distinct().Count();
-        decimal totalQuantity = items.Sum(i => i.MaterialQuantity);
-        decimal totalValue = items.Sum(i => i.MaterialValue);
+        decimal totalQuantity = items.Sum(i => i.TotalStockQuantity);
+        decimal totalValue = items.Sum(i => i.TotalStockValue);
 
         return new StockReportImportResultDto(
             fileName,
@@ -175,13 +102,57 @@ public sealed class ImportStockReportHandler : IStockReportExcelParser
             throw new ArgumentException("FieldColumnMap must specify column mappings for the target fields.");
         }
 
-        foreach (StockReportFieldMetadata metadata in StockReportFieldCatalog.All)
+        foreach (StockReportFieldMetadata metadata in StockReportFieldCatalog.Required)
         {
-            if (!mapping.FieldColumnMap.TryGetValue(metadata.Field, out int colIndex) || colIndex <= 0)
+            if (!mapping.FieldColumnMap.ContainsKey(metadata.Field))
             {
-                throw new ArgumentException($"Missing or invalid column mapping for required field '{metadata.Key}'.");
+                throw new ArgumentException($"Missing column mapping for required field '{metadata.Key}'.");
             }
         }
+
+        foreach (KeyValuePair<StockReportField, int> pair in mapping.FieldColumnMap)
+        {
+            if (pair.Value <= 0)
+            {
+                throw new ArgumentException($"Invalid column mapping for field '{pair.Key}'.");
+            }
+        }
+    }
+
+    private static StockReportItemDto ReadItem(StockReportRowReader row)
+    {
+        return new StockReportItemDto(
+            row.RowNumber,
+            row.ReadRequiredText(StockReportField.MaterialDocumentNumber),
+            row.ReadText(StockReportField.MaterialDocumentItem),
+            row.ReadYear(StockReportField.MaterialDocumentYear),
+            row.ReadRequiredText(StockReportField.MaterialNumber),
+            row.ReadText(StockReportField.MaterialDescription),
+            row.ReadDecimal(StockReportField.TotalStockQuantity),
+            row.ReadDecimal(StockReportField.TotalStockValue))
+        {
+            WbsElement = row.ReadOptionalText(StockReportField.WbsElement),
+            BatchNumber = row.ReadOptionalText(StockReportField.BatchNumber),
+            StorageLocation = row.ReadOptionalText(StockReportField.StorageLocation),
+            MovementType = row.ReadOptionalText(StockReportField.MovementType),
+            BaseUnitOfMeasure = row.ReadOptionalText(StockReportField.BaseUnitOfMeasure),
+            LocalCurrency = row.ReadOptionalText(StockReportField.LocalCurrency),
+            SpecialStockIndicator = row.ReadOptionalText(StockReportField.SpecialStockIndicator),
+            CrossPlantMaterialStatus = row.ReadOptionalText(StockReportField.CrossPlantMaterialStatus),
+            PlantSpecificMaterialStatus = row.ReadOptionalText(StockReportField.PlantSpecificMaterialStatus),
+            ClientLevelDeletionFlag = row.ReadFlag(StockReportField.ClientLevelDeletionFlag),
+            PlantLevelDeletionFlag = row.ReadFlag(StockReportField.PlantLevelDeletionFlag),
+            StockCreationDate = row.ReadDate(StockReportField.StockCreationDate),
+            StockType = row.ReadOptionalText(StockReportField.StockType),
+            StockTypeDescription = row.ReadOptionalText(StockReportField.StockTypeDescription),
+            PurchaseOrder = row.ReadOptionalText(StockReportField.PurchaseOrder),
+            PurchaseOrderItem = row.ReadOptionalText(StockReportField.PurchaseOrderItem),
+            PurchaseRequisition = row.ReadOptionalText(StockReportField.PurchaseRequisition),
+            PurchaseRequisitionItem = row.ReadOptionalText(StockReportField.PurchaseRequisitionItem),
+            GoodsReceiptDate = row.ReadDate(StockReportField.GoodsReceiptDate),
+            Vendor = row.ReadOptionalText(StockReportField.Vendor),
+            VendorName = row.ReadOptionalText(StockReportField.VendorName)
+        };
     }
 
     private static bool IsMappedRowBlank(
@@ -198,54 +169,6 @@ public sealed class ImportStockReportHandler : IStockReportExcelParser
         }
 
         return true;
-    }
-
-    private static bool TryParseYear(OpenXmlCellData? cell, out int year, out string? rawValue)
-    {
-        rawValue = cell?.DisplayText ?? string.Empty;
-        if (cell is null || string.IsNullOrWhiteSpace(rawValue))
-        {
-            year = 0;
-            return false;
-        }
-
-        if (cell.NumericValue is double numeric)
-        {
-            int candidate = (int)Math.Round(numeric);
-            if (candidate is >= 1900 and <= 2999)
-            {
-                year = candidate;
-                return true;
-            }
-        }
-
-        if (int.TryParse(rawValue.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed) &&
-            parsed is >= 1900 and <= 2999)
-        {
-            year = parsed;
-            return true;
-        }
-
-        year = 0;
-        return false;
-    }
-
-    private static bool TryParseDecimal(OpenXmlCellData? cell, out decimal result, out string? rawValue)
-    {
-        rawValue = cell?.DisplayText ?? string.Empty;
-        if (cell is null || string.IsNullOrWhiteSpace(rawValue))
-        {
-            result = 0m;
-            return false;
-        }
-
-        if (cell.NumericValue is double numeric)
-        {
-            result = Convert.ToDecimal(numeric, CultureInfo.InvariantCulture);
-            return true;
-        }
-
-        return TryParseFlexibleDecimalString(rawValue, out result);
     }
 
     public static bool TryParseFlexibleDecimalString(string? rawInput, out decimal value)

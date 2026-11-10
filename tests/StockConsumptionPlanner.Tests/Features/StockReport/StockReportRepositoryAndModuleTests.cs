@@ -107,6 +107,79 @@ public sealed class StockReportRepositoryAndModuleTests
     }
 
     [Fact]
+    public async Task EfCoreSqliteRepository_SapOptionalFields_RoundTrip()
+    {
+        string dbPath = Path.Combine(Path.GetTempPath(), $"scp-sqlite-sap-{Guid.NewGuid():N}.db");
+
+        try
+        {
+            ServiceCollection services = new();
+            IConfiguration configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Persistence:Provider"] = "Sqlite",
+                    ["ConnectionStrings:Sqlite"] = $"Data Source={dbPath};Pooling=False"
+                })
+                .Build();
+
+            services.AddStockReportFeature(configuration);
+
+            await using ServiceProvider provider = services.BuildServiceProvider();
+            foreach (IHostedService hostedService in provider.GetServices<IHostedService>())
+            {
+                await hostedService.StartAsync(CancellationToken.None);
+            }
+
+            IStockReportRepository repository = provider.GetRequiredService<IStockReportRepository>();
+
+            StockReportItem full = new(2, "4900001234", "0001", 2026, "000000000010000123", "Труба", 12.5m, 1500.75m)
+            {
+                WbsElement = "UA-01-0001.01",
+                BatchNumber = "0000012345",
+                StorageLocation = "1000",
+                MovementType = "101",
+                BaseUnitOfMeasure = "М",
+                LocalCurrency = "UAH",
+                SpecialStockIndicator = "Q",
+                CrossPlantMaterialStatus = "Z1",
+                PlantSpecificMaterialStatus = "01",
+                ClientLevelDeletionFlag = true,
+                PlantLevelDeletionFlag = true,
+                StockCreationDate = new DateOnly(2026, 10, 24),
+                StockType = "F",
+                StockTypeDescription = "Вільний для використання",
+                PurchaseOrder = "4500000123",
+                PurchaseOrderItem = "00010",
+                PurchaseRequisition = "3700001234",
+                PurchaseRequisitionItem = "00020",
+                GoodsReceiptDate = new DateOnly(2026, 10, 20),
+                Vendor = "0000100234",
+                VendorName = "ТОВ «Металопрокат»"
+            };
+            StockReportItem minimal = new(3, "4900001235", "0002", 2026, "MAT-2", "Болт", 1m, 2m);
+
+            await repository.SaveCurrentAsync(new StockReportBatch(
+                "sap.xlsx",
+                "MB51",
+                new DateTimeOffset(2026, 11, 10, 12, 0, 0, TimeSpan.Zero),
+                [full, minimal]));
+
+            StockReportBatch? loaded = await repository.GetCurrentAsync();
+
+            Assert.NotNull(loaded);
+            Assert.Equal(full, loaded.Items[0]);
+            Assert.Equal(minimal, loaded.Items[1]);
+        }
+        finally
+        {
+            if (File.Exists(dbPath))
+            {
+                File.Delete(dbPath);
+            }
+        }
+    }
+
+    [Fact]
     public async Task EfCoreSqliteRepository_LifecycleTransitions_StagingToActiveToSupersededAndPurged()
     {
         string dbPath = Path.Combine(Path.GetTempPath(), $"scp-sqlite-lifecycle-{Guid.NewGuid():N}.db");
@@ -421,11 +494,17 @@ public sealed class StockReportRepositoryAndModuleTests
     [InlineData("MaterialDccoumentYear", StockReportField.MaterialDocumentYear)]
     [InlineData("Рік документа", StockReportField.MaterialDocumentYear)]
     [InlineData("Документ матеріалу", StockReportField.MaterialDocumentNumber)]
-    [InlineData("Позиція", StockReportField.MaterialDocumentItem)]
+    [InlineData("Позиція у док.мат", StockReportField.MaterialDocumentItem)]
+    [InlineData("Позиція", StockReportField.PurchaseOrderItem)]
+    [InlineData("Позиція заявки", StockReportField.PurchaseRequisitionItem)]
+    [InlineData("Ім`я постачальника", StockReportField.VendorName)]
+    [InlineData("Ім'я постачальника", StockReportField.VendorName)]
+    [InlineData("MaterialQuantity", StockReportField.TotalStockQuantity)]
+    [InlineData("MaterialValue", StockReportField.TotalStockValue)]
     [InlineData("Номенклатура", StockReportField.MaterialNumber)]
     [InlineData("Найменування", StockReportField.MaterialDescription)]
-    [InlineData("Кількість", StockReportField.MaterialQuantity)]
-    [InlineData("Вартість", StockReportField.MaterialValue)]
+    [InlineData("Кількість", StockReportField.TotalStockQuantity)]
+    [InlineData("Вартість", StockReportField.TotalStockValue)]
     public void TryParseFieldKey_RecognizesCanonicalTypoAndUkrainianKeys(string rawKey, StockReportField expected)
     {
         bool parsed = StockReportFieldCatalog.TryParseFieldKey(rawKey, out StockReportField actual);

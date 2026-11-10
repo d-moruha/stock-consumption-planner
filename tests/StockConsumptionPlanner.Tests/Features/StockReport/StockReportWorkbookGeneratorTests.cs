@@ -45,23 +45,31 @@ public sealed class StockReportWorkbookGeneratorTests
         foreach (StockReportItemDto item in result.Items)
         {
             Assert.InRange(item.SourceRowNumber, 2, 26);
-            Assert.Equal(worksheet.GetCellString(item.SourceRowNumber, 1), item.MaterialDocumentNumber);
+            Assert.Equal(CellText(worksheet, item, StockReportField.MaterialDocumentNumber), item.MaterialDocumentNumber);
             Assert.Matches("^[0-9]{10}$", item.MaterialDocumentNumber);
-            Assert.Equal(worksheet.GetCellString(item.SourceRowNumber, 2), item.MaterialDocumentItem);
+            Assert.Equal(CellText(worksheet, item, StockReportField.MaterialDocumentItem), item.MaterialDocumentItem);
             Assert.Matches("^[0-9]{4}$", item.MaterialDocumentItem);
             Assert.InRange(item.MaterialDocumentYear, 2020, 2026);
-            Assert.Equal(worksheet.GetCellString(item.SourceRowNumber, 4), item.MaterialNumber);
+            Assert.Equal(CellText(worksheet, item, StockReportField.MaterialNumber), item.MaterialNumber);
             Assert.Matches("^[0-9]{12}$", item.MaterialNumber);
             Assert.False(string.IsNullOrWhiteSpace(item.MaterialDescription));
-            Assert.True(item.MaterialQuantity > 0m);
-            Assert.True(item.MaterialValue > 0m);
+            Assert.True(item.TotalStockQuantity > 0m);
+            Assert.True(item.TotalStockValue > 0m);
+            Assert.Equal("UAH", item.LocalCurrency);
+            Assert.Matches("^45[0-9]{8}$", item.PurchaseOrder!);
+            Assert.Matches("^[0-9]{5}$", item.PurchaseOrderItem!);
+            Assert.Matches("^(37|48)[0-9]{8}$", item.PurchaseRequisition!);
+            Assert.Matches("^[0-9]{10}$", item.Vendor!);
+            Assert.Equal(item.MaterialDocumentYear, item.GoodsReceiptDate!.Value.Year);
+            Assert.Equal(item.SpecialStockIndicator == "Q", item.WbsElement is not null);
+            Assert.Contains(item.StockType, new[] { "F", "X", "S", "T" });
         }
     }
 
     [Theory]
     [InlineData(StockReportHeaderLanguage.English)]
     [InlineData(StockReportHeaderLanguage.Ukrainian)]
-    public void Generate_HeaderLanguage_AutoMapsAllSevenFields(StockReportHeaderLanguage headerLanguage)
+    public void Generate_HeaderLanguage_AutoMapsEveryField(StockReportHeaderLanguage headerLanguage)
     {
         StockReportGeneratorOptions options = new()
         {
@@ -76,14 +84,7 @@ public sealed class StockReportWorkbookGeneratorTests
 
         StockReportInspectionDto inspection = _inspector.Inspect(stream, "generated.xlsx", "Stock");
 
-        Assert.Equal(7, inspection.SuggestedMapping.Count);
-        Assert.Equal(1, inspection.SuggestedMapping[StockReportField.MaterialDocumentNumber]);
-        Assert.Equal(2, inspection.SuggestedMapping[StockReportField.MaterialDocumentItem]);
-        Assert.Equal(3, inspection.SuggestedMapping[StockReportField.MaterialDocumentYear]);
-        Assert.Equal(4, inspection.SuggestedMapping[StockReportField.MaterialNumber]);
-        Assert.Equal(5, inspection.SuggestedMapping[StockReportField.MaterialDescription]);
-        Assert.Equal(6, inspection.SuggestedMapping[StockReportField.MaterialQuantity]);
-        Assert.Equal(7, inspection.SuggestedMapping[StockReportField.MaterialValue]);
+        Assert.Equal(IdentityMapping().FieldColumnMap, inspection.SuggestedMapping);
     }
 
     [Fact]
@@ -102,16 +103,14 @@ public sealed class StockReportWorkbookGeneratorTests
             SheetName = "Stock",
             HeaderRowNumber = 1,
             DataStartRowNumber = 2,
-            FieldColumnMap = new Dictionary<StockReportField, int>
-            {
-                [StockReportField.MaterialDocumentNumber] = 1,
-                [StockReportField.MaterialDocumentItem] = 2,
-                [StockReportField.MaterialDocumentYear] = 3,
-                [StockReportField.MaterialNumber] = 4,
-                [StockReportField.MaterialDescription] = 5,
-                [StockReportField.MaterialQuantity] = 6,
-                [StockReportField.MaterialValue] = 7
-            }
+            FieldColumnMap = StockReportFieldCatalog.All
+                .Select((metadata, index) => (metadata.Field, Column: index + 1))
+                .ToDictionary(pair => pair.Field, pair => pair.Column)
         };
+    }
+
+    private static string CellText(OpenXmlWorksheetData worksheet, StockReportItemDto item, StockReportField field)
+    {
+        return worksheet.GetCellString(item.SourceRowNumber, IdentityMapping().FieldColumnMap[field]);
     }
 }

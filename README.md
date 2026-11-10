@@ -52,7 +52,7 @@ Stock and plans meet on one field: the material movement document id.
 
 | Record | Known fields |
 | --- | --- |
-| Stock | Material movement document key (year, number, item), current quantity |
+| Stock | Material movement document key (year, number, item), material, total stock quantity and value on the report date, plus optional SAP attributes (WBS element, batch, purchasing documents, vendor, ...) |
 | Plan | Stock key, target year and month, planned quantity, material snapshot, created/updated/orphaned timestamps, version |
 
 ## Solution Structure (Vertical Slice Architecture)
@@ -91,22 +91,45 @@ The schema is created on startup with `EnsureCreated`, which does nothing if any
 | `OrphanRetentionMonths` | `6` | Orphaned plans older than this are deleted. |
 | `PurgeInterval` | `1.00:00:00` | How often the cleanup job runs; `00:00:00` disables it. |
 
-## Target Material Document Fields
+## Stock Report Fields
 
-| Field Key | Type | Notes |
-|---|---|---|
-| `MaterialDocumentNumber` | `string` | Preserves leading zeros |
-| `MaterialDocumentItem` | `string` | Preserves leading zeros (e.g. `0001`) |
-| `MaterialDocumentYear` | `int` | 4-digit year (also matches `MaterialDccoumentYear`) |
-| `MaterialNumber` | `string` | Material / nomenclature code |
-| `MaterialDescription` | `string` | Ukrainian / English material description |
-| `MaterialQuantity` | `decimal` | Supports `.` and `,` decimal separators |
-| `MaterialValue` | `decimal` | Supports `.` and `,` decimal separators |
+Columns of the SAP stock report (a custom MB51-based transaction), in export order. Headers are matched in Ukrainian or English, including SAP-truncated and abbreviated forms. Required columns must be mapped to import; optional columns may stay unmapped. Text values keep leading zeros; decimals accept `.` and `,` separators; dates accept Excel dates and `dd.MM.yyyy`; flags accept `X` or blank.
+
+| Field Key | Ukrainian header | SAP field | Type | Required |
+|---|---|---|---|---|
+| `MaterialDocumentNumber` | Документ матеріалу | `MBLNR` | `string` | yes |
+| `MaterialDocumentItem` | Позиція у док.мат | `ZEILE` | `string` | yes |
+| `MaterialDocumentYear` | Рік документа матер. | `MJAHR` | `int` | yes |
+| `WbsElement` | Елемент ієрарх.стр.робіт | `PS_PSP_PNR / MAT_PSPNR` | `string` |  |
+| `BatchNumber` | Партія | `CHARG` | `string` |  |
+| `MaterialNumber` | Матеріал | `MATNR` | `string` | yes |
+| `MaterialDescription` | Опис матеріалу | `MAKTX` | `string` | yes |
+| `StorageLocation` | Місце збереження | `LGORT` | `string` |  |
+| `MovementType` | Тип руху | `BWART` | `string` |  |
+| `TotalStockQuantity` | Загальний запас | `LBKUM` | `decimal` | yes |
+| `BaseUnitOfMeasure` | Базис.один.виміру | `MEINS` | `string` |  |
+| `TotalStockValue` | Загальна вартість | `SALK3` | `decimal` | yes |
+| `LocalCurrency` | Внутрішня валюта | `WAERS` | `string` |  |
+| `SpecialStockIndicator` | Особливий запас | `SOBKZ` | `string` |  |
+| `CrossPlantMaterialStatus` | Ст.мат.для кіл.зав | `MARA-MSTAE` | `string` |  |
+| `PlantSpecificMaterialStatus` | Ст.мат.віднос.заводу | `MARC-MMSTA` | `string` |  |
+| `ClientLevelDeletionFlag` | МВ на рівні мандата | `MARA-LVORM` | `bool` |  |
+| `PlantLevelDeletionFlag` | МВ на рівні заводу | `MARC-LVORM` | `bool` |  |
+| `StockCreationDate` | Дата утворення запасу | `custom` | `date` |  |
+| `StockType` | Тип запасу | `INSMK` (`F`/`X`/`S`, plus `T` in transit) | `string` |  |
+| `StockTypeDescription` | Опис типу запасу | `stock type text` | `string` |  |
+| `PurchaseOrder` | Документ закупівлі | `EBELN` | `string` |  |
+| `PurchaseOrderItem` | Позиція | `EBELP` | `string` |  |
+| `PurchaseRequisition` | Заявка на купівлю | `BANFN` | `string` |  |
+| `PurchaseRequisitionItem` | Позиція заявки | `BNFPO` | `string` |  |
+| `GoodsReceiptDate` | Дата надходж.товарів від постачальника | `custom` | `date` |  |
+| `Vendor` | Постачальник | `LIFNR` | `string` |  |
+| `VendorName` | Ім\`я постачальника | `LFA1-NAME1` | `string` |  |
 
 ## API Endpoints
 
 - `POST /api/stock-reports/inspect` — Inspects an uploaded `.xlsx` file, returns worksheet names, detected columns with sample values, and heuristic Ukrainian/English column mapping suggestions.
-- `POST /api/stock-reports/import` — Parses only the 7 mapped columns starting from `DataStartRowNumber`, ignores all unmapped columns, stores the current batch in `IStockReportRepository`, and returns summary metrics and row-level errors.
+- `POST /api/stock-reports/import` — Parses the mapped columns (all required fields must be mapped) starting from `DataStartRowNumber`, ignores all unmapped columns, stores the current batch in `IStockReportRepository`, and returns summary metrics and row-level errors.
 - `GET /api/stock-reports/current` — Returns the currently stored stock report batch and summary totals.
 - `GET /api/consumption-plans?year=&month=&status=all|linked|orphaned&search=&page=&pageSize=` — Lists plans with current stock quantity, orphan state, purge date, and `editableUntilUtc`.
 - `GET /api/consumption-plans/{id}` — Returns one plan.

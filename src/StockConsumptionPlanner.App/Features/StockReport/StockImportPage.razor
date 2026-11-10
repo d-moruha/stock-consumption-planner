@@ -12,7 +12,7 @@
     <div>
         <h1 class="h3 mb-1">Current Stock Report Import (.xlsx)</h1>
         <p class="text-muted mb-0">
-            Upload an Excel report, select the worksheet and header row, map the 7 required material fields, and ignore all other columns.
+            Upload an Excel report, select the worksheet and header row, map the required material fields (optional SAP columns may stay unmapped), and ignore all other columns.
         </p>
     </div>
 </div>
@@ -114,7 +114,7 @@
 {
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <span class="fw-semibold">Step 2 — Interactive Column Mapping (7 Target Fields)</span>
+            <span class="fw-semibold">Step 2 — Interactive Column Mapping (@StockReportFieldCatalog.All.Count Target Fields)</span>
             <span class="small text-muted">
                 Detected @_inspection.Columns.Count columns (@GetMappedColumnCount() mapped, @GetIgnoredColumns().Count ignored)
             </span>
@@ -138,16 +138,17 @@
 
                             <tr>
                                 <td>
-                                    <div class="fw-semibold">@metadata.DisplayName</div>
+                                    <div class="fw-semibold">@metadata.EnglishName</div>
                                     <code class="small">@metadata.Key</code>
                                     <span class="badge bg-light text-dark border ms-1">@metadata.DataType</span>
+                                    <span class="badge @(metadata.IsRequired ? "bg-danger-subtle text-danger-emphasis" : "bg-light text-muted") border ms-1">@(metadata.IsRequired ? "required" : "optional")</span>
                                 </td>
                                 <td>
                                     <div>@metadata.UkrainianName</div>
                                     <div class="small text-muted">@metadata.Description</div>
                                 </td>
                                 <td>
-                                    <select class="form-select @(selectedCol > 0 ? "border-success" : "border-danger")"
+                                    <select class="form-select @(selectedCol > 0 ? "border-success" : metadata.IsRequired ? "border-danger" : null)"
                                             value="@selectedCol"
                                             @onchange="e => OnFieldColumnChanged(metadata.Field, e.Value?.ToString())">
                                         <option value="0">-- Select Excel Column --</option>
@@ -205,7 +206,7 @@
             <div class="mt-3 d-flex justify-content-end">
                 <button type="button"
                         class="btn btn-primary"
-                        disabled="@(!AreAllFieldsMapped() || _isBusy)"
+                        disabled="@(!AreRequiredFieldsMapped() || _isBusy)"
                         @onclick="ExecuteImportAsync">
                     Import Mapped Stock Report
                 </button>
@@ -313,13 +314,10 @@
                 <thead class="table-light sticky-top">
                     <tr>
                         <th>Row</th>
-                        <th>MaterialDocumentNumber</th>
-                        <th>MaterialDocumentItem</th>
-                        <th>MaterialDocumentYear</th>
-                        <th>MaterialNumber</th>
-                        <th>MaterialDescription</th>
-                        <th class="text-end">MaterialQuantity</th>
-                        <th class="text-end">MaterialValue</th>
+                        @foreach (StockReportFieldMetadata metadata in StockReportFieldCatalog.All)
+                        {
+                            <th class="text-nowrap @(IsNumeric(metadata) ? "text-end" : null)" title="@metadata.UkrainianName">@metadata.EnglishName</th>
+                        }
                     </tr>
                 </thead>
                 <tbody>
@@ -327,13 +325,10 @@
                     {
                         <tr>
                             <td class="text-muted small">@item.SourceRowNumber</td>
-                            <td><code>@item.MaterialDocumentNumber</code></td>
-                            <td><code>@item.MaterialDocumentItem</code></td>
-                            <td>@item.MaterialDocumentYear</td>
-                            <td><span class="fw-semibold">@item.MaterialNumber</span></td>
-                            <td>@item.MaterialDescription</td>
-                            <td class="text-end font-monospace">@item.MaterialQuantity.ToString("N3")</td>
-                            <td class="text-end font-monospace">@item.MaterialValue.ToString("N2")</td>
+                            @foreach (StockReportFieldMetadata metadata in StockReportFieldCatalog.All)
+                            {
+                                <td class="text-nowrap @(IsNumeric(metadata) ? "text-end font-monospace" : null)">@FormatValue(item, metadata.Field)</td>
+                            }
                         </tr>
                     }
                 </tbody>
@@ -344,7 +339,7 @@
 
 @code {
     private const long MaxUploadFileSizeBytes = 25 * 1024 * 1024;
-    private const string LocalStorageKey = "scp.stockReport.lastColumnMapping.v1";
+    private const string LocalStorageKey = "scp.stockReport.lastColumnMapping.v2";
 
     private byte[]? _fileBytes;
     private string? _uploadedFileName;
@@ -511,9 +506,9 @@
         return null;
     }
 
-    private bool AreAllFieldsMapped()
+    private bool AreRequiredFieldsMapped()
     {
-        foreach (StockReportFieldMetadata metadata in StockReportFieldCatalog.All)
+        foreach (StockReportFieldMetadata metadata in StockReportFieldCatalog.Required)
         {
             if (!_fieldColumnMap.TryGetValue(metadata.Field, out int colIndex) || colIndex <= 0)
             {
@@ -548,23 +543,7 @@
             using MemoryStream ms = new(_fileBytes);
             _lastImportResult = ExcelParser.Parse(ms, _uploadedFileName, mapping);
 
-            List<StockReportItem> domainItems = _lastImportResult.Items
-                .Select(dto => new StockReportItem(
-                    dto.SourceRowNumber,
-                    dto.MaterialDocumentNumber,
-                    dto.MaterialDocumentItem,
-                    dto.MaterialDocumentYear,
-                    dto.MaterialNumber,
-                    dto.MaterialDescription,
-                    dto.MaterialQuantity,
-                    dto.MaterialValue))
-                .ToList();
-
-            StockReportBatch batch = new(
-                _lastImportResult.SourceFileName,
-                _lastImportResult.SheetName,
-                _lastImportResult.ImportedAtUtc,
-                domainItems);
+            StockReportBatch batch = _lastImportResult.ToBatch();
 
             await StockReportRepository.SaveCurrentAsync(batch);
             _currentBatch = batch;
@@ -668,7 +647,34 @@
                 item.MaterialDocumentItem.Contains(q, StringComparison.OrdinalIgnoreCase) ||
                 item.MaterialNumber.Contains(q, StringComparison.OrdinalIgnoreCase) ||
                 item.MaterialDescription.Contains(q, StringComparison.OrdinalIgnoreCase) ||
-                item.MaterialDocumentYear.ToString().Contains(q, StringComparison.OrdinalIgnoreCase))
+                item.MaterialDocumentYear.ToString().Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                Contains(item.WbsElement, q) ||
+                Contains(item.BatchNumber, q) ||
+                Contains(item.PurchaseOrder, q) ||
+                Contains(item.VendorName, q))
             .ToList();
+    }
+
+    private static bool Contains(string? value, string query)
+    {
+        return value?.Contains(query, StringComparison.OrdinalIgnoreCase) == true;
+    }
+
+    private static bool IsNumeric(StockReportFieldMetadata metadata)
+    {
+        return metadata.DataType == StockReportFieldType.Decimal;
+    }
+
+    private static string FormatValue(StockReportItem item, StockReportField field)
+    {
+        return item.GetValue(field) switch
+        {
+            null => string.Empty,
+            decimal value when field == StockReportField.TotalStockValue => value.ToString("N2"),
+            decimal value => value.ToString("N3"),
+            DateOnly date => date.ToString("dd.MM.yyyy"),
+            bool flag => flag ? "X" : string.Empty,
+            object value => value.ToString() ?? string.Empty
+        };
     }
 }

@@ -85,62 +85,9 @@ public sealed class InspectStockReportHandler : IStockReportExcelInspector
 
     public static Dictionary<StockReportField, int> SuggestMapping(IReadOnlyList<DetectedExcelColumnDto> columns)
     {
-        Dictionary<StockReportField, int> result = new();
-        HashSet<int> assignedColumns = new();
+        ArgumentNullException.ThrowIfNull(columns);
 
-        foreach (StockReportFieldMetadata metadata in StockReportFieldCatalog.All)
-        {
-            DetectedExcelColumnDto? exactMatch = columns.FirstOrDefault(col =>
-            {
-                if (assignedColumns.Contains(col.ColumnIndex))
-                {
-                    return false;
-                }
-
-                string normalizedHeader = StockReportFieldCatalog.NormalizeHeaderToken(col.HeaderText);
-                return metadata.Aliases.Any(alias =>
-                    string.Equals(normalizedHeader, alias, StringComparison.OrdinalIgnoreCase));
-            });
-
-            if (exactMatch is not null)
-            {
-                result[metadata.Field] = exactMatch.ColumnIndex;
-                assignedColumns.Add(exactMatch.ColumnIndex);
-            }
-        }
-
-        foreach (StockReportFieldMetadata metadata in StockReportFieldCatalog.All)
-        {
-            if (result.ContainsKey(metadata.Field))
-            {
-                continue;
-            }
-
-            DetectedExcelColumnDto? partialMatch = columns.FirstOrDefault(col =>
-            {
-                if (assignedColumns.Contains(col.ColumnIndex))
-                {
-                    return false;
-                }
-
-                string normalizedHeader = StockReportFieldCatalog.NormalizeHeaderToken(col.HeaderText);
-                if (string.IsNullOrEmpty(normalizedHeader))
-                {
-                    return false;
-                }
-
-                return metadata.Aliases.Any(alias =>
-                    alias.Length >= 3 &&
-                    normalizedHeader.Contains(alias, StringComparison.OrdinalIgnoreCase));
-            });
-
-            if (partialMatch is not null)
-            {
-                result[metadata.Field] = partialMatch.ColumnIndex;
-                assignedColumns.Add(partialMatch.ColumnIndex);
-            }
-        }
-
-        return result;
+        return StockReportHeaderMatcher.SuggestMapping(
+            columns.Select(col => (col.ColumnIndex, col.HeaderText)).ToList());
     }
 }

@@ -95,8 +95,8 @@ public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebAppl
                 "MaterialDccoumentYear": 4,
                 "MaterialNumber": 6,
                 "MaterialDescription": 7,
-                "MaterialQuantity": 8,
-                "MaterialValue": "I"
+                "TotalStockQuantity": 8,
+                "TotalStockValue": "I"
               }
             }
             """;
@@ -150,8 +150,8 @@ public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebAppl
             Assert.All(dbItems, item => Assert.Equal(StockLifecycleStatus.Active, item.LifecycleStatus));
             Assert.Equal("0049001234", dbItems[0].MaterialDocumentNumber);
             Assert.Equal("0001", dbItems[0].MaterialDocumentItem);
-            Assert.Equal(12.500m, dbItems[0].MaterialQuantity);
-            Assert.Equal(15400.75m, dbItems[0].MaterialValue);
+            Assert.Equal(12.500m, dbItems[0].TotalStockQuantity);
+            Assert.Equal(15400.75m, dbItems[0].TotalStockValue);
         }
         finally
         {
@@ -179,8 +179,8 @@ public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebAppl
                 "MaterialDocumentYear": 3,
                 "MaterialNumber": 4,
                 "MaterialDescription": 5,
-                "MaterialQuantity": 6,
-                "MaterialValue": 7
+                "TotalStockQuantity": 6,
+                "TotalStockValue": 7
               }
             }
             """;
@@ -196,8 +196,8 @@ public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebAppl
                         (3, "MaterialDocumentYear"),
                         (4, "MaterialNumber"),
                         (5, "MaterialDescription"),
-                        (6, "MaterialQuantity"),
-                        (7, "MaterialValue")
+                        (6, "TotalStockQuantity"),
+                        (7, "TotalStockValue")
                     ],
                     [2] =
                     [
@@ -235,8 +235,8 @@ public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebAppl
                         (3, "MaterialDocumentYear"),
                         (4, "MaterialNumber"),
                         (5, "MaterialDescription"),
-                        (6, "MaterialQuantity"),
-                        (7, "MaterialValue")
+                        (6, "TotalStockQuantity"),
+                        (7, "TotalStockValue")
                     ],
                     [2] =
                     [
@@ -269,7 +269,7 @@ public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebAppl
             Assert.Equal(2, current.TotalRows);
             Assert.Equal(75.50m, current.TotalQuantity);
             Assert.Equal(900.00m, current.TotalValue);
-            Assert.Equal(65.50m, current.Items.Single(i => i.MaterialDocumentNumber == "0049001234").MaterialQuantity);
+            Assert.Equal(65.50m, current.Items.Single(i => i.MaterialDocumentNumber == "0049001234").TotalStockQuantity);
 
             IDbContextFactory<PlannerDbContext> dbFactory =
                 factory.Services.GetRequiredService<IDbContextFactory<PlannerDbContext>>();
@@ -361,8 +361,8 @@ public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebAppl
                     (3, "MaterialDocumentYear"),
                     (4, "MaterialNumber"),
                     (5, "MaterialDescription"),
-                    (6, "MaterialQuantity"),
-                    (7, "MaterialValue")
+                    (6, "TotalStockQuantity"),
+                    (7, "TotalStockValue")
                 ]
             };
 
@@ -394,8 +394,8 @@ public sealed class StockReportEndpointsIntegrationTests : IClassFixture<WebAppl
                 "MaterialDocumentYear": 3,
                 "MaterialNumber": 4,
                 "MaterialDescription": 5,
-                "MaterialQuantity": 6,
-                "MaterialValue": 7
+                "TotalStockQuantity": 6,
+                "TotalStockValue": 7
               }
             }
             """;
