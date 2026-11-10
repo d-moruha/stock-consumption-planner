@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ImportPageTitle" xml:space="preserve">
+    <value>Імпорт звіту про запаси (.xlsx)</value>
+  </data>
+  <data name="ImportHeading" xml:space="preserve">
+    <value>Імпорт поточного звіту про запаси (.xlsx)</value>
+  </data>
+  <data name="ImportIntro" xml:space="preserve">
+    <value>Завантажте звіт Excel, виберіть аркуш і рядок заголовків та зіставте обов’язкові поля матеріалу (необов’язкові стовпці SAP можна не зіставляти); решта стовпців ігнорується.</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Закрити</value>
+  </data>
+  <data name="Step1Title" xml:space="preserve">
+    <value>Крок 1 — вибір файлу та налаштування рядка заголовків</value>
+  </data>
+  <data name="ExcelWorkbook" xml:space="preserve">
+    <value>Книга Excel (.xlsx)</value>
+  </data>
+  <data name="Worksheet" xml:space="preserve">
+    <value>Аркуш</value>
+  </data>
+  <data name="UploadFileFirst" xml:space="preserve">
+    <value>Спочатку завантажте файл...</value>
+  </data>
+  <data name="HeaderRow" xml:space="preserve">
+    <value>Рядок заголовків</value>
+  </data>
+  <data name="DataStartRow" xml:space="preserve">
+    <value>Перший рядок даних</value>
+  </data>
+  <data name="Reinspect" xml:space="preserve">
+    <value>Повторно перевірити аркуш і заголовки</value>
+  </data>
+  <data name="ResetMapping" xml:space="preserve">
+    <value>Скинути до автоматичного зіставлення</value>
+  </data>
+  <data name="LoadSavedMapping" xml:space="preserve">
+    <value>Завантажити збережене зіставлення</value>
+  </data>
+  <data name="SaveMapping" xml:space="preserve">
+    <value>Зберегти зіставлення в браузері</value>
+  </data>
+  <data name="Step2Title" xml:space="preserve">
+    <value>Крок 2 — зіставлення стовпців (цільових полів: {0})</value>
+  </data>
+  <data name="DetectedColumns" xml:space="preserve">
+    <value>Знайдено стовпців: {0} (зіставлено: {1}, ігнорується: {2})</value>
+  </data>
+  <data name="TargetField" xml:space="preserve">
+    <value>Цільове поле</value>
+  </data>
+  <data name="ExpectedHeader" xml:space="preserve">
+    <value>Очікуваний заголовок</value>
+  </data>
+  <data name="ExcelColumnMapping" xml:space="preserve">
+    <value>Стовпець Excel</value>
+  </data>
+  <data name="SampleValues" xml:space="preserve">
+    <value>Приклади значень</value>
+  </data>
+  <data name="SelectExcelColumn" xml:space="preserve">
+    <value>-- Виберіть стовпець Excel --</value>
+  </data>
+  <data name="SamplePreview" xml:space="preserve">
+    <value>(приклад: {0})</value>
+  </data>
+  <data name="NoSample" xml:space="preserve">
+    <value>Немає прикладу</value>
+  </data>
+  <data name="ColumnDisposition" xml:space="preserve">
+    <value>Використання стовпців таблиці</value>
+  </data>
+  <data name="Ignored" xml:space="preserve">
+    <value>(ігнорується)</value>
+  </data>
+  <data name="ImportButton" xml:space="preserve">
+    <value>Імпортувати звіт про запаси</value>
+  </data>
+  <data name="RowErrorsTitle" xml:space="preserve">
+    <value>Помилки перевірки та перетворення рядків (помилок: {0}, рядків: {1})</value>
+  </data>
+  <data name="RowNumber" xml:space="preserve">
+    <value>№ рядка</value>
+  </data>
+  <data name="Field" xml:space="preserve">
+    <value>Поле</value>
+  </data>
+  <data name="RawValue" xml:space="preserve">
+    <value>Вихідне значення</value>
+  </data>
+  <data name="Message" xml:space="preserve">
+    <value>Повідомлення</value>
+  </data>
+  <data name="Empty" xml:space="preserve">
+    <value>(порожньо)</value>
+  </data>
+  <data name="RowErrorRequired" xml:space="preserve">
+    <value>Поле «{0}» є обов’язковим.</value>
+  </data>
+  <data name="RowErrorInvalid" xml:space="preserve">
+    <value>Некоректне значення «{1}» у полі «{0}».</value>
+  </data>
+  <data name="RowErrorTooLong" xml:space="preserve">
+    <value>Поле «{0}» має містити не більше {1} символів.</value>
+  </data>
+  <data name="RowErrorInvalid_Year" xml:space="preserve">
+    <value>Некоректне значення «{1}» у полі «{0}». Очікується рік із 4 цифр.</value>
+  </data>
+  <data name="RowErrorInvalid_Decimal" xml:space="preserve">
+    <value>Некоректне значення «{1}» у полі «{0}». Очікується десяткове число.</value>
+  </data>
+  <data name="RowErrorInvalid_Date" xml:space="preserve">
+    <value>Некоректне значення «{1}» у полі «{0}». Очікується дата, напр. 31.12.2026.</value>
+  </data>
+  <data name="RowErrorInvalid_Flag" xml:space="preserve">
+    <value>Некоректне значення «{1}» у полі «{0}». Очікується X або порожнє значення.</value>
+  </data>
+  <data name="Required" xml:space="preserve">
+    <value>обов’язкове</value>
+  </data>
+  <data name="Optional" xml:space="preserve">
+    <value>необов’язкове</value>
+  </data>
+  <data name="FieldType_Text" xml:space="preserve">
+    <value>Текст</value>
+  </data>
+  <data name="FieldType_Year" xml:space="preserve">
+    <value>Рік</value>
+  </data>
+  <data name="FieldType_Decimal" xml:space="preserve">
+    <value>Число</value>
+  </data>
+  <data name="FieldType_Date" xml:space="preserve">
+    <value>Дата</value>
+  </data>
+  <data name="FieldType_Flag" xml:space="preserve">
+    <value>Ознака</value>
+  </data>
+  <data name="Step3Title" xml:space="preserve">
+    <value>Крок 3 — поточний збережений звіт про запаси</value>
+  </data>
+  <data name="StoredReportSummary" xml:space="preserve">
+    <value>({0} / {1} — рядків: {2})</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>Пошук за матеріалом, документом, описом...</value>
+  </data>
+  <data name="Clear" xml:space="preserve">
+    <value>Очистити</value>
+  </data>
+  <data name="NoItems" xml:space="preserve">
+    <value>Збережених позицій звіту про запаси немає. Завантажте та імпортуйте файл .xlsx вище.</value>
+  </data>
+  <data name="ValidRows" xml:space="preserve">
+    <value>Коректних рядків:</value>
+  </data>
+  <data name="Showing" xml:space="preserve">
+    <value>(показано: {0})</value>
+  </data>
+  <data name="TotalQuantity" xml:space="preserve">
+    <value>Загальна кількість:</value>
+  </data>
+  <data name="TotalValue" xml:space="preserve">
+    <value>Загальна вартість:</value>
+  </data>
+  <data name="ImportedAt" xml:space="preserve">
+    <value>Імпортовано:</value>
+  </data>
+  <data name="UtcTime" xml:space="preserve">
+    <value>{0:T} UTC</value>
+  </data>
+  <data name="Row" xml:space="preserve">
+    <value>Рядок</value>
+  </data>
+  <data name="StatusInspected" xml:space="preserve">
+    <value>Файл «{0}» перевірено (знайдено стовпців: {1}).</value>
+  </data>
+  <data name="StatusReadFailed" xml:space="preserve">
+    <value>Не вдалося прочитати файл Excel: {0}</value>
+  </data>
+  <data name="StatusInspectionFailed" xml:space="preserve">
+    <value>Помилка перевірки файлу: {0}</value>
+  </data>
+  <data name="StatusImported" xml:space="preserve">
+    <value>Імпортовано коректних рядків: {0} з файлу «{1}» (проігноровано незіставлених стовпців: {2}, рядків з помилками: {3}).</value>
+  </data>
+  <data name="StatusImportFailed" xml:space="preserve">
+    <value>Помилка імпорту: {0}</value>
+  </data>
+  <data name="StatusMappingSaved" xml:space="preserve">
+    <value>Зіставлення стовпців збережено в браузері.</value>
+  </data>
+  <data name="StatusMappingSaveFailed" xml:space="preserve">
+    <value>Не вдалося зберегти зіставлення: {0}</value>
+  </data>
+  <data name="StatusNoSavedMapping" xml:space="preserve">
+    <value>Збереженого зіставлення стовпців у браузері не знайдено.</value>
+  </data>
+  <data name="StatusSavedMappingInvalid" xml:space="preserve">
+    <value>Збережене зіставлення має некоректний формат.</value>
+  </data>
+  <data name="StatusMappingLoaded" xml:space="preserve">
+    <value>Збережене зіставлення стовпців завантажено з браузера.</value>
+  </data>
+  <data name="StatusMappingLoadFailed" xml:space="preserve">
+    <value>Не вдалося завантажити збережене зіставлення: {0}</value>
+  </data>
+  <data name="StatusReportCleared" xml:space="preserve">
+    <value>Поточний збережений звіт про запаси очищено.</value>
+  </data>
+  <data name="FieldDescription_MaterialDocumentNumber" xml:space="preserve">
+    <value>Номер документа матеріалу (MB51). Частина ключа запасу; провідні нулі зберігаються.</value>
+  </data>
+  <data name="FieldDescription_MaterialDocumentItem" xml:space="preserve">
+    <value>Позиція в документі матеріалу. Частина ключа запасу; провідні нулі зберігаються (напр. 0001).</value>
+  </data>
+  <data name="FieldDescription_MaterialDocumentYear" xml:space="preserve">
+    <value>Рік документа матеріалу з 4 цифр. Частина ключа запасу.</value>
+  </data>
+  <data name="FieldDescription_WbsElement" xml:space="preserve">
+    <value>Елемент ієрархічної структури робіт (СПП-елемент) проєктного запасу (особливий запас Q) у вигляді зовнішнього ключа.</value>
+  </data>
+  <data name="FieldDescription_BatchNumber" xml:space="preserve">
+    <value>Номер партії; провідні нулі зберігаються.</value>
+  </data>
+  <data name="FieldDescription_MaterialNumber" xml:space="preserve">
+    <value>Номер матеріалу; провідні нулі зберігаються.</value>
+  </data>
+  <data name="FieldDescription_MaterialDescription" xml:space="preserve">
+    <value>Короткий текст (опис) матеріалу.</value>
+  </data>
+  <data name="FieldDescription_StorageLocation" xml:space="preserve">
+    <value>Місце збереження (склад) на заводі.</value>
+  </data>
+  <data name="FieldDescription_MovementType" xml:space="preserve">
+    <value>Тип руху управління запасами для позиції документа матеріалу (напр. 101).</value>
+  </data>
+  <data name="FieldDescription_TotalStockQuantity" xml:space="preserve">
+    <value>Кількість запасу позиції документа на дату звіту в базисній одиниці виміру.</value>
+  </data>
+  <data name="FieldDescription_BaseUnitOfMeasure" xml:space="preserve">
+    <value>Базисна одиниця виміру кількості запасу.</value>
+  </data>
+  <data name="FieldDescription_TotalStockValue" xml:space="preserve">
+    <value>Вартість запасу позиції документа на дату звіту у внутрішній валюті.</value>
+  </data>
+  <data name="FieldDescription_LocalCurrency" xml:space="preserve">
+    <value>Ключ валюти загальної вартості (валюта балансової одиниці).</value>
+  </data>
+  <data name="FieldDescription_SpecialStockIndicator" xml:space="preserve">
+    <value>Індикатор особливого запасу (напр. E — запас замовлення клієнта, K — консигнація постачальника, Q — проєктний запас).</value>
+  </data>
+  <data name="FieldDescription_CrossPlantMaterialStatus" xml:space="preserve">
+    <value>Статус матеріалу, чинний для всіх заводів (основний запис матеріалу, рівень мандата).</value>
+  </data>
+  <data name="FieldDescription_PlantSpecificMaterialStatus" xml:space="preserve">
+    <value>Статус матеріалу на заводі запасу (основний запис матеріалу, рівень заводу).</value>
+  </data>
+  <data name="FieldDescription_ClientLevelDeletionFlag" xml:space="preserve">
+    <value>Матеріал позначено для видалення на рівні мандата (X — позначено).</value>
+  </data>
+  <data name="FieldDescription_PlantLevelDeletionFlag" xml:space="preserve">
+    <value>Матеріал позначено для видалення на заводі (X — позначено).</value>
+  </data>
+  <data name="FieldDescription_StockCreationDate" xml:space="preserve">
+    <value>Дата утворення запасу позиції документа (користувацький стовпець звіту).</value>
+  </data>
+  <data name="FieldDescription_StockType" xml:space="preserve">
+    <value>Тип запасу позиції документа: F — вільне використання, X — контроль якості, S — заблокований, T — у дорозі.</value>
+  </data>
+  <data name="FieldDescription_StockTypeDescription" xml:space="preserve">
+    <value>Текст типу запасу.</value>
+  </data>
+  <data name="FieldDescription_PurchaseOrder" xml:space="preserve">
+    <value>Замовлення на поставку, за яким надійшов товар (документи SAP 45*).</value>
+  </data>
+  <data name="FieldDescription_PurchaseOrderItem" xml:space="preserve">
+    <value>Позиція замовлення на поставку; провідні нулі зберігаються (напр. 00010).</value>
+  </data>
+  <data name="FieldDescription_PurchaseRequisition" xml:space="preserve">
+    <value>Заявка на купівлю, на підставі якої створено замовлення (документи SAP 37*, 48*).</value>
+  </data>
+  <data name="FieldDescription_PurchaseRequisitionItem" xml:space="preserve">
+    <value>Позиція заявки на купівлю; провідні нулі зберігаються (напр. 00010).</value>
+  </data>
+  <data name="FieldDescription_GoodsReceiptDate" xml:space="preserve">
+    <value>Дата надходження товарів від постачальника (користувацький стовпець звіту).</value>
+  </data>
+  <data name="FieldDescription_Vendor" xml:space="preserve">
+    <value>Номер рахунку постачальника; провідні нулі зберігаються.</value>
+  </data>
+  <data name="FieldDescription_VendorName" xml:space="preserve">
+    <value>Назва постачальника.</value>
+  </data>
+</root>

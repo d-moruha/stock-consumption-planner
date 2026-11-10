@@ -1,29 +1,28 @@
 @page "/consumption-plans/orphaned"
 @rendermode InteractiveServer
-@using System.Globalization
 @inject GetPlansHandler PlansHandler
 @inject DeletePlanHandler DeleteHandler
 @inject PlanEditPolicy EditPolicy
 @inject ConsumptionPlanOptions PlanOptions
+@inject IStringLocalizer<ConsumptionPlansResources> L
 
-<PageTitle>Orphaned Consumption Plans</PageTitle>
+<PageTitle>@L["OrphanedTitle"]</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h1 class="h3 mb-1">Orphaned Consumption Plans</h1>
+        <h1 class="h3 mb-1">@L["OrphanedTitle"]</h1>
         <p class="text-muted mb-0">
-            Plans whose stock record is missing from the current stock report. They are read-only, re-link automatically
-            when the record returns in a later import, and are deleted after @PlanOptions.OrphanRetentionMonths months.
+            @L["OrphanedIntro", PlanOptions.OrphanRetentionMonths]
         </p>
     </div>
-    <a class="btn btn-outline-secondary" href="/consumption-plans">Back to Plans</a>
+    <a class="btn btn-outline-secondary" href="/consumption-plans">@L["BackToPlans"]</a>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(_statusMessage))
 {
     <div class="alert @(_isErrorStatus ? "alert-danger" : "alert-success") d-flex justify-content-between align-items-center" role="alert">
         <span>@_statusMessage</span>
-        <button type="button" class="btn-close" @onclick="() => _statusMessage = null" aria-label="Close"></button>
+        <button type="button" class="btn-close" @onclick="() => _statusMessage = null" aria-label="@L["Close"]"></button>
     </div>
 }
 
@@ -31,15 +30,15 @@
     <div class="card-body">
         <div class="row g-3 align-items-end">
             <div class="col-md-6">
-                <label class="form-label fw-semibold" for="orphanSearchInput">Search</label>
+                <label class="form-label fw-semibold" for="orphanSearchInput">@L["Search"]</label>
                 <input id="orphanSearchInput"
                        type="search"
                        class="form-control"
-                       placeholder="Material number, description, or document number"
+                       placeholder="@L["SearchPlaceholder"]"
                        @bind="_search" />
             </div>
             <div class="col-md-2">
-                <button type="button" class="btn btn-primary w-100" disabled="@_isBusy" @onclick="SearchAsync">Search</button>
+                <button type="button" class="btn btn-primary w-100" disabled="@_isBusy" @onclick="SearchAsync">@L["Search"]</button>
             </div>
         </div>
     </div>
@@ -47,12 +46,12 @@
 
 @if (_plans is null)
 {
-    <p class="text-muted">Loading…</p>
+    <p class="text-muted">@L["Loading"]</p>
 }
 else if (_plans.TotalCount == 0)
 {
     <div class="card border-0 shadow-sm">
-        <div class="card-body p-4 text-muted">No orphaned plans.</div>
+        <div class="card-body p-4 text-muted">@L["NoOrphanedPlans"]</div>
     </div>
 }
 else
@@ -62,16 +61,16 @@ else
             <table class="table table-sm table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Document</th>
-                        <th>Item</th>
-                        <th>Year</th>
-                        <th>Material</th>
-                        <th>Description</th>
-                        <th>Target Month</th>
-                        <th class="text-end">Planned</th>
-                        <th>Orphaned Since</th>
-                        <th>Deleted After</th>
-                        <th class="text-end">Actions</th>
+                        <th>@L["ColumnDocument"]</th>
+                        <th>@L["ColumnItem"]</th>
+                        <th>@L["ColumnYear"]</th>
+                        <th>@L["ColumnMaterial"]</th>
+                        <th>@L["ColumnDescription"]</th>
+                        <th>@L["TargetMonth"]</th>
+                        <th class="text-end">@L["ColumnPlanned"]</th>
+                        <th>@L["ColumnOrphanedSince"]</th>
+                        <th>@L["ColumnDeletedAfter"]</th>
+                        <th class="text-end">@L["ColumnActions"]</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -83,17 +82,17 @@ else
                             <td>@plan.MaterialDocumentYear</td>
                             <td>@plan.MaterialNumber</td>
                             <td class="text-truncate" style="max-width: 18rem;" title="@plan.MaterialDescription">@plan.MaterialDescription</td>
-                            <td>@($"{plan.TargetYear:D4}-{plan.TargetMonth:D2}")</td>
-                            <td class="text-end">@plan.PlannedQuantity.ToString("#,0.####", CultureInfo.InvariantCulture)</td>
+                            <td>@ConsumptionPlanDisplay.FormatMonth(plan.TargetYear, plan.TargetMonth)</td>
+                            <td class="text-end">@ConsumptionPlanDisplay.FormatQuantity(plan.PlannedQuantity)</td>
                             <td class="small">@FormatLocal(plan.OrphanedAtUtc)</td>
                             <td class="small">@FormatLocal(plan.PurgeDueAtUtc)</td>
                             <td class="text-end">
                                 <button type="button"
                                         class="btn btn-sm btn-outline-danger"
                                         disabled="@(!plan.CanDelete || _isBusy)"
-                                        title="@(plan.CanDelete ? "Delete this plan" : "The edit period for this plan has ended")"
+                                        title="@(plan.CanDelete ? L["DeletePlanTooltip"] : L["EditPeriodEndedTooltip"])"
                                         @onclick="() => DeleteAsync(plan)">
-                                    Delete
+                                    @L["Delete"]
                                 </button>
                             </td>
                         </tr>
@@ -102,10 +101,10 @@ else
             </table>
         </div>
         <div class="card-footer bg-white d-flex justify-content-between align-items-center">
-            <span class="small text-muted">@_plans.TotalCount orphaned plan(s). Times are in @EditPolicy.TimeZone.Id.</span>
+            <span class="small text-muted">@L["OrphanedFooter", _plans.TotalCount, EditPolicy.TimeZone.Id]</span>
             <div>
-                <button type="button" class="btn btn-sm btn-outline-secondary" disabled="@(_page <= 1 || _isBusy)" @onclick="() => GoToPageAsync(_page - 1)">Previous</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary ms-1" disabled="@(_page * _plans.PageSize >= _plans.TotalCount || _isBusy)" @onclick="() => GoToPageAsync(_page + 1)">Next</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" disabled="@(_page <= 1 || _isBusy)" @onclick="() => GoToPageAsync(_page - 1)">@L["Previous"]</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary ms-1" disabled="@(_page * _plans.PageSize >= _plans.TotalCount || _isBusy)" @onclick="() => GoToPageAsync(_page + 1)">@L["Next"]</button>
             </div>
         </div>
     </div>
@@ -153,9 +152,14 @@ else
         {
             ConsumptionPlanResult<bool> result = await DeleteHandler.HandleAsync(plan.Id, plan.Version);
             _isErrorStatus = !result.IsSuccess;
+            StockDocumentKey key = new(plan.MaterialDocumentYear, plan.MaterialDocumentNumber, plan.MaterialDocumentItem);
             _statusMessage = result.IsSuccess
-                ? $"Plan for {plan.MaterialDocumentYear}/{plan.MaterialDocumentNumber}/{plan.MaterialDocumentItem} deleted."
-                : result.Error!.Message;
+                ? L["PlanDeleted", key.ToString()]
+                : ConsumptionPlanDisplay.LocalizeError(
+                    L,
+                    result.Error!,
+                    key,
+                    new PlanTargetMonth(plan.TargetYear, plan.TargetMonth));
             await LoadAsync();
         }
         finally
@@ -164,6 +168,5 @@ else
         }
     }
 
-    private string FormatLocal(DateTimeOffset? utc) =>
-        utc is null ? "—" : EditPolicy.ToBusinessTime(utc.Value).ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+    private string FormatLocal(DateTimeOffset? utc) => ConsumptionPlanDisplay.FormatBusinessTime(EditPolicy, utc);
 }

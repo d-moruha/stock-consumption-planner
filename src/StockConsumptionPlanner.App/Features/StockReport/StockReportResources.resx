@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ImportPageTitle" xml:space="preserve">
+    <value>Stock Report Import (.xlsx)</value>
+  </data>
+  <data name="ImportHeading" xml:space="preserve">
+    <value>Current Stock Report Import (.xlsx)</value>
+  </data>
+  <data name="ImportIntro" xml:space="preserve">
+    <value>Upload an Excel report, select the worksheet and header row, map the required material fields (optional SAP columns may stay unmapped), and ignore all other columns.</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Step1Title" xml:space="preserve">
+    <value>Step 1 — File Selection &amp; Header Row Configuration</value>
+  </data>
+  <data name="ExcelWorkbook" xml:space="preserve">
+    <value>Excel Workbook (.xlsx)</value>
+  </data>
+  <data name="Worksheet" xml:space="preserve">
+    <value>Worksheet</value>
+  </data>
+  <data name="UploadFileFirst" xml:space="preserve">
+    <value>Upload a file first...</value>
+  </data>
+  <data name="HeaderRow" xml:space="preserve">
+    <value>Header Row</value>
+  </data>
+  <data name="DataStartRow" xml:space="preserve">
+    <value>Data Start Row</value>
+  </data>
+  <data name="Reinspect" xml:space="preserve">
+    <value>Re-inspect Sheet &amp; Headers</value>
+  </data>
+  <data name="ResetMapping" xml:space="preserve">
+    <value>Reset to Auto-Suggested Mapping</value>
+  </data>
+  <data name="LoadSavedMapping" xml:space="preserve">
+    <value>Load Saved Mapping</value>
+  </data>
+  <data name="SaveMapping" xml:space="preserve">
+    <value>Save Mapping in Browser</value>
+  </data>
+  <data name="Step2Title" xml:space="preserve">
+    <value>Step 2 — Interactive Column Mapping ({0} Target Fields)</value>
+  </data>
+  <data name="DetectedColumns" xml:space="preserve">
+    <value>Detected {0} columns ({1} mapped, {2} ignored)</value>
+  </data>
+  <data name="TargetField" xml:space="preserve">
+    <value>Target Field</value>
+  </data>
+  <data name="ExpectedHeader" xml:space="preserve">
+    <value>Ukrainian / Expected Header</value>
+  </data>
+  <data name="ExcelColumnMapping" xml:space="preserve">
+    <value>Excel Column Mapping</value>
+  </data>
+  <data name="SampleValues" xml:space="preserve">
+    <value>Sample Values</value>
+  </data>
+  <data name="SelectExcelColumn" xml:space="preserve">
+    <value>-- Select Excel Column --</value>
+  </data>
+  <data name="SamplePreview" xml:space="preserve">
+    <value>(sample: {0})</value>
+  </data>
+  <data name="NoSample" xml:space="preserve">
+    <value>No sample</value>
+  </data>
+  <data name="ColumnDisposition" xml:space="preserve">
+    <value>Spreadsheet Column Disposition</value>
+  </data>
+  <data name="Ignored" xml:space="preserve">
+    <value>(Ignored)</value>
+  </data>
+  <data name="ImportButton" xml:space="preserve">
+    <value>Import Mapped Stock Report</value>
+  </data>
+  <data name="RowErrorsTitle" xml:space="preserve">
+    <value>Row Validation &amp; Conversion Errors ({0} errors across {1} rows)</value>
+  </data>
+  <data name="RowNumber" xml:space="preserve">
+    <value>Row #</value>
+  </data>
+  <data name="Field" xml:space="preserve">
+    <value>Field</value>
+  </data>
+  <data name="RawValue" xml:space="preserve">
+    <value>Raw Value</value>
+  </data>
+  <data name="Message" xml:space="preserve">
+    <value>Message</value>
+  </data>
+  <data name="Empty" xml:space="preserve">
+    <value>(empty)</value>
+  </data>
+  <data name="RowErrorRequired" xml:space="preserve">
+    <value>{0} is required.</value>
+  </data>
+  <data name="RowErrorInvalid" xml:space="preserve">
+    <value>Invalid value '{1}' for {0}.</value>
+  </data>
+  <data name="RowErrorTooLong" xml:space="preserve">
+    <value>{0} must be at most {1} characters.</value>
+  </data>
+  <data name="RowErrorInvalid_Year" xml:space="preserve">
+    <value>Invalid value '{1}' for {0}. Expected a 4-digit year.</value>
+  </data>
+  <data name="RowErrorInvalid_Decimal" xml:space="preserve">
+    <value>Invalid value '{1}' for {0}. Expected a valid decimal number.</value>
+  </data>
+  <data name="RowErrorInvalid_Date" xml:space="preserve">
+    <value>Invalid value '{1}' for {0}. Expected a date such as 31.12.2026.</value>
+  </data>
+  <data name="RowErrorInvalid_Flag" xml:space="preserve">
+    <value>Invalid value '{1}' for {0}. Expected X or blank.</value>
+  </data>
+  <data name="Required" xml:space="preserve">
+    <value>required</value>
+  </data>
+  <data name="Optional" xml:space="preserve">
+    <value>optional</value>
+  </data>
+  <data name="FieldType_Text" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="FieldType_Year" xml:space="preserve">
+    <value>Year</value>
+  </data>
+  <data name="FieldType_Decimal" xml:space="preserve">
+    <value>Decimal</value>
+  </data>
+  <data name="FieldType_Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="FieldType_Flag" xml:space="preserve">
+    <value>Flag</value>
+  </data>
+  <data name="Step3Title" xml:space="preserve">
+    <value>Step 3 — Current Stored Stock Report</value>
+  </data>
+  <data name="StoredReportSummary" xml:space="preserve">
+    <value>({0} / {1} — {2} rows)</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>Search material, document, description...</value>
+  </data>
+  <data name="Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="NoItems" xml:space="preserve">
+    <value>No stock report items are currently stored. Upload and import an .xlsx file above.</value>
+  </data>
+  <data name="ValidRows" xml:space="preserve">
+    <value>Valid Rows:</value>
+  </data>
+  <data name="Showing" xml:space="preserve">
+    <value>(showing {0})</value>
+  </data>
+  <data name="TotalQuantity" xml:space="preserve">
+    <value>Total Quantity:</value>
+  </data>
+  <data name="TotalValue" xml:space="preserve">
+    <value>Total Value:</value>
+  </data>
+  <data name="ImportedAt" xml:space="preserve">
+    <value>Imported At:</value>
+  </data>
+  <data name="UtcTime" xml:space="preserve">
+    <value>{0:T} UTC</value>
+  </data>
+  <data name="Row" xml:space="preserve">
+    <value>Row</value>
+  </data>
+  <data name="StatusInspected" xml:space="preserve">
+    <value>Inspected '{0}' ({1} columns detected).</value>
+  </data>
+  <data name="StatusReadFailed" xml:space="preserve">
+    <value>Failed to read Excel file: {0}</value>
+  </data>
+  <data name="StatusInspectionFailed" xml:space="preserve">
+    <value>Inspection error: {0}</value>
+  </data>
+  <data name="StatusImported" xml:space="preserve">
+    <value>Imported {0} valid rows from '{1}' ({2} unmapped columns ignored, {3} rows with errors).</value>
+  </data>
+  <data name="StatusImportFailed" xml:space="preserve">
+    <value>Import failed: {0}</value>
+  </data>
+  <data name="StatusMappingSaved" xml:space="preserve">
+    <value>Column mapping saved in browser storage.</value>
+  </data>
+  <data name="StatusMappingSaveFailed" xml:space="preserve">
+    <value>Could not save mapping: {0}</value>
+  </data>
+  <data name="StatusNoSavedMapping" xml:space="preserve">
+    <value>No saved column mapping found in browser storage.</value>
+  </data>
+  <data name="StatusSavedMappingInvalid" xml:space="preserve">
+    <value>Saved mapping format was invalid.</value>
+  </data>
+  <data name="StatusMappingLoaded" xml:space="preserve">
+    <value>Loaded saved column mapping from browser storage.</value>
+  </data>
+  <data name="StatusMappingLoadFailed" xml:space="preserve">
+    <value>Could not load saved mapping: {0}</value>
+  </data>
+  <data name="StatusReportCleared" xml:space="preserve">
+    <value>Cleared current stored stock report.</value>
+  </data>
+</root>

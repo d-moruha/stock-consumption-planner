@@ -7,24 +7,25 @@
 @inject DeletePlanHandler DeleteHandler
 @inject PlanEditPolicy EditPolicy
 @inject ConsumptionPlanOptions PlanOptions
+@inject IStringLocalizer<ConsumptionPlansResources> L
 
-<PageTitle>Consumption Plans</PageTitle>
+<PageTitle>@L["PlansTitle"]</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h1 class="h3 mb-1">Consumption Plans</h1>
+        <h1 class="h3 mb-1">@L["PlansTitle"]</h1>
         <p class="text-muted mb-0">
-            Plan how much of each current stock record is consumed in a month. One plan per stock record per month.
+            @L["PlansIntro"]
         </p>
     </div>
-    <a class="btn btn-outline-secondary" href="/consumption-plans/orphaned">Orphaned Plans</a>
+    <a class="btn btn-outline-secondary" href="/consumption-plans/orphaned">@L["OrphanedPlansLink"]</a>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(_statusMessage))
 {
     <div class="alert @(_isErrorStatus ? "alert-danger" : "alert-success") d-flex justify-content-between align-items-center" role="alert">
         <span>@_statusMessage</span>
-        <button type="button" class="btn-close" @onclick="() => _statusMessage = null" aria-label="Close"></button>
+        <button type="button" class="btn-close" @onclick="() => _statusMessage = null" aria-label="@L["Close"]"></button>
     </div>
 }
 
@@ -32,7 +33,7 @@
     <div class="card-body">
         <div class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label fw-semibold" for="targetMonthInput">Target Month</label>
+                <label class="form-label fw-semibold" for="targetMonthInput">@L["TargetMonth"]</label>
                 <input id="targetMonthInput"
                        type="month"
                        class="form-control"
@@ -40,15 +41,15 @@
                        @onchange="OnMonthChangedAsync" />
             </div>
             <div class="col-md-5">
-                <label class="form-label fw-semibold" for="planSearchInput">Search</label>
+                <label class="form-label fw-semibold" for="planSearchInput">@L["Search"]</label>
                 <input id="planSearchInput"
                        type="search"
                        class="form-control"
-                       placeholder="Material number, description, or document number"
+                       placeholder="@L["SearchPlaceholder"]"
                        @bind="_search" />
             </div>
             <div class="col-md-2">
-                <button type="button" class="btn btn-primary w-100" disabled="@_isBusy" @onclick="SearchAsync">Search</button>
+                <button type="button" class="btn btn-primary w-100" disabled="@_isBusy" @onclick="SearchAsync">@L["Search"]</button>
             </div>
         </div>
 
@@ -57,15 +58,15 @@
             <div class="small text-muted mt-3">
                 @if (_sheet.CanCreate)
                 {
-                    <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle me-2">New plans allowed</span>
+                    <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle me-2">@L["NewPlansAllowed"]</span>
                 }
                 else
                 {
-                    <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle me-2">Month has ended</span>
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle me-2">@L["MonthEnded"]</span>
                 }
-                A plan can be changed for @PlanOptions.EditDaysAfterCreation days after it is created, and otherwise until
-                <strong>@FormatLocal(_sheet.LockBeforeMonthUtc)</strong> (@PlanOptions.LockDaysBeforeTargetMonth days before @_target).
-                Times are in @EditPolicy.TimeZone.Id.
+                @L["EditRulePrefix", PlanOptions.EditDaysAfterCreation]
+                <strong>@FormatLocal(_sheet.LockBeforeMonthUtc)</strong>
+                @L["EditRuleSuffix", PlanOptions.LockDaysBeforeTargetMonth, ConsumptionPlanDisplay.FormatMonth(_target), EditPolicy.TimeZone.Id]
             </div>
         }
     </div>
@@ -73,17 +74,17 @@
 
 @if (_sheet is null)
 {
-    <p class="text-muted">Loading…</p>
+    <p class="text-muted">@L["Loading"]</p>
 }
 else if (_sheet.Rows.TotalCount == 0)
 {
     <div class="card border-0 shadow-sm">
         <div class="card-body p-4">
-            <h2 class="h5 mb-2">No Stock to Plan</h2>
+            <h2 class="h5 mb-2">@L["NoStockTitle"]</h2>
             <p class="text-muted mb-3">
-                @(string.IsNullOrWhiteSpace(_search) ? "No current stock report is loaded." : "No stock records match the search.")
+                @(string.IsNullOrWhiteSpace(_search) ? L["NoStockReport"] : L["NoStockMatches"])
             </p>
-            <a class="btn btn-outline-primary" href="/stock-import">Go to Stock Report Import</a>
+            <a class="btn btn-outline-primary" href="/stock-import">@L["GoToStockImport"]</a>
         </div>
     </div>
 }
@@ -94,15 +95,15 @@ else
             <table class="table table-sm table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Document</th>
-                        <th>Item</th>
-                        <th>Year</th>
-                        <th>Material</th>
-                        <th>Description</th>
-                        <th class="text-end">Stock</th>
-                        <th style="width: 11rem;">Planned</th>
-                        <th>Editable Until</th>
-                        <th class="text-end">Actions</th>
+                        <th>@L["ColumnDocument"]</th>
+                        <th>@L["ColumnItem"]</th>
+                        <th>@L["ColumnYear"]</th>
+                        <th>@L["ColumnMaterial"]</th>
+                        <th>@L["ColumnDescription"]</th>
+                        <th class="text-end">@L["ColumnStock"]</th>
+                        <th style="width: 11rem;">@L["ColumnPlanned"]</th>
+                        <th>@L["ColumnEditableUntil"]</th>
+                        <th class="text-end">@L["ColumnActions"]</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -128,7 +129,7 @@ else
                                        @onchange="args => _drafts[key] = args.Value?.ToString() ?? string.Empty" />
                                 @if (plan?.ExceedsStock == true)
                                 {
-                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle mt-1">Exceeds stock</span>
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle mt-1">@L["ExceedsStock"]</span>
                                 }
                             </td>
                             <td class="small text-muted">
@@ -139,7 +140,7 @@ else
                                         class="btn btn-sm btn-primary"
                                         disabled="@(!canSave || _isBusy)"
                                         @onclick="() => SaveAsync(key, plan)">
-                                    @(plan is null ? "Create" : "Save")
+                                    @(plan is null ? L["Create"] : L["Save"])
                                 </button>
                                 @if (plan is not null)
                                 {
@@ -147,7 +148,7 @@ else
                                             class="btn btn-sm btn-outline-danger ms-1"
                                             disabled="@(!plan.CanDelete || _isBusy)"
                                             @onclick="() => DeleteAsync(plan)">
-                                        Delete
+                                        @L["Delete"]
                                     </button>
                                 }
                             </td>
@@ -158,12 +159,11 @@ else
         </div>
         <div class="card-footer bg-white d-flex justify-content-between align-items-center">
             <span class="small text-muted">
-                Rows @(((_sheet.Rows.Page - 1) * _sheet.Rows.PageSize) + 1)–@(((_sheet.Rows.Page - 1) * _sheet.Rows.PageSize) + _sheet.Rows.Items.Count)
-                of @_sheet.Rows.TotalCount
+                @L["RowsRange", ((_sheet.Rows.Page - 1) * _sheet.Rows.PageSize) + 1, ((_sheet.Rows.Page - 1) * _sheet.Rows.PageSize) + _sheet.Rows.Items.Count, _sheet.Rows.TotalCount]
             </span>
             <div>
-                <button type="button" class="btn btn-sm btn-outline-secondary" disabled="@(_page <= 1 || _isBusy)" @onclick="() => GoToPageAsync(_page - 1)">Previous</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary ms-1" disabled="@(_page * _sheet.Rows.PageSize >= _sheet.Rows.TotalCount || _isBusy)" @onclick="() => GoToPageAsync(_page + 1)">Next</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" disabled="@(_page <= 1 || _isBusy)" @onclick="() => GoToPageAsync(_page - 1)">@L["Previous"]</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary ms-1" disabled="@(_page * _sheet.Rows.PageSize >= _sheet.Rows.TotalCount || _isBusy)" @onclick="() => GoToPageAsync(_page + 1)">@L["Next"]</button>
             </div>
         </div>
     </div>
@@ -199,7 +199,8 @@ else
             }
             else
             {
-                ShowError(result.Error!);
+                _isErrorStatus = true;
+                _statusMessage = L["LoadFailed", ConsumptionPlanDisplay.FormatMonth(_target)];
             }
         }
         finally
@@ -243,7 +244,7 @@ else
         if (!decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal quantity))
         {
             _isErrorStatus = true;
-            _statusMessage = $"Enter a planned quantity for {key}.";
+            _statusMessage = L["EnterPlannedQuantity", key.ToString()];
             return;
         }
 
@@ -263,12 +264,12 @@ else
             if (result.IsSuccess)
             {
                 _isErrorStatus = false;
-                _statusMessage = $"Plan for {key} in {_target} saved.";
+                _statusMessage = L["PlanSaved", key.ToString(), ConsumptionPlanDisplay.FormatMonth(_target)];
                 await LoadAsync();
             }
             else
             {
-                ShowError(result.Error!);
+                ShowError(result.Error!, key, quantity);
             }
         }
         finally
@@ -286,12 +287,12 @@ else
             if (result.IsSuccess)
             {
                 _isErrorStatus = false;
-                _statusMessage = $"Plan for {plan.MaterialDocumentYear}/{plan.MaterialDocumentNumber}/{plan.MaterialDocumentItem} deleted.";
+                _statusMessage = L["PlanDeleted", PlanKey(plan).ToString()];
                 await LoadAsync();
             }
             else
             {
-                ShowError(result.Error!);
+                ShowError(result.Error!, PlanKey(plan));
             }
         }
         finally
@@ -300,15 +301,16 @@ else
         }
     }
 
-    private void ShowError(ConsumptionPlanError error)
+    private void ShowError(ConsumptionPlanError error, StockDocumentKey key, decimal? plannedQuantity = null)
     {
         _isErrorStatus = true;
-        _statusMessage = error.Code == ConsumptionPlanErrorCode.StaleVersion
-            ? $"{error.Message} Use Search to reload."
-            : error.Message;
+        _statusMessage = ConsumptionPlanDisplay.LocalizeError(L, error, key, _target, plannedQuantity);
     }
 
-    private string FormatLocal(DateTimeOffset utc) => EditPolicy.ToBusinessTime(utc).ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+    private static StockDocumentKey PlanKey(ConsumptionPlanDto plan) =>
+        new(plan.MaterialDocumentYear, plan.MaterialDocumentNumber, plan.MaterialDocumentItem);
 
-    private static string FormatQuantity(decimal value) => value.ToString("#,0.####", CultureInfo.InvariantCulture);
+    private string FormatLocal(DateTimeOffset utc) => ConsumptionPlanDisplay.FormatBusinessTime(EditPolicy, utc);
+
+    private static string FormatQuantity(decimal value) => ConsumptionPlanDisplay.FormatQuantity(value);
 }
