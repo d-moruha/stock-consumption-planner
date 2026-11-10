@@ -26,5 +26,12 @@ public sealed class PlannerDbContext(DbContextOptions<PlannerDbContext> options)
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PlannerDbContext).Assembly);
+
+        modelBuilder.Entity<PlannerSchemaVersion>(entity =>
+        {
+            entity.ToTable(PlannerSchemaVersion.TableName);
+            entity.HasKey(v => v.Hash);
+            entity.Property(v => v.Hash).HasMaxLength(64);
+        });
     }
 }
