@@ -1,5 +1,6 @@
 using System.Globalization;
 using StockConsumptionPlanner.App.Features.ConsumptionPlans.PlanPeriod;
+using StockConsumptionPlanner.App.Features.ConsumptionPlans.Shared;
 using StockConsumptionPlanner.App.Localization;
 
 namespace StockConsumptionPlanner.Tests.Features.ConsumptionPlans.PlanPeriod;
@@ -32,6 +33,23 @@ public sealed class PlanPeriodInputTests
 
         Assert.Equal(2093, input.MinYear);
         Assert.Equal(2100, input.MaxYear);
+    }
+
+    [Fact]
+    public void Earliest_RaisesMinYearAndRejectsEarlierPeriods()
+    {
+        PlanPeriodInput input = new(
+            2026,
+            CultureInfo.InvariantCulture,
+            new PlanTargetMonth(2026, 12));
+
+        Assert.Equal(2026, input.MinYear);
+        Assert.Equal(2031, input.MaxYear);
+        Assert.Equal(PlanPeriodError.YearOutOfRange, input.ParseYear("2025").Error);
+        Assert.True(input.IsBeforeEarliest(new PlanTargetMonth(2026, 11)));
+        Assert.False(input.IsBeforeEarliest(new PlanTargetMonth(2026, 12)));
+        Assert.False(input.IsBeforeEarliest(new PlanTargetMonth(2027, 1)));
+        Assert.False(Ukrainian.IsBeforeEarliest(new PlanTargetMonth(2021, 1)));
     }
 
     [Fact]

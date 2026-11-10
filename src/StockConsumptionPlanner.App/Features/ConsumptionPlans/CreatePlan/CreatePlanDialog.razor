@@ -1,0 +1,236 @@
+@using System.Globalization
+@inject CreatePlanHandler CreateHandler
+@inject IStringLocalizer<ConsumptionPlansResources> L
+
+<div class="modal d-block"
+     tabindex="-1"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="createPlanTitle"
+     @onkeydown="OnKeyDownAsync">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="createPlanTitle">@L["CreatePlanTitle"]</h2>
+                <button type="button"
+                        class="btn-close"
+                        aria-label="@L["Close"]"
+                        @onclick="CloseAsync"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row small mb-3">
+                    <dt class="col-4">@L["ColumnDocument"]</dt>
+                    <dd class="col-8 mb-1">
+                        <code>@Row.MaterialDocumentNumber</code> /
+                        <code>@Row.MaterialDocumentItem</code> /
+                        @Row.MaterialDocumentYear
+                    </dd>
+                    <dt class="col-4">@L["ColumnMaterial"]</dt>
+                    <dd class="col-8 mb-1">@Row.MaterialNumber — @Row.MaterialDescription</dd>
+                    <dt class="col-4">@L["ColumnStock"]</dt>
+                    <dd class="col-8 mb-0">
+                        @ConsumptionPlanDisplay.FormatQuantity(Row.CurrentStockQuantity)
+                    </dd>
+                </dl>
+                <PlanPeriodPicker IdPrefix="newPlan"
+                                  Period="_lastValidPeriod"
+                                  CurrentYear="CurrentYear"
+                                  Earliest="Earliest"
+                                  PeriodChanged="OnPeriodChanged" />
+                @if (IsPeriodTaken)
+                {
+                    <div id="newPlanPeriodError" class="invalid-feedback d-block">
+                        @L["PlanExistsForPeriod", FormatPeriod(_period!.Value)]
+                    </div>
+                }
+                <div class="mt-3">
+                    <label class="form-label fw-semibold" for="newPlanQuantityInput">
+                        @L["PlannedQuantity"]
+                    </label>
+                    <input @ref="_quantityInput"
+                           id="newPlanQuantityInput"
+                           type="text"
+                           inputmode="decimal"
+                           autocomplete="off"
+                           class="form-control @(IsQuantityInvalid ? "is-invalid" : null)"
+                           aria-invalid="@(IsQuantityInvalid ? "true" : null)"
+                           aria-describedby="@(IsQuantityInvalid ? QuantityErrorId : null)"
+                           value="@_quantityText"
+                           @onchange="OnQuantityChanged" />
+                    @if (IsQuantityInvalid)
+                    {
+                        <div id="@QuantityErrorId" class="invalid-feedback">@_quantityError</div>
+                    }
+                </div>
+                @if (_serverError is not null)
+                {
+                    <div class="alert alert-danger mt-3 mb-0" role="alert">@_serverError</div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" @onclick="CloseAsync">
+                    @L["Cancel"]
+                </button>
+                <button type="button"
+                        class="btn btn-primary"
+                        disabled="@_isSaving"
+                        @onclick="CreateAsync">
+                    @L["Create"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop show"></div>
+
+@code {
+    private const string QuantityErrorId = "newPlanQuantityError";
+
+    private ElementReference _quantityInput;
+    private PlanTargetMonth? _period;
+    private PlanTargetMonth _lastValidPeriod;
+    private string _quantityText = string.Empty;
+    private string? _quantityError;
+    private string? _serverError;
+    private bool _isSaving;
+
+    [Parameter, EditorRequired]
+    public PlanningSheetRowDto Row { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public PlanTargetMonth InitialPeriod { get; set; }
+
+    [Parameter, EditorRequired]
+    public PlanTargetMonth Earliest { get; set; }
+
+    [Parameter, EditorRequired]
+    public int CurrentYear { get; set; }
+
+    [Parameter]
+    public EventCallback<ConsumptionPlanDto> OnCreated { get; set; }
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    private bool IsPeriodTaken => _period is { } period && Row.Plans.Any(
+        plan => plan.TargetYear == period.Year && plan.TargetMonth == period.Month);
+
+    private bool IsQuantityInvalid => _quantityError is not null;
+
+    protected override void OnInitialized()
+    {
+        _period = InitialPeriod;
+        _lastValidPeriod = InitialPeriod;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await _quantityInput.FocusAsync();
+        }
+    }
+
+    private void OnPeriodChanged(PlanTargetMonth? period)
+    {
+        _period = period;
+        _lastValidPeriod = period ?? _lastValidPeriod;
+        _serverError = null;
+    }
+
+    private void OnQuantityChanged(ChangeEventArgs args)
+    {
+        _quantityText = args.Value?.ToString() ?? string.Empty;
+        _quantityError = ValidateQuantity(out _);
+        _serverError = null;
+    }
+
+    private string? ValidateQuantity(out decimal quantity)
+    {
+        string text = _quantityText.Trim().Replace(',', '.');
+        if (text.Length == 0)
+        {
+            quantity = 0m;
+            return L["QuantityRequired"];
+        }
+
+        if (!decimal.TryParse(
+                text,
+                NumberStyles.AllowDecimalPoint,
+                CultureInfo.InvariantCulture,
+                out quantity))
+        {
+            return L["QuantityInvalid", ConsumptionPlan.QuantityScale];
+        }
+
+        if (quantity > Row.CurrentStockQuantity)
+        {
+            return L[
+                "QuantityExceedsStock",
+                ConsumptionPlanDisplay.FormatQuantity(Row.CurrentStockQuantity)];
+        }
+
+        return ConsumptionPlan.ValidatePlannedQuantity(quantity) is null
+            ? null
+            : L["QuantityInvalid", ConsumptionPlan.QuantityScale].Value;
+    }
+
+    private async Task CreateAsync()
+    {
+        _quantityError = ValidateQuantity(out decimal quantity);
+        if (_period is not { } period || IsPeriodTaken || _quantityError is not null)
+        {
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            ConsumptionPlanResult<ConsumptionPlanDto> result = await CreateHandler.HandleAsync(
+                new CreateConsumptionPlanRequest(
+                    Row.MaterialDocumentYear,
+                    Row.MaterialDocumentNumber,
+                    Row.MaterialDocumentItem,
+                    period.Year,
+                    period.Month,
+                    quantity));
+            if (result.IsSuccess)
+            {
+                await OnCreated.InvokeAsync(result.Value!);
+                return;
+            }
+
+            _serverError = ConsumptionPlanDisplay.LocalizeError(
+                L,
+                result.Error!,
+                new StockDocumentKey(
+                    Row.MaterialDocumentYear,
+                    Row.MaterialDocumentNumber,
+                    Row.MaterialDocumentItem),
+                period,
+                quantity);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task OnKeyDownAsync(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            await CloseAsync();
+        }
+    }
+
+    private async Task CloseAsync()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private static string FormatPeriod(PlanTargetMonth period)
+    {
+        return ConsumptionPlanDisplay.FormatMonth(period);
+    }
+}

@@ -89,17 +89,14 @@
   <data name="PlanPeriodError_MonthUnknown" xml:space="preserve">
     <value>Введіть номер місяця від 1 до 12 або назву місяця, наприклад «{2}».</value>
   </data>
+  <data name="PlanPeriodError_PeriodTooEarly" xml:space="preserve">
+    <value>Оберіть {3} або пізніший місяць.</value>
+  </data>
   <data name="Search" xml:space="preserve">
     <value>Пошук</value>
   </data>
   <data name="SearchPlaceholder" xml:space="preserve">
     <value>Номер матеріалу, опис або номер документа</value>
-  </data>
-  <data name="NewPlansAllowed" xml:space="preserve">
-    <value>Можна створювати нові плани</value>
-  </data>
-  <data name="MonthEnded" xml:space="preserve">
-    <value>Місяць завершився</value>
   </data>
   <data name="EditRulePrefix" xml:space="preserve">
     <value>План можна змінювати протягом {0} дн. після створення, а також до</value>
@@ -160,6 +157,42 @@
   </data>
   <data name="Create" xml:space="preserve">
     <value>Створити</value>
+  </data>
+  <data name="CreatePlan" xml:space="preserve">
+    <value>Створити план</value>
+  </data>
+  <data name="CreatePlanTitle" xml:space="preserve">
+    <value>Новий план споживання</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Скасувати</value>
+  </data>
+  <data name="ColumnPlannedFor" xml:space="preserve">
+    <value>Заплановано на {0}</value>
+  </data>
+  <data name="ColumnPlans" xml:space="preserve">
+    <value>Плани</value>
+  </data>
+  <data name="ColumnPeriod" xml:space="preserve">
+    <value>Період</value>
+  </data>
+  <data name="PlansCount" xml:space="preserve">
+    <value>Плани ({0})</value>
+  </data>
+  <data name="PlannedQuantity" xml:space="preserve">
+    <value>Запланована кількість</value>
+  </data>
+  <data name="PlanExistsForPeriod" xml:space="preserve">
+    <value>План на {0} для цього запису запасів уже існує.</value>
+  </data>
+  <data name="QuantityRequired" xml:space="preserve">
+    <value>Введіть заплановану кількість.</value>
+  </data>
+  <data name="QuantityInvalid" xml:space="preserve">
+    <value>Введіть число, більше за нуль, з не більше ніж {0} знаками після коми.</value>
+  </data>
+  <data name="QuantityExceedsStock" xml:space="preserve">
+    <value>Запланована кількість не може перевищувати поточний залишок ({0}).</value>
   </data>
   <data name="Save" xml:space="preserve">
     <value>Зберегти</value>

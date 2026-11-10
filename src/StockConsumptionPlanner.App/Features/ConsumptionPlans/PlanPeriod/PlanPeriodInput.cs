@@ -10,7 +10,8 @@ public enum PlanPeriodError
     YearNotFourDigits,
     YearOutOfRange,
     MonthRequired,
-    MonthUnknown
+    MonthUnknown,
+    PeriodTooEarly
 }
 
 public readonly record struct PlanPeriodField(int Value, PlanPeriodError Error)
@@ -22,19 +23,24 @@ public sealed class PlanPeriodInput
 {
     public const int YearsAroundCurrent = 5;
 
-    public PlanPeriodInput(int currentYear, CultureInfo culture)
+    public PlanPeriodInput(int currentYear, CultureInfo culture, PlanTargetMonth? earliest = null)
     {
         ArgumentNullException.ThrowIfNull(culture);
 
         CurrentYear = currentYear;
         Culture = culture;
-        MinYear = Math.Max(PlanTargetMonth.MinYear, currentYear - YearsAroundCurrent);
+        Earliest = earliest;
+        MinYear = Math.Max(
+            Math.Max(PlanTargetMonth.MinYear, currentYear - YearsAroundCurrent),
+            earliest?.Year ?? PlanTargetMonth.MinYear);
         MaxYear = Math.Min(PlanTargetMonth.MaxYear, currentYear + YearsAroundCurrent);
         Years = [.. Enumerable.Range(MinYear, MaxYear - MinYear + 1).Select(FormatYear)];
         MonthNames = [.. Enumerable.Range(1, 12).Select(FormatMonth)];
     }
 
     public int CurrentYear { get; }
+
+    public PlanTargetMonth? Earliest { get; }
 
     public CultureInfo Culture { get; }
 
@@ -55,6 +61,11 @@ public sealed class PlanPeriodInput
     {
         string name = Culture.DateTimeFormat.GetMonthName(month);
         return name.Length == 0 ? name : char.ToUpper(name[0], Culture) + name[1..];
+    }
+
+    public bool IsBeforeEarliest(PlanTargetMonth period)
+    {
+        return Earliest is { } earliest && period.CompareTo(earliest) < 0;
     }
 
     public PlanPeriodField ParseYear(string? text)

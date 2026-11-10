@@ -89,17 +89,14 @@
   <data name="PlanPeriodError_MonthUnknown" xml:space="preserve">
     <value>Enter a month number from 1 to 12 or a month name, for example {2}.</value>
   </data>
+  <data name="PlanPeriodError_PeriodTooEarly" xml:space="preserve">
+    <value>Choose {3} or a later month.</value>
+  </data>
   <data name="Search" xml:space="preserve">
     <value>Search</value>
   </data>
   <data name="SearchPlaceholder" xml:space="preserve">
     <value>Material number, description, or document number</value>
-  </data>
-  <data name="NewPlansAllowed" xml:space="preserve">
-    <value>New plans allowed</value>
-  </data>
-  <data name="MonthEnded" xml:space="preserve">
-    <value>Month has ended</value>
   </data>
   <data name="EditRulePrefix" xml:space="preserve">
     <value>A plan can be changed for {0} days after it is created, and otherwise until</value>
@@ -160,6 +157,42 @@
   </data>
   <data name="Create" xml:space="preserve">
     <value>Create</value>
+  </data>
+  <data name="CreatePlan" xml:space="preserve">
+    <value>Create plan</value>
+  </data>
+  <data name="CreatePlanTitle" xml:space="preserve">
+    <value>Create consumption plan</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="ColumnPlannedFor" xml:space="preserve">
+    <value>Planned for {0}</value>
+  </data>
+  <data name="ColumnPlans" xml:space="preserve">
+    <value>Plans</value>
+  </data>
+  <data name="ColumnPeriod" xml:space="preserve">
+    <value>Period</value>
+  </data>
+  <data name="PlansCount" xml:space="preserve">
+    <value>Plans ({0})</value>
+  </data>
+  <data name="PlannedQuantity" xml:space="preserve">
+    <value>Planned quantity</value>
+  </data>
+  <data name="PlanExistsForPeriod" xml:space="preserve">
+    <value>This stock record already has a plan for {0}.</value>
+  </data>
+  <data name="QuantityRequired" xml:space="preserve">
+    <value>Enter the planned quantity.</value>
+  </data>
+  <data name="QuantityInvalid" xml:space="preserve">
+    <value>Enter a number greater than zero with at most {0} decimal places.</value>
+  </data>
+  <data name="QuantityExceedsStock" xml:space="preserve">
+    <value>The planned quantity cannot exceed the current stock ({0}).</value>
   </data>
   <data name="Save" xml:space="preserve">
     <value>Save</value>

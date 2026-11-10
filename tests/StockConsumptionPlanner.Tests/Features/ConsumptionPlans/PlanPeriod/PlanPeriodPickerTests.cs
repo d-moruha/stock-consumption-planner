@@ -158,11 +158,38 @@ public sealed class PlanPeriodPickerTests : BunitContext
         Assert.Empty(_reported);
     }
 
-    private IRenderedComponent<PlanPeriodPicker> RenderPicker()
+    [Theory]
+    [InlineData(PlannerCultures.Ukrainian, "Оберіть грудень 2026\u202Fр. або пізніший місяць.")]
+    [InlineData(PlannerCultures.English, "Choose December 2026 or a later month.")]
+    public void PeriodBeforeEarliest_ShowsLocalizedErrorUnderMonth(string culture, string expected)
+    {
+        using CultureScope _ = new(culture);
+        IRenderedComponent<PlanPeriodPicker> picker = RenderPicker(
+            new PlanTargetMonth(2026, 12),
+            idPrefix: "newPlan");
+
+        picker.Find("#newPlanMonthInput").Change("11");
+
+        Assert.Equal(expected, picker.Find("#newPlanMonthInput-error").TextContent);
+        Assert.DoesNotContain("is-invalid", picker.Find("#newPlanYearInput").ClassList);
+        Assert.Equal(6, picker.FindAll("#newPlanYearInput-options button").Count);
+        Assert.Equal([null], _reported);
+
+        picker.Find("#newPlanYearInput").Change("2027");
+
+        Assert.Empty(picker.FindAll(".invalid-feedback"));
+        Assert.Equal([null, new PlanTargetMonth(2027, 11)], _reported);
+    }
+
+    private IRenderedComponent<PlanPeriodPicker> RenderPicker(
+        PlanTargetMonth? earliest = null,
+        string idPrefix = "plan")
     {
         return Render<PlanPeriodPicker>(parameters => parameters
             .Add(picker => picker.Period, new PlanTargetMonth(2026, 12))
             .Add(picker => picker.CurrentYear, 2026)
+            .Add(picker => picker.Earliest, earliest)
+            .Add(picker => picker.IdPrefix, idPrefix)
             .Add(
                 picker => picker.PeriodChanged,
                 (PlanTargetMonth? period) => _reported.Add(period)));

@@ -3,8 +3,8 @@
 
 <div class="row g-2" role="group" aria-label="@L["PlanPeriod"]">
     <div class="col-5">
-        <label class="form-label fw-semibold" for="planYearInput">@L["PlanYear"]</label>
-        <EditableDropdown Id="planYearInput"
+        <label class="form-label fw-semibold" for="@YearId">@L["PlanYear"]</label>
+        <EditableDropdown Id="@YearId"
                           Text="@_yearText"
                           TextChanged="OnYearChangedAsync"
                           Options="_input.Years"
@@ -13,8 +13,8 @@
                           InputMode="numeric" />
     </div>
     <div class="col-7">
-        <label class="form-label fw-semibold" for="planMonthInput">@L["PlanMonth"]</label>
-        <EditableDropdown Id="planMonthInput"
+        <label class="form-label fw-semibold" for="@MonthId">@L["PlanMonth"]</label>
+        <EditableDropdown Id="@MonthId"
                           Text="@_monthText"
                           TextChanged="OnMonthChangedAsync"
                           Options="_input.MonthNames"
@@ -38,13 +38,23 @@
     public int CurrentYear { get; set; }
 
     [Parameter]
+    public PlanTargetMonth? Earliest { get; set; }
+
+    [Parameter]
+    public string IdPrefix { get; set; } = "plan";
+
+    [Parameter]
     public EventCallback<PlanTargetMonth?> PeriodChanged { get; set; }
+
+    private string YearId => $"{IdPrefix}YearInput";
+
+    private string MonthId => $"{IdPrefix}MonthInput";
 
     protected override void OnParametersSet()
     {
-        if (_input is null || _input.CurrentYear != CurrentYear)
+        if (_input is null || _input.CurrentYear != CurrentYear || _input.Earliest != Earliest)
         {
-            _input = new PlanPeriodInput(CurrentYear, CultureInfo.CurrentCulture);
+            _input = new PlanPeriodInput(CurrentYear, CultureInfo.CurrentCulture, Earliest);
         }
 
         if (_shownPeriod != Period)
@@ -72,6 +82,13 @@
         if (_year.IsValid && _month.IsValid)
         {
             PlanTargetMonth period = new(_year.Value, _month.Value);
+            if (_input.IsBeforeEarliest(period))
+            {
+                _month = new PlanPeriodField(0, PlanPeriodError.PeriodTooEarly);
+                await PeriodChanged.InvokeAsync(null);
+                return;
+            }
+
             Show(period);
             await PeriodChanged.InvokeAsync(period);
         }
@@ -97,10 +114,14 @@
             return null;
         }
 
+        string earliest = Earliest is { } period
+            ? ConsumptionPlanDisplay.FormatMonth(period)
+            : string.Empty;
         return L[
             $"PlanPeriodError_{field.Error}",
             _input.MinYear,
             _input.MaxYear,
-            _input.FormatMonth(1)].Value;
+            _input.FormatMonth(1),
+            earliest].Value;
     }
 }
