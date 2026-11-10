@@ -20,8 +20,51 @@ public sealed record StockReportItemDto(
     int MaterialDocumentYear,
     string MaterialNumber,
     string MaterialDescription,
-    decimal MaterialQuantity,
-    decimal MaterialValue);
+    decimal TotalStockQuantity,
+    decimal TotalStockValue)
+{
+    public string? WbsElement { get; init; }
+
+    public string? BatchNumber { get; init; }
+
+    public string? StorageLocation { get; init; }
+
+    public string? MovementType { get; init; }
+
+    public string? BaseUnitOfMeasure { get; init; }
+
+    public string? LocalCurrency { get; init; }
+
+    public string? SpecialStockIndicator { get; init; }
+
+    public string? CrossPlantMaterialStatus { get; init; }
+
+    public string? PlantSpecificMaterialStatus { get; init; }
+
+    public bool ClientLevelDeletionFlag { get; init; }
+
+    public bool PlantLevelDeletionFlag { get; init; }
+
+    public DateOnly? StockCreationDate { get; init; }
+
+    public string? StockType { get; init; }
+
+    public string? StockTypeDescription { get; init; }
+
+    public string? PurchaseOrder { get; init; }
+
+    public string? PurchaseOrderItem { get; init; }
+
+    public string? PurchaseRequisition { get; init; }
+
+    public string? PurchaseRequisitionItem { get; init; }
+
+    public DateOnly? GoodsReceiptDate { get; init; }
+
+    public string? Vendor { get; init; }
+
+    public string? VendorName { get; init; }
+}
 
 public sealed record StockReportRowErrorDto(
     int RowNumber,

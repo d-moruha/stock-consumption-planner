@@ -119,23 +119,7 @@ public static class ImportStockReportEndpoint
 
             StockReportImportResultDto result = parser.Parse(memoryStream, file.FileName, mapping);
 
-            List<StockReportItem> domainItems = result.Items
-                .Select(dto => new StockReportItem(
-                    dto.SourceRowNumber,
-                    dto.MaterialDocumentNumber,
-                    dto.MaterialDocumentItem,
-                    dto.MaterialDocumentYear,
-                    dto.MaterialNumber,
-                    dto.MaterialDescription,
-                    dto.MaterialQuantity,
-                    dto.MaterialValue))
-                .ToList();
-
-            StockReportBatch batch = new(
-                result.SourceFileName,
-                result.SheetName,
-                result.ImportedAtUtc,
-                domainItems);
+            StockReportBatch batch = result.ToBatch();
 
             await repository.SaveCurrentAsync(batch, cancellationToken);
 

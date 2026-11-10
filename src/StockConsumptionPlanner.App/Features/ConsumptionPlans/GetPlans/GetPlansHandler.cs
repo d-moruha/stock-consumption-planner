@@ -85,7 +85,7 @@ public sealed class GetPlansHandler(
                             i.MaterialDocumentNumber == p.MaterialDocumentNumber &&
                             i.MaterialDocumentItem == p.MaterialDocumentItem)
                 .OrderBy(i => i.Id)
-                .Select(i => (decimal?)i.MaterialQuantity)
+                .Select(i => (decimal?)i.TotalStockQuantity)
                 .FirstOrDefault()));
     }
 

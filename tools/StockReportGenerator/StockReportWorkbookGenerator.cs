@@ -25,6 +25,29 @@ public static class StockReportWorkbookGenerator
         "Paint enamel white"
     ];
 
+    private static readonly string[] StorageLocations = ["1000", "1010", "2000", "3100"];
+
+    private static readonly string[] MovementTypes = ["101", "301", "311", "561"];
+
+    private static readonly string[] BaseUnits = ["ШТ", "М", "КГ", "Л"];
+
+    private static readonly string[] SpecialStockIndicators = ["", "", "E", "K", "Q"];
+
+    private static readonly (string Code, string Description)[] StockTypes =
+    [
+        ("01", "Вільний для використання"),
+        ("02", "Контроль якості"),
+        ("07", "Блокований")
+    ];
+
+    private static readonly string[] VendorNames =
+    [
+        "ТОВ «Металопрокат»",
+        "ПрАТ «Кабельний завод»",
+        "ТОВ «Промкомплект»",
+        "Steel Supply GmbH"
+    ];
+
     private static readonly DateTimeOffset PackageTimestamp = new(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     private static readonly Regex DocumentTimestamp = new(
@@ -119,7 +142,7 @@ public static class StockReportWorkbookGenerator
         {
             string header = options.HeaderLanguage == StockReportHeaderLanguage.Ukrainian
                 ? metadata.UkrainianName
-                : metadata.DisplayName;
+                : metadata.EnglishName;
             AppendTextCell(row, columnIndex, 1, header);
             columnIndex++;
         }
@@ -130,14 +153,101 @@ public static class StockReportWorkbookGenerator
     private static Row CreateDataRow(int rowNumber, Random random)
     {
         Row row = new() { RowIndex = (uint)rowNumber };
-        AppendTextCell(row, 1, rowNumber, NextDocumentNumber(random));
-        AppendTextCell(row, 2, rowNumber, NextDocumentItem(random));
-        AppendNumberCell(row, 3, rowNumber, NextDocumentYear(random));
-        AppendTextCell(row, 4, rowNumber, NextMaterialNumber(random));
-        AppendTextCell(row, 5, rowNumber, MaterialDescriptions[random.Next(MaterialDescriptions.Length)]);
-        AppendNumberCell(row, 6, rowNumber, NextQuantity(random));
-        AppendNumberCell(row, 7, rowNumber, NextValue(random));
+        Dictionary<StockReportField, (string Value, bool IsNumber)> values = NextRowValues(random);
+
+        int columnIndex = 1;
+        foreach (StockReportFieldMetadata metadata in StockReportFieldCatalog.All)
+        {
+            (string value, bool isNumber) = values[metadata.Field];
+            if (isNumber)
+            {
+                AppendNumberCell(row, columnIndex, rowNumber, value);
+            }
+            else if (value.Length > 0)
+            {
+                AppendTextCell(row, columnIndex, rowNumber, value);
+            }
+
+            columnIndex++;
+        }
+
         return row;
+    }
+
+    private static Dictionary<StockReportField, (string Value, bool IsNumber)> NextRowValues(Random random)
+    {
+        string documentYear = NextDocumentYear(random);
+        string specialStock = Pick(random, SpecialStockIndicators);
+        (string stockType, string stockTypeDescription) = Pick(random, StockTypes);
+        DateOnly receiptDate = NextDate(random, int.Parse(documentYear, CultureInfo.InvariantCulture));
+
+        return new Dictionary<StockReportField, (string Value, bool IsNumber)>
+        {
+            [StockReportField.MaterialDocumentNumber] = (NextDocumentNumber(random), false),
+            [StockReportField.MaterialDocumentItem] = (NextDocumentItem(random), false),
+            [StockReportField.MaterialDocumentYear] = (documentYear, true),
+            [StockReportField.WbsElement] = (specialStock == "Q" ? NextWbsElement(random) : string.Empty, false),
+            [StockReportField.BatchNumber] = (NextDigits(random, 10), false),
+            [StockReportField.MaterialNumber] = (NextMaterialNumber(random), false),
+            [StockReportField.MaterialDescription] = (Pick(random, MaterialDescriptions), false),
+            [StockReportField.StorageLocation] = (Pick(random, StorageLocations), false),
+            [StockReportField.MovementType] = (Pick(random, MovementTypes), false),
+            [StockReportField.TotalStockQuantity] = (NextQuantity(random), true),
+            [StockReportField.BaseUnitOfMeasure] = (Pick(random, BaseUnits), false),
+            [StockReportField.TotalStockValue] = (NextValue(random), true),
+            [StockReportField.LocalCurrency] = ("UAH", false),
+            [StockReportField.SpecialStockIndicator] = (specialStock, false),
+            [StockReportField.CrossPlantMaterialStatus] = (random.Next(10) == 0 ? "Z1" : string.Empty, false),
+            [StockReportField.PlantSpecificMaterialStatus] = (random.Next(10) == 0 ? "01" : string.Empty, false),
+            [StockReportField.ClientLevelDeletionFlag] = (random.Next(20) == 0 ? "X" : string.Empty, false),
+            [StockReportField.PlantLevelDeletionFlag] = (random.Next(20) == 0 ? "X" : string.Empty, false),
+            [StockReportField.StockCreationDate] = (FormatDate(receiptDate), false),
+            [StockReportField.StockType] = (stockType, false),
+            [StockReportField.StockTypeDescription] = (stockTypeDescription, false),
+            [StockReportField.PurchaseOrder] = ("45" + NextDigits(random, 8), false),
+            [StockReportField.PurchaseOrderItem] = (NextPurchasingItem(random), false),
+            [StockReportField.PurchaseRequisition] = ((random.Next(2) == 0 ? "37" : "48") + NextDigits(random, 8), false),
+            [StockReportField.PurchaseRequisitionItem] = (NextPurchasingItem(random), false),
+            [StockReportField.GoodsReceiptDate] = (FormatDate(receiptDate), false),
+            [StockReportField.Vendor] = (NextDigits(random, 10), false),
+            [StockReportField.VendorName] = (Pick(random, VendorNames), false)
+        };
+    }
+
+    private static T Pick<T>(Random random, IReadOnlyList<T> values)
+    {
+        return values[random.Next(values.Count)];
+    }
+
+    private static string NextDigits(Random random, int length)
+    {
+        StringBuilder builder = new(length);
+        for (int index = 0; index < length; index++)
+        {
+            builder.Append((char)('0' + random.Next(10)));
+        }
+
+        return builder.ToString();
+    }
+
+    private static string NextWbsElement(Random random)
+    {
+        return $"UA-{random.Next(1, 100):D2}-{random.Next(1, 1000):D4}.{random.Next(1, 100):D2}";
+    }
+
+    private static string NextPurchasingItem(Random random)
+    {
+        return (random.Next(1, 100) * 10).ToString("D5", CultureInfo.InvariantCulture);
+    }
+
+    private static DateOnly NextDate(Random random, int year)
+    {
+        return new DateOnly(year, 1, 1).AddDays(random.Next(365));
+    }
+
+    private static string FormatDate(DateOnly date)
+    {
+        return date.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
     }
 
     private static string NextDocumentNumber(Random random)

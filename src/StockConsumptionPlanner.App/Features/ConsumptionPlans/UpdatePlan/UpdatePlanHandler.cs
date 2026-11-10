@@ -74,6 +74,6 @@ public sealed class UpdatePlanHandler(
             return ConsumptionPlanError.StaleVersion();
         }
 
-        return ConsumptionPlanResult<ConsumptionPlanDto>.Success(readModel.ToDto(plan, stock.Value.MaterialQuantity));
+        return ConsumptionPlanResult<ConsumptionPlanDto>.Success(readModel.ToDto(plan, stock.Value.TotalStockQuantity));
     }
 }

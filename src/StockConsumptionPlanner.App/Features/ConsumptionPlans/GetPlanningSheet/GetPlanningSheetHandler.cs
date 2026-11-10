@@ -69,8 +69,8 @@ public sealed class GetPlanningSheetHandler(
                 r.Item.MaterialDocumentItem,
                 r.Item.MaterialNumber,
                 r.Item.MaterialDescription,
-                r.Item.MaterialQuantity,
-                r.Plan is null ? null : readModel.ToDto(r.Plan, r.Item.MaterialQuantity)))
+                r.Item.TotalStockQuantity,
+                r.Plan is null ? null : readModel.ToDto(r.Plan, r.Item.TotalStockQuantity)))
             .ToList();
 
         return ConsumptionPlanResult<PlanningSheetDto>.Success(new PlanningSheetDto(

@@ -29,17 +29,7 @@ public static class GetCurrentStockReportEndpoint
                 []));
         }
 
-        List<StockReportItemDto> items = batch.Items
-            .Select(item => new StockReportItemDto(
-                item.SourceRowNumber,
-                item.MaterialDocumentNumber,
-                item.MaterialDocumentItem,
-                item.MaterialDocumentYear,
-                item.MaterialNumber,
-                item.MaterialDescription,
-                item.MaterialQuantity,
-                item.MaterialValue))
-            .ToList();
+        List<StockReportItemDto> items = batch.Items.Select(item => item.ToDto()).ToList();
 
         return Results.Ok(new CurrentStockReportDto(
             true,

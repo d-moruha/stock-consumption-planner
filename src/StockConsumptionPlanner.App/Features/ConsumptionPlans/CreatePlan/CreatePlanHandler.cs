@@ -86,7 +86,7 @@ public sealed class CreatePlanHandler(
             throw;
         }
 
-        return ConsumptionPlanResult<ConsumptionPlanDto>.Success(readModel.ToDto(plan, stock.Value.MaterialQuantity));
+        return ConsumptionPlanResult<ConsumptionPlanDto>.Success(readModel.ToDto(plan, stock.Value.TotalStockQuantity));
     }
 
     private static Task<bool> PlanExistsAsync(
