@@ -1,18 +1,20 @@
 @page "/stock-import"
 @rendermode InteractiveServer
+@using System.Globalization
 @using System.Text.Json
 @inject IStockReportExcelInspector ExcelInspector
 @inject IStockReportExcelParser ExcelParser
 @inject IStockReportRepository StockReportRepository
 @inject IJSRuntime JsRuntime
+@inject IStringLocalizer<StockReportResources> L
 
-<PageTitle>Stock Report Import (.xlsx)</PageTitle>
+<PageTitle>@L["ImportPageTitle"]</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h1 class="h3 mb-1">Current Stock Report Import (.xlsx)</h1>
+        <h1 class="h3 mb-1">@L["ImportHeading"]</h1>
         <p class="text-muted mb-0">
-            Upload an Excel report, select the worksheet and header row, map the required material fields (optional SAP columns may stay unmapped), and ignore all other columns.
+            @L["ImportIntro"]
         </p>
     </div>
 </div>
@@ -21,13 +23,13 @@
 {
     <div class="alert @(_isErrorStatus ? "alert-danger" : "alert-success") d-flex justify-content-between align-items-center" role="alert">
         <span>@_statusMessage</span>
-        <button type="button" class="btn-close" @onclick="() => _statusMessage = null" aria-label="Close"></button>
+        <button type="button" class="btn-close" @onclick="() => _statusMessage = null" aria-label="@L["Close"]"></button>
     </div>
 }
 
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">Step 1 — File Selection &amp; Header Row Configuration</span>
+        <span class="fw-semibold">@L["Step1Title"]</span>
         @if (!string.IsNullOrWhiteSpace(_uploadedFileName))
         {
             <span class="badge bg-primary">@_uploadedFileName</span>
@@ -36,12 +38,12 @@
     <div class="card-body">
         <div class="row g-3 align-items-end">
             <div class="col-md-5">
-                <label class="form-label fw-semibold" for="excelFileInput">Excel Workbook (`.xlsx`)</label>
+                <label class="form-label fw-semibold" for="excelFileInput">@L["ExcelWorkbook"]</label>
                 <InputFile id="excelFileInput" class="form-control" accept=".xlsx" OnChange="OnFileSelectedAsync" />
             </div>
 
             <div class="col-md-3">
-                <label class="form-label fw-semibold" for="sheetSelector">Worksheet</label>
+                <label class="form-label fw-semibold" for="sheetSelector">@L["Worksheet"]</label>
                 <select id="sheetSelector"
                         class="form-select"
                         disabled="@(_inspection is null)"
@@ -56,13 +58,13 @@
                     }
                     else
                     {
-                        <option value="">Upload a file first...</option>
+                        <option value="">@L["UploadFileFirst"]</option>
                     }
                 </select>
             </div>
 
             <div class="col-md-2">
-                <label class="form-label fw-semibold" for="headerRowInput">Header Row</label>
+                <label class="form-label fw-semibold" for="headerRowInput">@L["HeaderRow"]</label>
                 <input id="headerRowInput"
                        type="number"
                        min="1"
@@ -72,7 +74,7 @@
             </div>
 
             <div class="col-md-2">
-                <label class="form-label fw-semibold" for="dataStartRowInput">Data Start Row</label>
+                <label class="form-label fw-semibold" for="dataStartRowInput">@L["DataStartRow"]</label>
                 <input id="dataStartRowInput"
                        type="number"
                        min="@(_headerRowNumber + 1)"
@@ -86,25 +88,25 @@
                     class="btn btn-outline-primary btn-sm"
                     disabled="@(_fileBytes is null || _isBusy)"
                     @onclick="ReinspectCurrentFileAsync">
-                Re-inspect Sheet &amp; Headers
+                @L["Reinspect"]
             </button>
             <button type="button"
                     class="btn btn-outline-secondary btn-sm"
                     disabled="@(_inspection is null)"
                     @onclick="ApplyAutoSuggestedMapping">
-                Reset to Auto-Suggested Mapping
+                @L["ResetMapping"]
             </button>
             <button type="button"
                     class="btn btn-outline-secondary btn-sm"
                     disabled="@(_inspection is null)"
                     @onclick="LoadSavedMappingFromStorageAsync">
-                Load Saved Mapping
+                @L["LoadSavedMapping"]
             </button>
             <button type="button"
                     class="btn btn-outline-secondary btn-sm"
                     disabled="@(_inspection is null)"
                     @onclick="SaveMappingToStorageAsync">
-                Save Mapping in Browser
+                @L["SaveMapping"]
             </button>
         </div>
     </div>
@@ -114,9 +116,9 @@
 {
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <span class="fw-semibold">Step 2 — Interactive Column Mapping (@StockReportFieldCatalog.All.Count Target Fields)</span>
+            <span class="fw-semibold">@L["Step2Title", StockReportFieldCatalog.All.Count]</span>
             <span class="small text-muted">
-                Detected @_inspection.Columns.Count columns (@GetMappedColumnCount() mapped, @GetIgnoredColumns().Count ignored)
+                @L["DetectedColumns", _inspection.Columns.Count, GetMappedColumnCount(), GetIgnoredColumns().Count]
             </span>
         </div>
         <div class="card-body">
@@ -124,10 +126,10 @@
                 <table class="table table-hover align-middle mb-3">
                     <thead class="table-light">
                         <tr>
-                            <th style="width: 24%;">Target Field</th>
-                            <th style="width: 24%;">Ukrainian / Expected Header</th>
-                            <th style="width: 34%;">Excel Column Mapping</th>
-                            <th style="width: 18%;">Sample Values</th>
+                            <th style="width: 24%;">@L["TargetField"]</th>
+                            <th style="width: 24%;">@L["ExpectedHeader"]</th>
+                            <th style="width: 34%;">@L["ExcelColumnMapping"]</th>
+                            <th style="width: 18%;">@L["SampleValues"]</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -138,24 +140,24 @@
 
                             <tr>
                                 <td>
-                                    <div class="fw-semibold">@metadata.EnglishName</div>
+                                    <div class="fw-semibold">@metadata.GetLocalizedName()</div>
                                     <code class="small">@metadata.Key</code>
-                                    <span class="badge bg-light text-dark border ms-1">@metadata.DataType</span>
-                                    <span class="badge @(metadata.IsRequired ? "bg-danger-subtle text-danger-emphasis" : "bg-light text-muted") border ms-1">@(metadata.IsRequired ? "required" : "optional")</span>
+                                    <span class="badge bg-light text-dark border ms-1">@metadata.GetLocalizedTypeName(L)</span>
+                                    <span class="badge @(metadata.IsRequired ? "bg-danger-subtle text-danger-emphasis" : "bg-light text-muted") border ms-1">@(metadata.IsRequired ? L["Required"] : L["Optional"])</span>
                                 </td>
                                 <td>
                                     <div>@metadata.UkrainianName</div>
-                                    <div class="small text-muted">@metadata.Description</div>
+                                    <div class="small text-muted">@metadata.GetLocalizedDescription(L)</div>
                                 </td>
                                 <td>
                                     <select class="form-select @(selectedCol > 0 ? "border-success" : metadata.IsRequired ? "border-danger" : null)"
                                             value="@selectedCol"
                                             @onchange="e => OnFieldColumnChanged(metadata.Field, e.Value?.ToString())">
-                                        <option value="0">-- Select Excel Column --</option>
+                                        <option value="0">@L["SelectExcelColumn"]</option>
                                         @foreach (DetectedExcelColumnDto column in _inspection.Columns)
                                         {
                                             string samplePreview = column.SampleValues.Count > 0
-                                                ? $" (sample: {string.Join(", ", column.SampleValues.Take(2))})"
+                                                ? " " + L["SamplePreview", string.Join(", ", column.SampleValues.Take(2))]
                                                 : string.Empty;
                                             <option value="@column.ColumnIndex">
                                                 [@column.ColumnLetter] @column.HeaderText@samplePreview
@@ -172,7 +174,7 @@
                                     }
                                     else
                                     {
-                                        <span class="text-muted small">No sample</span>
+                                        <span class="text-muted small">@L["NoSample"]</span>
                                     }
                                 </td>
                             </tr>
@@ -182,7 +184,7 @@
             </div>
 
             <div class="border rounded p-3 bg-light">
-                <div class="small fw-semibold text-uppercase text-muted mb-2">Spreadsheet Column Disposition</div>
+                <div class="small fw-semibold text-uppercase text-muted mb-2">@L["ColumnDisposition"]</div>
                 <div class="d-flex flex-wrap gap-2">
                     @foreach (DetectedExcelColumnDto col in _inspection.Columns)
                     {
@@ -190,13 +192,13 @@
                         if (mappedField.HasValue)
                         {
                             <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-2 py-1">
-                                [@col.ColumnLetter] @col.HeaderText &rarr; @mappedField.Value
+                                [@col.ColumnLetter] @col.HeaderText &rarr; @mappedField.Value.GetLocalizedName()
                             </span>
                         }
                         else
                         {
                             <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle px-2 py-1">
-                                [@col.ColumnLetter] @col.HeaderText (Ignored)
+                                [@col.ColumnLetter] @col.HeaderText @L["Ignored"]
                             </span>
                         }
                     }
@@ -208,7 +210,7 @@
                         class="btn btn-primary"
                         disabled="@(!AreRequiredFieldsMapped() || _isBusy)"
                         @onclick="ExecuteImportAsync">
-                    Import Mapped Stock Report
+                    @L["ImportButton"]
                 </button>
             </div>
         </div>
@@ -219,16 +221,16 @@
 {
     <div class="card border-warning shadow-sm mb-4">
         <div class="card-header bg-warning-subtle text-warning-emphasis py-2 fw-semibold">
-            Row Validation &amp; Conversion Errors (@_lastImportResult.Errors.Count errors across @_lastImportResult.ErrorRowCount rows)
+            @L["RowErrorsTitle", _lastImportResult.Errors.Count, _lastImportResult.ErrorRowCount]
         </div>
         <div class="table-responsive" style="max-height: 240px;">
             <table class="table table-sm table-striped align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Row #</th>
-                        <th>Field</th>
-                        <th>Raw Value</th>
-                        <th>Message</th>
+                        <th>@L["RowNumber"]</th>
+                        <th>@L["Field"]</th>
+                        <th>@L["RawValue"]</th>
+                        <th>@L["Message"]</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -236,9 +238,9 @@
                     {
                         <tr>
                             <td><code>@err.RowNumber</code></td>
-                            <td><code>@err.Field</code></td>
-                            <td><code>@(err.RawValue ?? "(empty)")</code></td>
-                            <td class="text-danger">@err.Message</td>
+                            <td>@StockReportFieldLocalization.GetLocalizedFieldName(err.Field)</td>
+                            <td><code>@(err.RawValue ?? L["Empty"])</code></td>
+                            <td class="text-danger">@LocalizeRowError(err)</td>
                         </tr>
                     }
                 </tbody>
@@ -250,11 +252,11 @@
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div>
-            <span class="fw-semibold">Step 3 — Current Stored Stock Report</span>
+            <span class="fw-semibold">@L["Step3Title"]</span>
             @if (_currentBatch is not null)
             {
                 <span class="text-muted small ms-2">
-                    (@_currentBatch.SourceFileName / @_currentBatch.SheetName — @_currentBatch.TotalRows rows)
+                    @L["StoredReportSummary", _currentBatch.SourceFileName, _currentBatch.SheetName, _currentBatch.TotalRows]
                 </span>
             }
         </div>
@@ -262,13 +264,13 @@
             <input type="search"
                    class="form-control form-control-sm"
                    style="min-width: 260px;"
-                   placeholder="Search material, document, description..."
+                   placeholder="@L["SearchPlaceholder"]"
                    @bind="_searchQuery"
                    @bind:event="oninput" />
             @if (_currentBatch is not null)
             {
                 <button type="button" class="btn btn-outline-danger btn-sm" @onclick="ClearStoredReportAsync">
-                    Clear
+                    @L["Clear"]
                 </button>
             }
         </div>
@@ -277,7 +279,7 @@
     @if (_currentBatch is null || _currentBatch.Items.Count == 0)
     {
         <div class="card-body text-center text-muted py-5">
-            No stock report items are currently stored in memory. Upload and import an `.xlsx` file above.
+            @L["NoItems"]
         </div>
     }
     else
@@ -287,24 +289,24 @@
         <div class="card-body border-bottom bg-light py-2">
             <div class="row text-center">
                 <div class="col-sm-3">
-                    <span class="text-muted small">Valid Rows:</span>
+                    <span class="text-muted small">@L["ValidRows"]</span>
                     <strong class="ms-1">@_currentBatch.TotalRows</strong>
                     @if (filteredItems.Count != _currentBatch.TotalRows)
                     {
-                        <span class="text-muted small">(showing @filteredItems.Count)</span>
+                        <span class="text-muted small">@L["Showing", filteredItems.Count]</span>
                     }
                 </div>
                 <div class="col-sm-3">
-                    <span class="text-muted small">Total Quantity:</span>
+                    <span class="text-muted small">@L["TotalQuantity"]</span>
                     <strong class="ms-1 text-primary">@_currentBatch.TotalQuantity.ToString("N3")</strong>
                 </div>
                 <div class="col-sm-3">
-                    <span class="text-muted small">Total Value:</span>
+                    <span class="text-muted small">@L["TotalValue"]</span>
                     <strong class="ms-1 text-success">@_currentBatch.TotalValue.ToString("N2")</strong>
                 </div>
                 <div class="col-sm-3">
-                    <span class="text-muted small">Imported At:</span>
-                    <strong class="ms-1">@_currentBatch.ImportedAtUtc.ToString("HH:mm:ss 'UTC'")</strong>
+                    <span class="text-muted small">@L["ImportedAt"]</span>
+                    <strong class="ms-1">@L["UtcTime", _currentBatch.ImportedAtUtc]</strong>
                 </div>
             </div>
         </div>
@@ -313,10 +315,10 @@
             <table class="table table-sm table-hover align-middle mb-0">
                 <thead class="table-light sticky-top">
                     <tr>
-                        <th>Row</th>
+                        <th>@L["Row"]</th>
                         @foreach (StockReportFieldMetadata metadata in StockReportFieldCatalog.All)
                         {
-                            <th class="text-nowrap @(IsNumeric(metadata) ? "text-end" : null)" title="@metadata.UkrainianName">@metadata.EnglishName</th>
+                            <th class="text-nowrap @(IsNumeric(metadata) ? "text-end" : null)" title="@metadata.GetAlternateName()">@metadata.GetLocalizedName()</th>
                         }
                     </tr>
                 </thead>
@@ -379,12 +381,12 @@
             _selectedSheetName = null;
 
             InspectCurrentBytes();
-            _statusMessage = $"Inspected '{_uploadedFileName}' ({_inspection?.Columns.Count ?? 0} columns detected).";
+            _statusMessage = L["StatusInspected", _uploadedFileName, _inspection?.Columns.Count ?? 0];
         }
         catch (Exception ex)
         {
             _isErrorStatus = true;
-            _statusMessage = $"Failed to read Excel file: {ex.Message}";
+            _statusMessage = L["StatusReadFailed", ex.Message];
         }
         finally
         {
@@ -442,7 +444,7 @@
         catch (Exception ex)
         {
             _isErrorStatus = true;
-            _statusMessage = $"Inspection error: {ex.Message}";
+            _statusMessage = L["StatusInspectionFailed", ex.Message];
         }
     }
 
@@ -548,13 +550,17 @@
             await StockReportRepository.SaveCurrentAsync(batch);
             _currentBatch = batch;
 
-            _statusMessage = $"Imported {_lastImportResult.ValidRowCount} valid rows from '{_lastImportResult.SourceFileName}' " +
-                             $"({_lastImportResult.IgnoredColumnIndices.Count} unmapped columns ignored, {_lastImportResult.ErrorRowCount} rows with errors).";
+            _statusMessage = L[
+                "StatusImported",
+                _lastImportResult.ValidRowCount,
+                _lastImportResult.SourceFileName,
+                _lastImportResult.IgnoredColumnIndices.Count,
+                _lastImportResult.ErrorRowCount];
         }
         catch (Exception ex)
         {
             _isErrorStatus = true;
-            _statusMessage = $"Import failed: {ex.Message}";
+            _statusMessage = L["StatusImportFailed", ex.Message];
         }
         finally
         {
@@ -577,12 +583,12 @@
             string json = JsonSerializer.Serialize(dto);
             await JsRuntime.InvokeVoidAsync("localStorage.setItem", LocalStorageKey, json);
             _isErrorStatus = false;
-            _statusMessage = "Column mapping saved in browser storage.";
+            _statusMessage = L["StatusMappingSaved"];
         }
         catch (Exception ex)
         {
             _isErrorStatus = true;
-            _statusMessage = $"Could not save mapping: {ex.Message}";
+            _statusMessage = L["StatusMappingSaveFailed", ex.Message];
         }
     }
 
@@ -594,7 +600,7 @@
             if (string.IsNullOrWhiteSpace(json))
             {
                 _isErrorStatus = true;
-                _statusMessage = "No saved column mapping found in browser storage.";
+                _statusMessage = L["StatusNoSavedMapping"];
                 return;
             }
 
@@ -602,7 +608,7 @@
             if (dto is null)
             {
                 _isErrorStatus = true;
-                _statusMessage = "Saved mapping format was invalid.";
+                _statusMessage = L["StatusSavedMappingInvalid"];
                 return;
             }
 
@@ -610,12 +616,12 @@
             _dataStartRowNumber = Math.Max(_headerRowNumber + 1, dto.DataStartRowNumber);
             _fieldColumnMap = new Dictionary<StockReportField, int>(dto.FieldColumnMap);
             _isErrorStatus = false;
-            _statusMessage = "Loaded saved column mapping from browser storage.";
+            _statusMessage = L["StatusMappingLoaded"];
         }
         catch (Exception ex)
         {
             _isErrorStatus = true;
-            _statusMessage = $"Could not load saved mapping: {ex.Message}";
+            _statusMessage = L["StatusMappingLoadFailed", ex.Message];
         }
     }
 
@@ -625,7 +631,33 @@
         _currentBatch = null;
         _lastImportResult = null;
         _isErrorStatus = false;
-        _statusMessage = "Cleared current stored stock report.";
+        _statusMessage = L["StatusReportCleared"];
+    }
+
+    private string LocalizeRowError(StockReportRowErrorDto error)
+    {
+        string fieldName = StockReportFieldLocalization.GetLocalizedFieldName(error.Field);
+        if (string.IsNullOrWhiteSpace(error.RawValue))
+        {
+            return L["RowErrorRequired", fieldName];
+        }
+
+        if (StockReportFieldCatalog.TryParseFieldKey(error.Field, out StockReportField field))
+        {
+            StockReportFieldMetadata metadata = StockReportFieldCatalog.GetMetadata(field);
+            if (metadata.MaxLength is int maxLength && error.RawValue.Length > maxLength)
+            {
+                return L["RowErrorTooLong", fieldName, maxLength];
+            }
+
+            LocalizedString message = L[$"RowErrorInvalid_{metadata.DataType}", fieldName, error.RawValue];
+            if (!message.ResourceNotFound)
+            {
+                return message;
+            }
+        }
+
+        return L["RowErrorInvalid", fieldName, error.RawValue];
     }
 
     private IReadOnlyList<StockReportItem> GetFilteredItems()
@@ -672,7 +704,7 @@
             null => string.Empty,
             decimal value when field == StockReportField.TotalStockValue => value.ToString("N2"),
             decimal value => value.ToString("N3"),
-            DateOnly date => date.ToString("dd.MM.yyyy"),
+            DateOnly date => date.ToString("d", CultureInfo.CurrentCulture),
             bool flag => flag ? "X" : string.Empty,
             object value => value.ToString() ?? string.Empty
         };

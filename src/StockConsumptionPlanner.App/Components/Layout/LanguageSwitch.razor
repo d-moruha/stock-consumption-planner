@@ -1,0 +1,29 @@
+@inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResources> L
+
+<div class="language-switch btn-group btn-group-sm" role="group" aria-label="@L["LanguageSwitchLabel"]">
+    @foreach (LanguageOption option in Options)
+    {
+        bool isCurrent = PlannerCultures.IsCurrent(option.Culture);
+        <a class="btn @(isCurrent ? "btn-primary" : "btn-outline-primary")"
+           href="@LocalizationExtensions.BuildSetCultureUrl(option.Culture, CurrentRelativeUri)"
+           hreflang="@option.Culture"
+           lang="@option.Culture"
+           aria-current="@(isCurrent ? "true" : null)"
+           data-enhance-nav="false">
+            @option.Label
+        </a>
+    }
+</div>
+
+@code {
+    private static readonly LanguageOption[] Options =
+    [
+        new(PlannerCultures.Ukrainian, "Українська"),
+        new(PlannerCultures.English, "English")
+    ];
+
+    private string CurrentRelativeUri => "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
+
+    private sealed record LanguageOption(string Culture, string Label);
+}

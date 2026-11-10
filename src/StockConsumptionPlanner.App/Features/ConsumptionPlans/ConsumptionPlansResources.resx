@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PlansTitle" xml:space="preserve">
+    <value>Consumption Plans</value>
+  </data>
+  <data name="PlansIntro" xml:space="preserve">
+    <value>Plan how much of each current stock record is consumed in a month. One plan per stock record per month.</value>
+  </data>
+  <data name="OrphanedPlansLink" xml:space="preserve">
+    <value>Orphaned Plans</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="TargetMonth" xml:space="preserve">
+    <value>Target Month</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>Material number, description, or document number</value>
+  </data>
+  <data name="NewPlansAllowed" xml:space="preserve">
+    <value>New plans allowed</value>
+  </data>
+  <data name="MonthEnded" xml:space="preserve">
+    <value>Month has ended</value>
+  </data>
+  <data name="EditRulePrefix" xml:space="preserve">
+    <value>A plan can be changed for {0} days after it is created, and otherwise until</value>
+  </data>
+  <data name="EditRuleSuffix" xml:space="preserve">
+    <value>({0} days before {1}). Times are in {2}.</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading…</value>
+  </data>
+  <data name="NoStockTitle" xml:space="preserve">
+    <value>No Stock to Plan</value>
+  </data>
+  <data name="NoStockReport" xml:space="preserve">
+    <value>No current stock report is loaded.</value>
+  </data>
+  <data name="NoStockMatches" xml:space="preserve">
+    <value>No stock records match the search.</value>
+  </data>
+  <data name="GoToStockImport" xml:space="preserve">
+    <value>Go to Stock Report Import</value>
+  </data>
+  <data name="ColumnDocument" xml:space="preserve">
+    <value>Document</value>
+  </data>
+  <data name="ColumnItem" xml:space="preserve">
+    <value>Item</value>
+  </data>
+  <data name="ColumnYear" xml:space="preserve">
+    <value>Year</value>
+  </data>
+  <data name="ColumnMaterial" xml:space="preserve">
+    <value>Material</value>
+  </data>
+  <data name="ColumnDescription" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="ColumnStock" xml:space="preserve">
+    <value>Stock</value>
+  </data>
+  <data name="ColumnPlanned" xml:space="preserve">
+    <value>Planned</value>
+  </data>
+  <data name="ColumnEditableUntil" xml:space="preserve">
+    <value>Editable Until</value>
+  </data>
+  <data name="ColumnActions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="ColumnOrphanedSince" xml:space="preserve">
+    <value>Orphaned Since</value>
+  </data>
+  <data name="ColumnDeletedAfter" xml:space="preserve">
+    <value>Deleted After</value>
+  </data>
+  <data name="ExceedsStock" xml:space="preserve">
+    <value>Exceeds stock</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="RowsRange" xml:space="preserve">
+    <value>Rows {0}–{1} of {2}</value>
+  </data>
+  <data name="Previous" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+  <data name="Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Could not load plans for {0}.</value>
+  </data>
+  <data name="EnterPlannedQuantity" xml:space="preserve">
+    <value>Enter a planned quantity for {0}.</value>
+  </data>
+  <data name="PlanSaved" xml:space="preserve">
+    <value>Plan for {0} in {1} saved.</value>
+  </data>
+  <data name="PlanDeleted" xml:space="preserve">
+    <value>Plan for {0} deleted.</value>
+  </data>
+  <data name="OrphanedTitle" xml:space="preserve">
+    <value>Orphaned Consumption Plans</value>
+  </data>
+  <data name="OrphanedIntro" xml:space="preserve">
+    <value>Plans whose stock record is missing from the current stock report. They are read-only, re-link automatically when the record returns in a later import, and are deleted after {0} months.</value>
+  </data>
+  <data name="BackToPlans" xml:space="preserve">
+    <value>Back to Plans</value>
+  </data>
+  <data name="NoOrphanedPlans" xml:space="preserve">
+    <value>No orphaned plans.</value>
+  </data>
+  <data name="DeletePlanTooltip" xml:space="preserve">
+    <value>Delete this plan</value>
+  </data>
+  <data name="EditPeriodEndedTooltip" xml:space="preserve">
+    <value>The edit period for this plan has ended</value>
+  </data>
+  <data name="OrphanedFooter" xml:space="preserve">
+    <value>{0} orphaned plan(s). Times are in {1}.</value>
+  </data>
+  <data name="PlanError_Validation" xml:space="preserve">
+    <value>The planned quantity was rejected: enter a number greater than zero with at most {3} decimal places.</value>
+  </data>
+  <data name="PlanError_NotFound" xml:space="preserve">
+    <value>The plan no longer exists. Use Search to reload.</value>
+  </data>
+  <data name="PlanError_DuplicatePlan" xml:space="preserve">
+    <value>A plan for stock record {0} in {1} already exists. Use Search to reload.</value>
+  </data>
+  <data name="PlanError_StaleVersion" xml:space="preserve">
+    <value>The plan was changed by someone else. Use Search to reload.</value>
+  </data>
+  <data name="PlanError_EditPeriodClosed" xml:space="preserve">
+    <value>The edit period for this plan has ended.</value>
+  </data>
+  <data name="PlanError_TargetMonthInPast" xml:space="preserve">
+    <value>Plans cannot be created for {1}, which has already ended.</value>
+  </data>
+  <data name="PlanError_StockNotActive" xml:space="preserve">
+    <value>Stock record {0} is not in the current stock report.</value>
+  </data>
+  <data name="PlanError_AmbiguousStock" xml:space="preserve">
+    <value>Stock record {0} appears more than once in the current stock report.</value>
+  </data>
+  <data name="PlanError_QuantityExceedsStock" xml:space="preserve">
+    <value>Planned quantity {2} exceeds the current stock quantity of record {0}.</value>
+  </data>
+  <data name="PlanError_PlanOrphaned" xml:space="preserve">
+    <value>Stock record {0} is no longer in the current stock report, so the plan is read-only.</value>
+  </data>
+</root>
