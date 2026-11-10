@@ -1,0 +1,106 @@
+@using System.Globalization
+@inject IStringLocalizer<ConsumptionPlansResources> L
+
+<div class="row g-2" role="group" aria-label="@L["PlanPeriod"]">
+    <div class="col-5">
+        <label class="form-label fw-semibold" for="planYearInput">@L["PlanYear"]</label>
+        <EditableDropdown Id="planYearInput"
+                          Text="@_yearText"
+                          TextChanged="OnYearChangedAsync"
+                          Options="_input.Years"
+                          ErrorMessage="@Describe(_year)"
+                          ToggleLabel="@L["ShowYears"]"
+                          InputMode="numeric" />
+    </div>
+    <div class="col-7">
+        <label class="form-label fw-semibold" for="planMonthInput">@L["PlanMonth"]</label>
+        <EditableDropdown Id="planMonthInput"
+                          Text="@_monthText"
+                          TextChanged="OnMonthChangedAsync"
+                          Options="_input.MonthNames"
+                          ErrorMessage="@Describe(_month)"
+                          ToggleLabel="@L["ShowMonths"]" />
+    </div>
+</div>
+
+@code {
+    private PlanPeriodInput _input = null!;
+    private PlanTargetMonth? _shownPeriod;
+    private string _yearText = string.Empty;
+    private string _monthText = string.Empty;
+    private PlanPeriodField _year;
+    private PlanPeriodField _month;
+
+    [Parameter, EditorRequired]
+    public PlanTargetMonth Period { get; set; }
+
+    [Parameter, EditorRequired]
+    public int CurrentYear { get; set; }
+
+    [Parameter]
+    public EventCallback<PlanTargetMonth?> PeriodChanged { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (_input is null || _input.CurrentYear != CurrentYear)
+        {
+            _input = new PlanPeriodInput(CurrentYear, CultureInfo.CurrentCulture);
+        }
+
+        if (_shownPeriod != Period)
+        {
+            Show(Period);
+        }
+    }
+
+    private async Task OnYearChangedAsync(string text)
+    {
+        _yearText = text;
+        await ValidateAsync();
+    }
+
+    private async Task OnMonthChangedAsync(string text)
+    {
+        _monthText = text;
+        await ValidateAsync();
+    }
+
+    private async Task ValidateAsync()
+    {
+        _year = _input.ParseYear(_yearText);
+        _month = _input.ParseMonth(_monthText);
+        if (_year.IsValid && _month.IsValid)
+        {
+            PlanTargetMonth period = new(_year.Value, _month.Value);
+            Show(period);
+            await PeriodChanged.InvokeAsync(period);
+        }
+        else
+        {
+            await PeriodChanged.InvokeAsync(null);
+        }
+    }
+
+    private void Show(PlanTargetMonth period)
+    {
+        _shownPeriod = period;
+        _yearText = PlanPeriodInput.FormatYear(period.Year);
+        _monthText = _input.FormatMonth(period.Month);
+        _year = default;
+        _month = default;
+    }
+
+    private string? Describe(PlanPeriodField field)
+    {
+        if (field.IsValid)
+        {
+            return null;
+        }
+
+        return L[
+            $"PlanPeriodError_{field.Error}",
+            _input.MinYear,
+            _input.MaxYear,
+            _input.FormatMonth(1)].Value;
+    }
+}

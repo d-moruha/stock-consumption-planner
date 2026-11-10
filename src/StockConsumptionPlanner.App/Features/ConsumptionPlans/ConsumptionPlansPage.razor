@@ -31,14 +31,11 @@
 
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label fw-semibold" for="targetMonthInput">@L["TargetMonth"]</label>
-                <input id="targetMonthInput"
-                       type="month"
-                       class="form-control"
-                       value="@_target.ToString()"
-                       @onchange="OnMonthChangedAsync" />
+        <div class="row g-3 align-items-start">
+            <div class="col-md-5">
+                <PlanPeriodPicker Period="_target"
+                                  CurrentYear="EditPolicy.CurrentMonth.Year"
+                                  PeriodChanged="OnPeriodChangedAsync" />
             </div>
             <div class="col-md-5">
                 <label class="form-label fw-semibold" for="planSearchInput">@L["Search"]</label>
@@ -49,11 +46,17 @@
                        @bind="_search" />
             </div>
             <div class="col-md-2">
-                <button type="button" class="btn btn-primary w-100" disabled="@_isBusy" @onclick="SearchAsync">@L["Search"]</button>
+                <span class="form-label d-none d-md-block" aria-hidden="true">&nbsp;</span>
+                <button type="button"
+                        class="btn btn-primary w-100"
+                        disabled="@(_isBusy || !_isPeriodValid)"
+                        @onclick="SearchAsync">
+                    @L["Search"]
+                </button>
             </div>
         </div>
 
-        @if (_sheet is not null)
+        @if (_sheet is not null && _isPeriodValid)
         {
             <div class="small text-muted mt-3">
                 @if (_sheet.CanCreate)
@@ -72,7 +75,11 @@
     </div>
 </div>
 
-@if (_sheet is null)
+@if (!_isPeriodValid)
+{
+    <div class="alert alert-warning" role="status">@L["PlanPeriodInvalid"]</div>
+}
+else if (_sheet is null)
 {
     <p class="text-muted">@L["Loading"]</p>
 }
@@ -178,6 +185,7 @@ else
     private bool _isBusy;
     private string? _statusMessage;
     private bool _isErrorStatus;
+    private bool _isPeriodValid = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -187,6 +195,11 @@ else
 
     private async Task LoadAsync()
     {
+        if (!_isPeriodValid)
+        {
+            return;
+        }
+
         _isBusy = true;
         try
         {
@@ -209,14 +222,23 @@ else
         }
     }
 
-    private async Task OnMonthChangedAsync(ChangeEventArgs args)
+    private async Task OnPeriodChangedAsync(PlanTargetMonth? period)
     {
-        if (PlanTargetMonth.TryParse(args.Value?.ToString(), out PlanTargetMonth month))
+        if (period is null)
         {
-            _target = month;
-            _page = 1;
-            await LoadAsync();
+            _isPeriodValid = false;
+            return;
         }
+
+        if (_isPeriodValid && period.Value == _target)
+        {
+            return;
+        }
+
+        _target = period.Value;
+        _isPeriodValid = true;
+        _page = 1;
+        await LoadAsync();
     }
 
     private async Task SearchAsync()
@@ -240,6 +262,11 @@ else
 
     private async Task SaveAsync(StockDocumentKey key, ConsumptionPlanDto? plan)
     {
+        if (!_isPeriodValid)
+        {
+            return;
+        }
+
         string text = GetDraft(key, plan).Trim().Replace(',', '.');
         if (!decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal quantity))
         {

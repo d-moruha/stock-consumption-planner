@@ -56,6 +56,39 @@
   <data name="TargetMonth" xml:space="preserve">
     <value>Цільовий місяць</value>
   </data>
+  <data name="PlanPeriod" xml:space="preserve">
+    <value>Період плану</value>
+  </data>
+  <data name="PlanYear" xml:space="preserve">
+    <value>Рік плану</value>
+  </data>
+  <data name="PlanMonth" xml:space="preserve">
+    <value>Місяць плану</value>
+  </data>
+  <data name="ShowYears" xml:space="preserve">
+    <value>Показати роки</value>
+  </data>
+  <data name="ShowMonths" xml:space="preserve">
+    <value>Показати місяці</value>
+  </data>
+  <data name="PlanPeriodInvalid" xml:space="preserve">
+    <value>Виправте період плану, щоб переглянути та створити плани.</value>
+  </data>
+  <data name="PlanPeriodError_YearRequired" xml:space="preserve">
+    <value>Введіть рік.</value>
+  </data>
+  <data name="PlanPeriodError_YearNotFourDigits" xml:space="preserve">
+    <value>Введіть рік чотирма цифрами, від {0} до {1}.</value>
+  </data>
+  <data name="PlanPeriodError_YearOutOfRange" xml:space="preserve">
+    <value>Рік має бути від {0} до {1}.</value>
+  </data>
+  <data name="PlanPeriodError_MonthRequired" xml:space="preserve">
+    <value>Введіть місяць.</value>
+  </data>
+  <data name="PlanPeriodError_MonthUnknown" xml:space="preserve">
+    <value>Введіть номер місяця від 1 до 12 або назву місяця, наприклад «{2}».</value>
+  </data>
   <data name="Search" xml:space="preserve">
     <value>Пошук</value>
   </data>
