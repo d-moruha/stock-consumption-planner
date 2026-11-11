@@ -93,7 +93,7 @@ public sealed class StockReportWorkbookGeneratorTests
         ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
             StockReportGeneratorArguments.Parse(["--rows", "0", "--output", "stock.xlsx"]));
 
-        Assert.Equal("rows", exception.ParamName);
+        Assert.Equal("args", exception.ParamName);
     }
 
     private static StockReportColumnMappingDto IdentityMapping()

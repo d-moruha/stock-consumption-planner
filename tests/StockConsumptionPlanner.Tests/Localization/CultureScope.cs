@@ -9,8 +9,9 @@ internal sealed class CultureScope : IDisposable
 
     public CultureScope(string culture)
     {
-        CultureInfo.CurrentCulture = new CultureInfo(culture);
-        CultureInfo.CurrentUICulture = new CultureInfo(culture);
+        CultureInfo selected = new(culture, useUserOverride: false);
+        CultureInfo.CurrentCulture = selected;
+        CultureInfo.CurrentUICulture = selected;
     }
 
     public void Dispose()

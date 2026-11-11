@@ -56,7 +56,7 @@ public static class StockReportGeneratorArguments
         if (rowCount.Value < 1)
         {
             throw new ArgumentOutOfRangeException(
-                "rows",
+                nameof(args),
                 rowCount.Value,
                 "--rows must be an integer greater than or equal to 1.");
         }
