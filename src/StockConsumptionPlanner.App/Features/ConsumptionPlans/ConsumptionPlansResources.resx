@@ -128,6 +128,12 @@
   <data name="ColumnDescription" xml:space="preserve">
     <value>Description</value>
   </data>
+  <data name="ColumnWbs" xml:space="preserve">
+    <value>WBS</value>
+  </data>
+  <data name="ColumnStorageLocation" xml:space="preserve">
+    <value>Storage Location</value>
+  </data>
   <data name="ColumnStock" xml:space="preserve">
     <value>Stock</value>
   </data>
@@ -151,6 +157,21 @@
   </data>
   <data name="SortByStockValue" xml:space="preserve">
     <value>Sort by stock value</value>
+  </data>
+  <data name="StockBalanceLabel" xml:space="preserve">
+    <value>Stock {0}, unplanned {1}</value>
+  </data>
+  <data name="StockBalanceColumn" xml:space="preserve">
+    <value>Share of stock</value>
+  </data>
+  <data name="StockBalancePlanned" xml:space="preserve">
+    <value>Planned</value>
+  </data>
+  <data name="StockBalanceUnplanned" xml:space="preserve">
+    <value>Unplanned</value>
+  </data>
+  <data name="StockBalanceOver" xml:space="preserve">
+    <value>Over stock</value>
   </data>
   <data name="ColumnPlanned" xml:space="preserve">
     <value>Planned</value>

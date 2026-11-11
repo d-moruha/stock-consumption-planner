@@ -1,3 +1,4 @@
+using AngleSharp.Dom;
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using StockConsumptionPlanner.App.Features.ConsumptionPlans;
@@ -39,7 +40,7 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         Assert.Empty(page.FindAll("#planMonthInput"));
         Assert.Equal(
             [
-                "Документ", "Позиція", "Рік", "Матеріал", "Опис", "Залишок",
+                "Матеріал", "Опис", "СПП-елемент", "Місце збереження", "Залишок", "",
                 "Незапланована кількість", "Вартість запасу ▼",
                 "Дата надходження", "Дата утворення запасу", "Вік запасу (дн.) ↕", "Плани", "Дії"
             ],
@@ -48,6 +49,43 @@ public sealed class ConsumptionPlansPageTests : BunitContext
             page.FindAll("tbody .dropdown-toggle"),
             toggle => Assert.True(toggle.HasAttribute("disabled")));
         Assert.Empty(page.FindAll(".modal"));
+    }
+
+    [Theory]
+    [InlineData(PlannerCultures.Ukrainian, "СПП-елемент", "Місце збереження")]
+    [InlineData(PlannerCultures.English, "WBS", "Storage Location")]
+    public async Task StockRows_ShowWbsAndStorageLocation_InsteadOfDocumentKey(
+        string culture,
+        string wbsHeader,
+        string storageHeader)
+    {
+        using CultureScope _ = new(culture);
+        await using ConsumptionPlanTestHost host = await StartAsync(November10);
+        await host.ImportAsync(
+            Stock("0049000001", 10m, sourceRow: 2) with
+            {
+                WbsElement = "UA-01-0001.01",
+                StorageLocation = "1000"
+            },
+            Stock("0049000002", 5m, sourceRow: 3));
+        IRenderedComponent<ConsumptionPlansPage> page = RenderPage(host);
+        page.WaitForElement("table");
+
+        string headers = CollapseWhitespace(page.Find("thead").TextContent);
+        Assert.Contains(wbsHeader, headers);
+        Assert.Contains(storageHeader, headers);
+        string removedHeader = culture == PlannerCultures.Ukrainian ? "Документ" : "Document";
+        Assert.DoesNotContain(removedHeader, headers);
+        Assert.Equal(
+            [
+                ["UA-01-0001.01", "1000"],
+                ["—", "—"]
+            ],
+            page.FindAll("tbody > tr[data-document]").Select(row => new[]
+            {
+                row.QuerySelector("td:nth-child(3)")!.TextContent.Trim(),
+                row.QuerySelector("td:nth-child(4)")!.TextContent.Trim()
+            }));
     }
 
     [Fact]
@@ -216,6 +254,18 @@ public sealed class ConsumptionPlansPageTests : BunitContext
                 ["—", "—", "—"]
             ],
             FigureCells(page));
+        AssertBalanceBar(page.FindAll("tbody > tr")[0], "83.33%", null, "16.67%");
+        AssertBalanceBar(page.FindAll("tbody > tr")[1], null, "100%", null);
+        Assert.Null(page.FindAll("tbody > tr")[2].QuerySelector(".stock-split"));
+        IElement firstRow = page.FindAll("tbody > tr")[0];
+        Assert.NotNull(firstRow.QuerySelector("td.stock-balance-col .stock-split"));
+        Assert.Equal(
+            FormatQuantity(-2m),
+            firstRow.QuerySelectorAll("td.stock-figure-col")[1].TextContent.Trim());
+        string legend = CollapseWhitespace(page.Find(".stock-split-legend").TextContent);
+        Assert.Contains(
+            culture == PlannerCultures.Ukrainian ? "Понад залишок" : "Over stock",
+            legend);
 
         page.Find("#stockValueSortButton").Click();
         page.WaitForAssertion(() => AssertValueSort(
@@ -239,17 +289,44 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         Assert.Equal(
             ariaSort,
             page.Find("#stockValueSortButton").ParentElement!.GetAttribute("aria-sort"));
-        Assert.Equal(indicator, page.Find("#stockValueSortButton span").TextContent);
+        Assert.Equal(
+            indicator,
+            page.Find("#stockValueSortButton [aria-hidden='true']").TextContent.Trim());
         Assert.Equal(
             documents,
-            page.FindAll("tbody > tr > td:first-child").Select(td => td.TextContent.Trim()));
+            page.FindAll("tbody > tr[data-document]")
+                .Select(row => row.GetAttribute("data-document")));
+    }
+
+    private static void AssertBalanceBar(
+        IElement row,
+        string? planned,
+        string? unplanned,
+        string? over)
+    {
+        AssertSegment(row, "stock-split-planned", planned);
+        AssertSegment(row, "stock-split-unplanned", unplanned);
+        AssertSegment(row, "stock-split-over", over);
+    }
+
+    private static void AssertSegment(IElement row, string className, string? width)
+    {
+        IElement? segment = row.QuerySelector("." + className);
+        if (width is null)
+        {
+            Assert.Null(segment);
+            return;
+        }
+
+        Assert.NotNull(segment);
+        Assert.Contains("width:" + width, segment.GetAttribute("style"));
     }
 
     private static List<string[]> FigureCells(IRenderedComponent<ConsumptionPlansPage> page)
     {
         return [.. page.FindAll("tbody > tr").Select(row => new[]
         {
-            row.QuerySelector("td:nth-child(6)")!.TextContent.Trim(),
+            row.QuerySelector("td:nth-child(5)")!.TextContent.Trim(),
             row.QuerySelector("td:nth-child(7)")!.TextContent.Trim(),
             row.QuerySelector("td:nth-child(8)")!.TextContent.Trim()
         })];
@@ -271,10 +348,13 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         Assert.Equal(
             ariaSort,
             page.Find("#stockAgeSortButton").ParentElement!.GetAttribute("aria-sort"));
-        Assert.Equal(indicator, page.Find("#stockAgeSortButton span").TextContent);
+        Assert.Equal(
+            indicator,
+            page.Find("#stockAgeSortButton [aria-hidden='true']").TextContent.Trim());
         Assert.Equal(
             documents,
-            page.FindAll("tbody > tr > td:first-child").Select(td => td.TextContent.Trim()));
+            page.FindAll("tbody > tr[data-document]")
+                .Select(row => row.GetAttribute("data-document")));
     }
 
     private static List<string[]> StockDateCells(IRenderedComponent<ConsumptionPlansPage> page)

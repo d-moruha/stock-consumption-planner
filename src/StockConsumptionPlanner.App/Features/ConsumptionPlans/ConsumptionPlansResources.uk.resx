@@ -128,6 +128,12 @@
   <data name="ColumnDescription" xml:space="preserve">
     <value>Опис</value>
   </data>
+  <data name="ColumnWbs" xml:space="preserve">
+    <value>СПП-елемент</value>
+  </data>
+  <data name="ColumnStorageLocation" xml:space="preserve">
+    <value>Місце збереження</value>
+  </data>
   <data name="ColumnStock" xml:space="preserve">
     <value>Залишок</value>
   </data>
@@ -151,6 +157,21 @@
   </data>
   <data name="SortByStockValue" xml:space="preserve">
     <value>Сортувати за вартістю запасу</value>
+  </data>
+  <data name="StockBalanceLabel" xml:space="preserve">
+    <value>Залишок {0}, незаплановано {1}</value>
+  </data>
+  <data name="StockBalanceColumn" xml:space="preserve">
+    <value>Частка залишку</value>
+  </data>
+  <data name="StockBalancePlanned" xml:space="preserve">
+    <value>Заплановано</value>
+  </data>
+  <data name="StockBalanceUnplanned" xml:space="preserve">
+    <value>Незаплановано</value>
+  </data>
+  <data name="StockBalanceOver" xml:space="preserve">
+    <value>Понад залишок</value>
   </data>
   <data name="ColumnPlanned" xml:space="preserve">
     <value>Заплановано</value>
