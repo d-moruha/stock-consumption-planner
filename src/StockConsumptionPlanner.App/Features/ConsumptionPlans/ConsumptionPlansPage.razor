@@ -9,6 +9,8 @@
 
 <PageTitle>@L["PlansTitle"]</PageTitle>
 
+<div class="screen-row">
+<div class="screen-row-chrome">
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h1 class="h3 mb-1">@L["PlansTitle"]</h1>
@@ -69,7 +71,8 @@ else if (_sheet.Rows.TotalCount == 0)
         </div>
     </div>
 }
-else
+</div>
+@if (_sheet is not null && _sheet.Rows.TotalCount > 0)
 {
     <div class="card border-0 shadow-sm scroll-table-card">
         <div class="table-responsive">
@@ -229,6 +232,7 @@ else
         </div>
     </div>
 }
+</div>
 
 @if (_dialogRow is not null)
 {
