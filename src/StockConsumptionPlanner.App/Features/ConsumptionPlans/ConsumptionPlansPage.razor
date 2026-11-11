@@ -76,11 +76,10 @@ else
             <table class="table table-sm table-hover align-middle mb-0">
                 <thead class="table-light align-middle">
                     <tr>
-                        <th>@L["ColumnDocument"]</th>
-                        <th>@L["ColumnItem"]</th>
-                        <th>@L["ColumnYear"]</th>
                         <th>@L["ColumnMaterial"]</th>
                         <th>@L["ColumnDescription"]</th>
+                        <th>@L["ColumnWbs"]</th>
+                        <th>@L["ColumnStorageLocation"]</th>
                         <th class="stock-figure-col">@L["ColumnStock"]</th>
                         <th class="stock-balance-col"
                             aria-label="@L["StockBalanceColumn"]"
@@ -123,12 +122,15 @@ else
                         StockDocumentKey key = RowKey(row);
                         bool isExpanded = row.Plans.Count > 0 && _expanded.Contains(key);
                         string plansId = $"plans-{row.SourceRowNumber}";
-                        <tr @key="key">
-                            <td><code>@row.MaterialDocumentNumber</code></td>
-                            <td><code>@row.MaterialDocumentItem</code></td>
-                            <td>@row.MaterialDocumentYear</td>
+                        <tr @key="key" data-document="@row.MaterialDocumentNumber">
                             <td>@row.MaterialNumber</td>
-                            <td class="text-truncate" style="max-width: 18rem;" title="@row.MaterialDescription">@row.MaterialDescription</td>
+                            <td class="text-truncate"
+                                style="max-width: 18rem;"
+                                title="@row.MaterialDescription">
+                                @row.MaterialDescription
+                            </td>
+                            <td class="text-nowrap">@FormatText(row.WbsElement)</td>
+                            <td class="text-nowrap">@FormatText(row.StorageLocation)</td>
                             <td class="stock-figure-col">
                                 @FormatQuantity(row.CurrentStockQuantity)
                             </td>
@@ -186,7 +188,7 @@ else
                         @if (isExpanded)
                         {
                             <tr @key="plansId" id="@plansId">
-                                <td colspan="14" class="bg-body-tertiary px-4 py-2">
+                                <td colspan="13" class="bg-body-tertiary px-4 py-2">
                                     @RenderPlans(row)
                                 </td>
                             </tr>
@@ -521,6 +523,11 @@ else
             "StockBalanceLabel",
             FormatQuantity(row.CurrentStockQuantity),
             FormatQuantity(row.UnplannedQuantity)];
+    }
+
+    private static string FormatText(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "—" : value;
     }
 
     private static string FormatQuantity(decimal? value)

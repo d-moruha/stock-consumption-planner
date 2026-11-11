@@ -26,6 +26,8 @@ public sealed record PlanningSheetRowDto(
     string MaterialDocumentItem,
     string MaterialNumber,
     string MaterialDescription,
+    string? WbsElement,
+    string? StorageLocation,
     decimal? CurrentStockQuantity,
     decimal? UnplannedQuantity,
     decimal? TotalStockValue,

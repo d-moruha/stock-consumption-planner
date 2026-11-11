@@ -40,7 +40,7 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         Assert.Empty(page.FindAll("#planMonthInput"));
         Assert.Equal(
             [
-                "Документ", "Позиція", "Рік", "Матеріал", "Опис", "Залишок", "",
+                "Матеріал", "Опис", "СПП-елемент", "Місце збереження", "Залишок", "",
                 "Незапланована кількість", "Вартість запасу ▼",
                 "Дата надходження", "Дата утворення запасу", "Вік запасу (дн.) ↕", "Плани", "Дії"
             ],
@@ -49,6 +49,43 @@ public sealed class ConsumptionPlansPageTests : BunitContext
             page.FindAll("tbody .dropdown-toggle"),
             toggle => Assert.True(toggle.HasAttribute("disabled")));
         Assert.Empty(page.FindAll(".modal"));
+    }
+
+    [Theory]
+    [InlineData(PlannerCultures.Ukrainian, "СПП-елемент", "Місце збереження")]
+    [InlineData(PlannerCultures.English, "WBS", "Storage Location")]
+    public async Task StockRows_ShowWbsAndStorageLocation_InsteadOfDocumentKey(
+        string culture,
+        string wbsHeader,
+        string storageHeader)
+    {
+        using CultureScope _ = new(culture);
+        await using ConsumptionPlanTestHost host = await StartAsync(November10);
+        await host.ImportAsync(
+            Stock("0049000001", 10m, sourceRow: 2) with
+            {
+                WbsElement = "UA-01-0001.01",
+                StorageLocation = "1000"
+            },
+            Stock("0049000002", 5m, sourceRow: 3));
+        IRenderedComponent<ConsumptionPlansPage> page = RenderPage(host);
+        page.WaitForElement("table");
+
+        string headers = CollapseWhitespace(page.Find("thead").TextContent);
+        Assert.Contains(wbsHeader, headers);
+        Assert.Contains(storageHeader, headers);
+        string removedHeader = culture == PlannerCultures.Ukrainian ? "Документ" : "Document";
+        Assert.DoesNotContain(removedHeader, headers);
+        Assert.Equal(
+            [
+                ["UA-01-0001.01", "1000"],
+                ["—", "—"]
+            ],
+            page.FindAll("tbody > tr[data-document]").Select(row => new[]
+            {
+                row.QuerySelector("td:nth-child(3)")!.TextContent.Trim(),
+                row.QuerySelector("td:nth-child(4)")!.TextContent.Trim()
+            }));
     }
 
     [Fact]
@@ -255,7 +292,8 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         Assert.Equal(indicator, page.Find("#stockValueSortButton span").TextContent);
         Assert.Equal(
             documents,
-            page.FindAll("tbody > tr > td:first-child").Select(td => td.TextContent.Trim()));
+            page.FindAll("tbody > tr[data-document]")
+                .Select(row => row.GetAttribute("data-document")));
     }
 
     private static void AssertBalanceBar(
@@ -286,9 +324,9 @@ public sealed class ConsumptionPlansPageTests : BunitContext
     {
         return [.. page.FindAll("tbody > tr").Select(row => new[]
         {
-            row.QuerySelector("td:nth-child(6)")!.TextContent.Trim(),
-            row.QuerySelector("td:nth-child(8)")!.TextContent.Trim(),
-            row.QuerySelector("td:nth-child(9)")!.TextContent.Trim()
+            row.QuerySelector("td:nth-child(5)")!.TextContent.Trim(),
+            row.QuerySelector("td:nth-child(7)")!.TextContent.Trim(),
+            row.QuerySelector("td:nth-child(8)")!.TextContent.Trim()
         })];
     }
 
@@ -311,16 +349,17 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         Assert.Equal(indicator, page.Find("#stockAgeSortButton span").TextContent);
         Assert.Equal(
             documents,
-            page.FindAll("tbody > tr > td:first-child").Select(td => td.TextContent.Trim()));
+            page.FindAll("tbody > tr[data-document]")
+                .Select(row => row.GetAttribute("data-document")));
     }
 
     private static List<string[]> StockDateCells(IRenderedComponent<ConsumptionPlansPage> page)
     {
         return [.. page.FindAll("tbody > tr").Select(row => new[]
         {
+            row.QuerySelector("td:nth-child(9)")!.TextContent.Trim(),
             row.QuerySelector("td:nth-child(10)")!.TextContent.Trim(),
-            row.QuerySelector("td:nth-child(11)")!.TextContent.Trim(),
-            row.QuerySelector("td:nth-child(12)")!.TextContent.Trim()
+            row.QuerySelector("td:nth-child(11)")!.TextContent.Trim()
         })];
     }
 

@@ -134,6 +134,8 @@ public sealed class GetPlanningSheetHandler(
             item.MaterialDocumentItem,
             item.MaterialNumber,
             item.MaterialDescription,
+            item.WbsElement,
+            item.StorageLocation,
             item.TotalStockQuantity,
             unplannedQuantity,
             item.TotalStockValue,
