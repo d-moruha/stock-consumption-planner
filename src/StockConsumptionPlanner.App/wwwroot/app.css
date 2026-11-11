@@ -203,4 +203,29 @@ h1:focus {
         max-height: none;
         contain: size;
     }
+
+    main:has(.scroll-table-card .plans-stock-table) > .content {
+        overflow: hidden;
+    }
+
+    main:has(.plans-stock-table) > .content > :not(.scroll-table-card) {
+        flex: 0 0 auto;
+    }
+
+    .scroll-table-card:has(.plans-stock-table) {
+        flex: 0 1 auto;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .scroll-table-card:has(.plans-stock-table) > .card-footer {
+        flex: 0 0 auto;
+    }
+
+    .scroll-table-card .table-responsive:has(.plans-stock-table) {
+        flex: 0 1 auto;
+        min-height: 0;
+        overflow: auto;
+        contain: none;
+    }
 }
