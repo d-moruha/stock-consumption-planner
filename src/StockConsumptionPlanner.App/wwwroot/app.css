@@ -204,3 +204,58 @@ h1:focus {
         contain: size;
     }
 }
+
+@media (min-width: 1920px) and (min-height: 1080px) and (orientation: landscape) {
+    main:has(.screen-row .scroll-table-card) > .content {
+        overflow: hidden;
+    }
+
+    .screen-row {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 1.5rem;
+        min-height: 0;
+        min-width: 0;
+    }
+
+    .screen-row-chrome {
+        flex: 0 0 28rem;
+        min-width: 0;
+    }
+
+    .screen-row-chrome > .d-flex {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .screen-row-chrome .col-md-6,
+    .screen-row-chrome .col-md-2 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .screen-row > .scroll-table-card {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        align-self: flex-start;
+        min-width: 0;
+        min-height: 0;
+        max-height: 100%;
+        overflow: hidden;
+    }
+
+    .screen-row > .scroll-table-card > .card-footer {
+        flex: 0 0 auto;
+    }
+
+    .screen-row > .scroll-table-card .table-responsive {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: none;
+        overflow: auto;
+        contain: none;
+    }
+}
