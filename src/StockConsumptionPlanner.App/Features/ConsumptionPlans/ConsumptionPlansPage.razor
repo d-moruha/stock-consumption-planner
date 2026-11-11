@@ -73,47 +73,54 @@ else
 {
     <div class="card border-0 shadow-sm scroll-table-card">
         <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle mb-0">
-                <thead class="table-light align-middle">
+            <table class="plans-stock-table table table-sm table-hover align-middle mb-0">
+                <thead class="table-light">
                     <tr>
-                        <th>@L["ColumnMaterial"]</th>
-                        <th>@L["ColumnDescription"]</th>
-                        <th>@L["ColumnWbs"]</th>
-                        <th>@L["ColumnStorageLocation"]</th>
-                        <th class="stock-figure-col">@L["ColumnStock"]</th>
+                        <th><span class="plans-col-label">@L["ColumnMaterial"]</span></th>
+                        <th><span class="plans-col-label">@L["ColumnDescription"]</span></th>
+                        <th><span class="plans-col-label">@L["ColumnWbs"]</span></th>
+                        <th><span class="plans-col-label">@L["ColumnStorageLocation"]</span></th>
+                        <th><span class="plans-col-label">@L["ColumnStock"]</span></th>
                         <th class="stock-balance-col"
                             aria-label="@L["StockBalanceColumn"]"
                             title="@L["StockBalanceColumn"]"></th>
-                        <th class="stock-figure-col">@L["ColumnUnplannedQuantity"]</th>
-                        <th class="text-end" aria-sort="@StockValueAriaSort">
+                        <th>
+                            <span class="plans-col-label">@L["ColumnUnplannedQuantity"]</span>
+                        </th>
+                        <th aria-sort="@StockValueAriaSort">
                             <button type="button"
                                     id="stockValueSortButton"
-                                    class="btn btn-link p-0 fw-bold text-body
-                                           text-decoration-none text-end"
+                                    class="plans-col-sort btn btn-link p-0 fw-bold text-body
+                                           text-decoration-none"
                                     title="@L["SortByStockValue"]"
                                     disabled="@_isBusy"
                                     @onclick="ToggleStockValueSortAsync">
-                                @L["ColumnStockValue"]
-                                <span class="@(IsStockValueSort ? null : "text-muted")"
-                                      aria-hidden="true">@StockValueSortIndicator</span>
+                                <span class="plans-col-label">
+                                    @L["ColumnStockValue"]
+                                    <span class="@(IsStockValueSort ? null : "text-muted")"
+                                          aria-hidden="true">@StockValueSortIndicator</span>
+                                </span>
                             </button>
                         </th>
-                        <th>@L["ColumnGoodsReceiptDate"]</th>
-                        <th>@L["ColumnStockCreationDate"]</th>
-                        <th class="text-end" aria-sort="@StockAgeAriaSort">
+                        <th><span class="plans-col-label">@L["ColumnGoodsReceiptDate"]</span></th>
+                        <th><span class="plans-col-label">@L["ColumnStockCreationDate"]</span></th>
+                        <th aria-sort="@StockAgeAriaSort">
                             <button type="button"
                                     id="stockAgeSortButton"
-                                    class="btn btn-link p-0 fw-bold text-body text-decoration-none text-end"
+                                    class="plans-col-sort btn btn-link p-0 fw-bold text-body
+                                           text-decoration-none"
                                     title="@L["SortByStockAge"]"
                                     disabled="@_isBusy"
                                     @onclick="ToggleStockAgeSortAsync">
-                                @L["ColumnStockAge"]
-                                <span class="@(IsStockAgeSort ? null : "text-muted")"
-                                      aria-hidden="true">@StockAgeSortIndicator</span>
+                                <span class="plans-col-label">
+                                    @L["ColumnStockAge"]
+                                    <span class="@(IsStockAgeSort ? null : "text-muted")"
+                                          aria-hidden="true">@StockAgeSortIndicator</span>
+                                </span>
                             </button>
                         </th>
-                        <th>@L["ColumnPlans"]</th>
-                        <th class="text-end">@L["ColumnActions"]</th>
+                        <th><span class="plans-col-label">@L["ColumnPlans"]</span></th>
+                        <th><span class="plans-col-label">@L["ColumnActions"]</span></th>
                     </tr>
                 </thead>
                 <tbody>

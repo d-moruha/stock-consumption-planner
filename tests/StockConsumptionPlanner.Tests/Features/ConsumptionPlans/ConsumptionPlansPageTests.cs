@@ -289,7 +289,9 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         Assert.Equal(
             ariaSort,
             page.Find("#stockValueSortButton").ParentElement!.GetAttribute("aria-sort"));
-        Assert.Equal(indicator, page.Find("#stockValueSortButton span").TextContent);
+        Assert.Equal(
+            indicator,
+            page.Find("#stockValueSortButton [aria-hidden='true']").TextContent.Trim());
         Assert.Equal(
             documents,
             page.FindAll("tbody > tr[data-document]")
@@ -346,7 +348,9 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         Assert.Equal(
             ariaSort,
             page.Find("#stockAgeSortButton").ParentElement!.GetAttribute("aria-sort"));
-        Assert.Equal(indicator, page.Find("#stockAgeSortButton span").TextContent);
+        Assert.Equal(
+            indicator,
+            page.Find("#stockAgeSortButton [aria-hidden='true']").TextContent.Trim());
         Assert.Equal(
             documents,
             page.FindAll("tbody > tr[data-document]")

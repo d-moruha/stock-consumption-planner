@@ -59,9 +59,39 @@ h1:focus {
     text-align: start;
 }
 
-.stock-figure-col {
-    width: 1%;
+.plans-stock-table {
+    width: max-content;
+    max-width: none;
+}
+
+.plans-stock-table th {
+    text-align: center;
+    vertical-align: bottom;
+    white-space: normal;
+}
+
+.plans-stock-table th .plans-col-label {
+    display: block;
+    width: min-content;
+    margin-inline: auto;
+    text-align: center;
+    white-space: normal;
+}
+
+.plans-stock-table .plans-col-sort {
+    display: inline-block;
+    width: auto;
+    min-width: 0;
+    padding: 0;
+    text-align: center;
+    white-space: normal;
+}
+
+.plans-stock-table td {
     white-space: nowrap;
+}
+
+.stock-figure-col {
     text-align: end;
     font-variant-numeric: tabular-nums;
 }
