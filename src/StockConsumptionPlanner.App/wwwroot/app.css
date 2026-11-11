@@ -59,17 +59,26 @@ h1:focus {
     text-align: start;
 }
 
-.stock-balance {
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.5rem;
+.stock-figure-col {
+    width: 1%;
+    white-space: nowrap;
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+}
+
+.stock-balance-col {
+    width: 5.25rem;
+    min-width: 5.25rem;
+    max-width: 5.25rem;
+    padding-right: 0.35rem;
+    padding-left: 0.35rem;
+    text-align: center;
 }
 
 .stock-split {
     position: relative;
-    display: inline-block;
-    width: 4.75rem;
+    display: block;
+    width: 100%;
     height: 0.5rem;
     overflow: hidden;
     border-radius: 999px;

@@ -155,6 +155,9 @@
   <data name="StockBalanceLabel" xml:space="preserve">
     <value>Stock {0}, unplanned {1}</value>
   </data>
+  <data name="StockBalanceColumn" xml:space="preserve">
+    <value>Share of stock</value>
+  </data>
   <data name="StockBalancePlanned" xml:space="preserve">
     <value>Planned</value>
   </data>

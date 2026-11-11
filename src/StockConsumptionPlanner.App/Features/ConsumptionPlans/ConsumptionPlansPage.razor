@@ -81,8 +81,11 @@ else
                         <th>@L["ColumnYear"]</th>
                         <th>@L["ColumnMaterial"]</th>
                         <th>@L["ColumnDescription"]</th>
-                        <th class="text-end">@L["ColumnStock"]</th>
-                        <th class="text-end">@L["ColumnUnplannedQuantity"]</th>
+                        <th class="stock-figure-col">@L["ColumnStock"]</th>
+                        <th class="stock-balance-col"
+                            aria-label="@L["StockBalanceColumn"]"
+                            title="@L["StockBalanceColumn"]"></th>
+                        <th class="stock-figure-col">@L["ColumnUnplannedQuantity"]</th>
                         <th class="text-end" aria-sort="@StockValueAriaSort">
                             <button type="button"
                                     id="stockValueSortButton"
@@ -126,37 +129,37 @@ else
                             <td>@row.MaterialDocumentYear</td>
                             <td>@row.MaterialNumber</td>
                             <td class="text-truncate" style="max-width: 18rem;" title="@row.MaterialDescription">@row.MaterialDescription</td>
-                            <td class="text-end">@FormatQuantity(row.CurrentStockQuantity)</td>
-                            <td class="text-end text-nowrap">
-                                <span class="stock-balance">
-                                    @if (StockBalanceShare.TryCreate(
-                                        row.CurrentStockQuantity,
-                                        row.UnplannedQuantity) is { } share)
-                                    {
-                                        <span class="stock-split"
-                                              role="img"
-                                              aria-label="@BalanceLabel(row)"
-                                              title="@BalanceLabel(row)">
-                                            @if (share.PlannedPercent > 0)
-                                            {
-                                                <span class="stock-split-planned"
-                                                      style="width:@share.PlannedWidth"></span>
-                                            }
-                                            @if (share.UnplannedPercent > 0)
-                                            {
-                                                <span class="stock-split-unplanned"
-                                                      style="width:@share.UnplannedWidth"></span>
-                                            }
-                                            @if (share.OverPercent > 0)
-                                            {
-                                                <span class="stock-split-over"
-                                                      style="width:@share.OverWidth"></span>
-                                            }
-                                        </span>
-                                    }
-                                    <span>@FormatQuantity(row.UnplannedQuantity)</span>
-                                </span>
+                            <td class="stock-figure-col">
+                                @FormatQuantity(row.CurrentStockQuantity)
                             </td>
+                            <td class="stock-balance-col">
+                                @if (StockBalanceShare.TryCreate(
+                                    row.CurrentStockQuantity,
+                                    row.UnplannedQuantity) is { } share)
+                                {
+                                    <span class="stock-split"
+                                          role="img"
+                                          aria-label="@BalanceLabel(row)"
+                                          title="@BalanceLabel(row)">
+                                        @if (share.PlannedPercent > 0)
+                                        {
+                                            <span class="stock-split-planned"
+                                                  style="width:@share.PlannedWidth"></span>
+                                        }
+                                        @if (share.UnplannedPercent > 0)
+                                        {
+                                            <span class="stock-split-unplanned"
+                                                  style="width:@share.UnplannedWidth"></span>
+                                        }
+                                        @if (share.OverPercent > 0)
+                                        {
+                                            <span class="stock-split-over"
+                                                  style="width:@share.OverWidth"></span>
+                                        }
+                                    </span>
+                                }
+                            </td>
+                            <td class="stock-figure-col">@FormatQuantity(row.UnplannedQuantity)</td>
                             <td class="text-end">@FormatMoney(row.TotalStockValue)</td>
                             <td class="text-nowrap">@ConsumptionPlanDisplay.FormatDate(row.GoodsReceiptDate)</td>
                             <td class="text-nowrap">@ConsumptionPlanDisplay.FormatDate(row.StockCreationDate)</td>
@@ -183,7 +186,7 @@ else
                         @if (isExpanded)
                         {
                             <tr @key="plansId" id="@plansId">
-                                <td colspan="13" class="bg-body-tertiary px-4 py-2">
+                                <td colspan="14" class="bg-body-tertiary px-4 py-2">
                                     @RenderPlans(row)
                                 </td>
                             </tr>

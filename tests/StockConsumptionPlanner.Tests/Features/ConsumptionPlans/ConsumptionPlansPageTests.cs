@@ -40,7 +40,7 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         Assert.Empty(page.FindAll("#planMonthInput"));
         Assert.Equal(
             [
-                "Документ", "Позиція", "Рік", "Матеріал", "Опис", "Залишок",
+                "Документ", "Позиція", "Рік", "Матеріал", "Опис", "Залишок", "",
                 "Незапланована кількість", "Вартість запасу ▼",
                 "Дата надходження", "Дата утворення запасу", "Вік запасу (дн.) ↕", "Плани", "Дії"
             ],
@@ -220,6 +220,11 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         AssertBalanceBar(page.FindAll("tbody > tr")[0], "83.33%", null, "16.67%");
         AssertBalanceBar(page.FindAll("tbody > tr")[1], null, "100%", null);
         Assert.Null(page.FindAll("tbody > tr")[2].QuerySelector(".stock-split"));
+        IElement firstRow = page.FindAll("tbody > tr")[0];
+        Assert.NotNull(firstRow.QuerySelector("td.stock-balance-col .stock-split"));
+        Assert.Equal(
+            FormatQuantity(-2m),
+            firstRow.QuerySelectorAll("td.stock-figure-col")[1].TextContent.Trim());
         string legend = CollapseWhitespace(page.Find(".stock-split-legend").TextContent);
         Assert.Contains(
             culture == PlannerCultures.Ukrainian ? "Понад залишок" : "Over stock",
@@ -282,8 +287,8 @@ public sealed class ConsumptionPlansPageTests : BunitContext
         return [.. page.FindAll("tbody > tr").Select(row => new[]
         {
             row.QuerySelector("td:nth-child(6)")!.TextContent.Trim(),
-            row.QuerySelector("td:nth-child(7)")!.TextContent.Trim(),
-            row.QuerySelector("td:nth-child(8)")!.TextContent.Trim()
+            row.QuerySelector("td:nth-child(8)")!.TextContent.Trim(),
+            row.QuerySelector("td:nth-child(9)")!.TextContent.Trim()
         })];
     }
 
@@ -313,9 +318,9 @@ public sealed class ConsumptionPlansPageTests : BunitContext
     {
         return [.. page.FindAll("tbody > tr").Select(row => new[]
         {
-            row.QuerySelector("td:nth-child(9)")!.TextContent.Trim(),
             row.QuerySelector("td:nth-child(10)")!.TextContent.Trim(),
-            row.QuerySelector("td:nth-child(11)")!.TextContent.Trim()
+            row.QuerySelector("td:nth-child(11)")!.TextContent.Trim(),
+            row.QuerySelector("td:nth-child(12)")!.TextContent.Trim()
         })];
     }
 

@@ -155,6 +155,9 @@
   <data name="StockBalanceLabel" xml:space="preserve">
     <value>Залишок {0}, незаплановано {1}</value>
   </data>
+  <data name="StockBalanceColumn" xml:space="preserve">
+    <value>Частка залишку</value>
+  </data>
   <data name="StockBalancePlanned" xml:space="preserve">
     <value>Заплановано</value>
   </data>
