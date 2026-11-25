@@ -2,13 +2,24 @@
 @inject IStringLocalizer<SharedResources> L
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
     <main>
         <div class="top-row px-4">
+            <button type="button"
+                    class="nav-toggle"
+                    aria-expanded="false"
+                    aria-controls="nav-overlay"
+                    title="@L["NavigationMenu"]">
+                <span class="nav-toggle-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">@L["NavigationMenu"]</span>
+            </button>
             <LanguageSwitch />
+        </div>
+
+        <div id="nav-overlay" class="nav-overlay">
+            <div class="nav-backdrop"></div>
+            <nav class="nav-panel" aria-label="@L["NavigationMenu"]">
+                <NavMenu />
+            </nav>
         </div>
 
         <article class="content px-4">
