@@ -11,15 +11,43 @@
 
 <div class="screen-row">
 <div class="screen-row-chrome">
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
+<div class="page-toolbar">
+    <div class="page-toolbar-heading">
         <h1 class="h3 mb-1">@L["PlansTitle"]</h1>
         <p class="text-muted mb-0">
             @L["PlansIntro"]
         </p>
     </div>
-    <a class="btn btn-outline-secondary" href="/consumption-plans/orphaned">@L["OrphanedPlansLink"]</a>
+    <div class="page-toolbar-search card border-0 shadow-sm">
+        <div class="card-body">
+            <label class="form-label fw-semibold" for="planSearchInput">@L["Search"]</label>
+            <div class="input-group">
+                <input id="planSearchInput"
+                       type="search"
+                       class="form-control"
+                       placeholder="@L["SearchPlaceholder"]"
+                       @bind="_search" />
+                <button type="button"
+                        class="btn btn-primary"
+                        disabled="@_isBusy"
+                        @onclick="SearchAsync">
+                    @L["Search"]
+                </button>
+            </div>
+        </div>
+    </div>
+    <a class="page-toolbar-link btn btn-outline-secondary" href="/consumption-plans/orphaned">
+        @L["OrphanedPlansLink"]
+    </a>
 </div>
+
+<p class="small text-muted mb-3">
+    @L[
+        "EditRule",
+        PlanOptions.EditDaysAfterCreation,
+        PlanOptions.LockDaysBeforeTargetMonth,
+        EditPolicy.TimeZone.Id]
+</p>
 
 @if (!string.IsNullOrWhiteSpace(_statusMessage))
 {
@@ -28,31 +56,6 @@
         <button type="button" class="btn-close" @onclick="() => _statusMessage = null" aria-label="@L["Close"]"></button>
     </div>
 }
-
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-6">
-                <label class="form-label fw-semibold" for="planSearchInput">@L["Search"]</label>
-                <input id="planSearchInput"
-                       type="search"
-                       class="form-control"
-                       placeholder="@L["SearchPlaceholder"]"
-                       @bind="_search" />
-            </div>
-            <div class="col-md-2">
-                <button type="button" class="btn btn-primary w-100" disabled="@_isBusy" @onclick="SearchAsync">@L["Search"]</button>
-            </div>
-        </div>
-
-        <div class="small text-muted mt-3">
-            @L[
-                "EditRule",
-                PlanOptions.EditDaysAfterCreation,
-                PlanOptions.LockDaysBeforeTargetMonth,
-                EditPolicy.TimeZone.Id]
-        </div>
-    </div>
 </div>
 
 @if (_sheet is null)
@@ -71,8 +74,7 @@ else if (_sheet.Rows.TotalCount == 0)
         </div>
     </div>
 }
-</div>
-@if (_sheet is not null && _sheet.Rows.TotalCount > 0)
+else
 {
     <div class="card border-0 shadow-sm scroll-table-card">
         <div class="table-responsive">
@@ -80,7 +82,9 @@ else if (_sheet.Rows.TotalCount == 0)
                 <thead class="table-light">
                     <tr>
                         <th><span class="plans-col-label">@L["ColumnMaterial"]</span></th>
-                        <th><span class="plans-col-label">@L["ColumnDescription"]</span></th>
+                        <th class="plans-col-description">
+                            <span class="plans-col-label">@L["ColumnDescription"]</span>
+                        </th>
                         <th><span class="plans-col-label">@L["ColumnWbs"]</span></th>
                         <th><span class="plans-col-label">@L["ColumnStorageLocation"]</span></th>
                         <th><span class="plans-col-label">@L["ColumnStock"]</span></th>
@@ -134,8 +138,7 @@ else if (_sheet.Rows.TotalCount == 0)
                         string plansId = $"plans-{row.SourceRowNumber}";
                         <tr @key="key" data-document="@row.MaterialDocumentNumber">
                             <td>@row.MaterialNumber</td>
-                            <td class="text-truncate"
-                                style="max-width: 18rem;"
+                            <td class="plans-col-description text-truncate"
                                 title="@row.MaterialDescription">
                                 @row.MaterialDescription
                             </td>
