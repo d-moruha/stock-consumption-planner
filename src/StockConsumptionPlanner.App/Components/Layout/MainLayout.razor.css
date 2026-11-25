@@ -20,8 +20,9 @@ main {
     z-index: 1040;
 }
 
-.app-brand {
+.top-row > .app-brand {
     flex: 0 0 auto;
+    margin-left: 0;
     color: #052767;
     font-size: 1.05rem;
     font-weight: 600;
@@ -126,7 +127,7 @@ main {
     z-index: 1;
     width: min(22rem, calc(100% - 2rem));
     max-height: calc(100vh - 5rem);
-    margin: 4.25rem 0 0 1rem;
+    margin: 4.25rem 0 0 1.5rem;
     padding: 0.5rem 0;
     overflow: auto;
     border-radius: 0.5rem;
@@ -138,6 +139,10 @@ main {
     .top-row, article {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
+    }
+
+    .nav-panel {
+        margin-left: 2rem;
     }
 }
 
