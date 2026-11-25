@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Options;
 
 namespace StockConsumptionPlanner.App.Localization;
 
@@ -13,21 +14,16 @@ public static class LocalizationExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddLocalization();
-        services.Configure<RequestLocalizationOptions>(options =>
-        {
-            string[] cultures = [.. PlannerCultures.Supported];
-            options.SetDefaultCulture(PlannerCultures.Default)
-                .AddSupportedCultures(cultures)
-                .AddSupportedUICultures(cultures);
-            options.RequestCultureProviders = [new CookieRequestCultureProvider()];
-        });
+        services.AddSingleton(CreateOptions);
+        services.AddOptions<RequestLocalizationOptions>()
+            .Configure<PlannerLocalizationOptions>(ApplyRequestLocalization);
 
         return services;
     }
 
     /// <summary>
-    /// Applies the culture cookie to UI requests (pages and the Blazor circuit) but not to <c>/api</c>,
-    /// whose contracts stay culture-invariant.
+    /// Applies UI culture to pages and the Blazor circuit, but not to <c>/api</c>.
+    /// Multilingual mode reads the culture cookie. A fixed language ignores it.
     /// </summary>
     public static IApplicationBuilder UsePlannerRequestLocalization(this IApplicationBuilder app)
     {
@@ -52,9 +48,44 @@ public static class LocalizationExtensions
                $"&redirectUri={Uri.EscapeDataString(redirectUri)}";
     }
 
-    private static IResult SetCulture(HttpContext context, string? culture, string? redirectUri)
+    private static PlannerLocalizationOptions CreateOptions(IServiceProvider services)
     {
-        if (PlannerCultures.TryNormalize(culture, out string selected))
+        PlannerLocalizationOptions options = new();
+        services.GetRequiredService<IConfiguration>()
+            .GetSection(PlannerLocalizationOptions.SectionName)
+            .Bind(options);
+        options.Validate();
+        return options;
+    }
+
+    private static void ApplyRequestLocalization(
+        RequestLocalizationOptions options,
+        PlannerLocalizationOptions localization)
+    {
+        if (localization.TryGetFixedCulture(out string culture))
+        {
+            options.SetDefaultCulture(culture)
+                .AddSupportedCultures(culture)
+                .AddSupportedUICultures(culture);
+            options.RequestCultureProviders = [];
+            return;
+        }
+
+        string[] cultures = [.. PlannerCultures.Supported];
+        options.SetDefaultCulture(PlannerCultures.Default)
+            .AddSupportedCultures(cultures)
+            .AddSupportedUICultures(cultures);
+        options.RequestCultureProviders = [new CookieRequestCultureProvider()];
+    }
+
+    private static IResult SetCulture(
+        HttpContext context,
+        PlannerLocalizationOptions localization,
+        string? culture,
+        string? redirectUri)
+    {
+        if (localization.AllowsLanguageSelection &&
+            PlannerCultures.TryNormalize(culture, out string selected))
         {
             context.Response.Cookies.Append(
                 CookieRequestCultureProvider.DefaultCookieName,

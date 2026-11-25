@@ -1,5 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @inject IStringLocalizer<SharedResources> L
+@inject PlannerLocalizationOptions Localization
 
 <div class="page">
     <main>
@@ -12,7 +13,10 @@
                 <span class="nav-toggle-icon" aria-hidden="true"></span>
                 <span class="visually-hidden">@L["NavigationMenu"]</span>
             </button>
-            <LanguageSwitch />
+            @if (Localization.AllowsLanguageSelection)
+            {
+                <LanguageSwitch />
+            }
         </div>
 
         <div id="nav-overlay" class="nav-overlay">

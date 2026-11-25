@@ -1,22 +1,54 @@
+@using System.Globalization
+@using System.Text
 @inject NavigationManager Navigation
 @inject IStringLocalizer<SharedResources> L
 
-<div class="language-switch btn-group btn-group-sm" role="group" aria-label="@L["LanguageSwitchLabel"]">
-    @foreach (LanguageOption option in Options)
-    {
-        bool isCurrent = PlannerCultures.IsCurrent(option.Culture);
-        <a class="btn @(isCurrent ? "btn-primary" : "btn-outline-primary")"
-           href="@LocalizationExtensions.BuildSetCultureUrl(option.Culture, CurrentRelativeUri)"
-           hreflang="@option.Culture"
-           lang="@option.Culture"
-           aria-current="@(isCurrent ? "true" : null)"
-           data-enhance-nav="false">
-            @option.Label
-        </a>
-    }
+<div class="language-switch">
+    <button type="button"
+            class="language-switch-toggle"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+            aria-controls="language-switch-list">
+        <span class="visually-hidden">@L["LanguageSwitchLabel"]</span>
+        <span class="language-flag" aria-hidden="true">@Flag(Current.Culture)</span>
+        <span class="language-switch-name" lang="@Current.Culture">@Current.Label</span>
+        <span class="language-switch-caret" aria-hidden="true"></span>
+    </button>
+    <ul id="language-switch-list"
+        class="language-switch-menu"
+        role="listbox"
+        aria-label="@L["LanguageSwitchLabel"]"
+        hidden>
+        @foreach (LanguageOption option in Options)
+        {
+            bool isCurrent = PlannerCultures.IsCurrent(option.Culture);
+            <li role="none">
+                <a role="option"
+                   href="@CultureUrl(option.Culture)"
+                   hreflang="@option.Culture"
+                   lang="@option.Culture"
+                   aria-current="@(isCurrent ? "true" : null)"
+                   aria-selected="@(isCurrent ? "true" : "false")"
+                   tabindex="-1"
+                   data-enhance-nav="false">
+                    <span class="language-flag" aria-hidden="true">@Flag(option.Culture)</span>
+                    <span>@option.Label</span>
+                </a>
+            </li>
+        }
+    </ul>
 </div>
 
 @code {
+    private const string UkrainianFlag =
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 12 8\" " +
+        "width=\"18\" height=\"12\" aria-hidden=\"true\" focusable=\"false\">" +
+        "<rect width=\"12\" height=\"4\" fill=\"#0057b7\"/>" +
+        "<rect y=\"4\" width=\"12\" height=\"4\" fill=\"#ffd700\"/>" +
+        "</svg>";
+
+    private static readonly string UnitedStatesFlag = BuildUnitedStatesFlag();
+
     private static readonly LanguageOption[] Options =
     [
         new(PlannerCultures.Ukrainian, "Українська"),
@@ -24,6 +56,68 @@
     ];
 
     private string CurrentRelativeUri => "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
+
+    private string CultureUrl(string culture)
+    {
+        return LocalizationExtensions.BuildSetCultureUrl(culture, CurrentRelativeUri);
+    }
+
+    private LanguageOption Current
+    {
+        get
+        {
+            foreach (LanguageOption option in Options)
+            {
+                if (PlannerCultures.IsCurrent(option.Culture))
+                {
+                    return option;
+                }
+            }
+
+            return Options[0];
+        }
+    }
+
+    private static MarkupString Flag(string culture)
+    {
+        string svg = culture == PlannerCultures.Ukrainian ? UkrainianFlag : UnitedStatesFlag;
+        return new MarkupString(svg);
+    }
+
+    private static string BuildUnitedStatesFlag()
+    {
+        StringBuilder markup = new();
+        markup.Append("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 190 100\" ");
+        markup.Append("width=\"19\" height=\"10\" aria-hidden=\"true\" focusable=\"false\">");
+        markup.Append("<rect width=\"190\" height=\"100\" fill=\"#b22234\"/>");
+        const double stripeHeight = 100d / 13d;
+        for (int stripe = 1; stripe < 13; stripe += 2)
+        {
+            double y = stripe * stripeHeight;
+            markup.Append(CultureInfo.InvariantCulture, $"<rect y=\"{y:0.###}\" width=\"190\" ");
+            markup.Append(CultureInfo.InvariantCulture, $"height=\"{stripeHeight:0.###}\" ");
+            markup.Append("fill=\"#fff\"/>");
+        }
+
+        markup.Append("<rect width=\"76\" height=\"53.846\" fill=\"#3c3b6e\"/>");
+        markup.Append("<g fill=\"#fff\">");
+        for (int row = 0; row < 9; row++)
+        {
+            int count = row % 2 == 0 ? 6 : 5;
+            double y = 4.2 + (row * 5.7);
+            double x0 = row % 2 == 0 ? 7.2 : 13.9;
+            for (int column = 0; column < count; column++)
+            {
+                double x = x0 + (column * 12.3);
+                markup.Append(
+                    CultureInfo.InvariantCulture,
+                    $"<circle cx=\"{x:0.#}\" cy=\"{y:0.#}\" r=\"1.15\"/>");
+            }
+        }
+
+        markup.Append("</g></svg>");
+        return markup.ToString();
+    }
 
     private sealed record LanguageOption(string Culture, string Label);
 }

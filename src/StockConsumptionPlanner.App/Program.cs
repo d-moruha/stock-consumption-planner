@@ -13,6 +13,7 @@ builder.Services.AddStockReportFeature(builder.Configuration);
 builder.Services.AddConsumptionPlansFeature(builder.Configuration);
 
 WebApplication app = builder.Build();
+app.Services.GetRequiredService<PlannerLocalizationOptions>();
 
 if (!app.Environment.IsDevelopment())
 {
