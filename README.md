@@ -82,6 +82,16 @@ Persistence is configured via `Persistence:Provider` in `appsettings.json` or en
 
 The schema is created on startup with `EnsureCreated`, which does nothing if any table already exists. A database created by an older build (before consumption plans) must be deleted once — the SQLite `.db` file or the `sqlite_data` / `postgres_data` Docker volumes — so it is recreated with the new tables.
 
+## Localization (`Localization:Mode`)
+
+| Value | Behavior |
+| --- | --- |
+| `Multilingual` (default) | The language dropdown is shown. Ukrainian is the default, and English can be selected. |
+| `English` | The app is English only. The language dropdown is hidden, and a culture cookie is ignored. |
+| `Ukrainian` | The app is Ukrainian only. The language dropdown is hidden, and a culture cookie is ignored. |
+
+Set `Localization:Mode` in `appsettings.json` or with the `Localization__Mode` environment variable.
+
 ## Consumption Plan Configuration (`ConsumptionPlans`)
 
 | Setting | Default | Meaning |

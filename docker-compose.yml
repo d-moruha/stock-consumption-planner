@@ -10,6 +10,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_HTTP_PORTS=8080
       - Persistence__Provider=${PERSISTENCE_PROVIDER:-Sqlite}
+      - Localization__Mode=${LOCALIZATION_MODE:-Multilingual}
       - ConnectionStrings__Sqlite=Data Source=/app/data/stock-consumption-planner.db
       - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=stock_planner;Username=postgres;Password=postgres
     volumes:
