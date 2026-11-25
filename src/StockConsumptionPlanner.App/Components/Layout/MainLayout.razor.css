@@ -20,22 +20,6 @@ main {
     z-index: 1040;
 }
 
-.top-row > .app-brand {
-    flex: 0 0 auto;
-    margin-left: 0;
-    color: #052767;
-    font-size: 1.05rem;
-    font-weight: 600;
-    line-height: 1.2;
-    white-space: nowrap;
-    text-decoration: none;
-}
-
-    .app-brand:hover {
-        color: #052767;
-        text-decoration: none;
-    }
-
 .nav-toggle {
     display: inline-flex;
     flex: 0 0 auto;
