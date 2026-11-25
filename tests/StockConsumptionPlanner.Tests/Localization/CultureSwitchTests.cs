@@ -38,6 +38,8 @@ public sealed class CultureSwitchTests : IClassFixture<WebApplicationFactory<Pro
         Assert.Contains("<h1 class=\"h3 mb-1\">Плани споживання</h1>", html);
         Assert.Contains("Огляд", html);
         Assert.Contains("culture/set?culture=en-US&redirectUri=%2Fconsumption-plans", html);
+        Assert.Contains("culture/set?culture=uk-UA&redirectUri=%2Fconsumption-plans", html);
+        AssertLanguageDropdown(html, "uk-UA", "Українська");
         Assert.DoesNotContain(">About<", html);
     }
 
@@ -66,6 +68,7 @@ public sealed class CultureSwitchTests : IClassFixture<WebApplicationFactory<Pro
         string english = await ReadPageAsync(client, "/culture/set?culture=en-US&redirectUri=%2Fstock-import");
         Assert.Contains("<html lang=\"en\">", english);
         Assert.Contains("<title>Stock Report Import (.xlsx)</title>", english);
+        AssertLanguageDropdown(english, "en-US", "English");
 
         string plansInEnglish = await ReadPageAsync(client, "/consumption-plans");
         Assert.Contains("<h1 class=\"h3 mb-1\">Consumption Plans</h1>", plansInEnglish);
@@ -73,6 +76,7 @@ public sealed class CultureSwitchTests : IClassFixture<WebApplicationFactory<Pro
         string ukrainian = await ReadPageAsync(client, "/culture/set?culture=uk-UA&redirectUri=%2Fconsumption-plans");
         Assert.Contains("<html lang=\"uk\">", ukrainian);
         Assert.Contains("<h1 class=\"h3 mb-1\">Плани споживання</h1>", ukrainian);
+        AssertLanguageDropdown(ukrainian, "uk-UA", "Українська");
     }
 
     [Theory]
@@ -112,6 +116,32 @@ public sealed class CultureSwitchTests : IClassFixture<WebApplicationFactory<Pro
         {
             // Ignore cleanup lock races in test teardown.
         }
+    }
+
+    private static void AssertLanguageDropdown(string html, string culture, string label)
+    {
+        Assert.Contains("class=\"language-switch\"", html);
+        Assert.DoesNotContain("btn-group", html);
+        Assert.Contains("aria-haspopup=\"listbox\"", html);
+        Assert.Contains("aria-expanded=\"false\"", html);
+        Assert.Contains("role=\"listbox\"", html);
+        Assert.Contains("hreflang=\"uk-UA\"", html);
+        Assert.Contains("hreflang=\"en-US\"", html);
+        Assert.Contains("lang=\"uk-UA\"", html);
+        Assert.Contains("lang=\"en-US\"", html);
+        Assert.Contains("<svg", html);
+        Assert.DoesNotContain("🇺🇦", html);
+        Assert.DoesNotContain("🇺🇸", html);
+        Assert.Matches(
+            $"class=\"language-switch-name\"\\s+lang=\"{culture}\"[^>]*>\\s*{label}",
+            html);
+        Assert.Matches(
+            $"hreflang=\"{culture}\"\\s+lang=\"{culture}\"\\s+aria-current=\"true\"",
+            html);
+        Assert.Matches(
+            $"hreflang=\"{culture}\"\\s+lang=\"{culture}\"\\s+aria-current=\"true\"" +
+            "\\s+aria-selected=\"true\"",
+            html);
     }
 
     private static Task<string> ReadPageAsync(HttpClient client, string path)
