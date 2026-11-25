@@ -191,6 +191,12 @@
   <data name="Clear" xml:space="preserve">
     <value>Очистити</value>
   </data>
+  <data name="Expand" xml:space="preserve">
+    <value>Розгорнути</value>
+  </data>
+  <data name="Collapse" xml:space="preserve">
+    <value>Згорнути</value>
+  </data>
   <data name="NoItems" xml:space="preserve">
     <value>Збережених позицій звіту про запаси немає. Завантажте та імпортуйте файл .xlsx вище.</value>
   </data>

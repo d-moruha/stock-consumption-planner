@@ -27,63 +27,17 @@
     </div>
 }
 
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">@L["Step1Title"]</span>
-        @if (!string.IsNullOrWhiteSpace(_uploadedFileName))
-        {
-            <span class="badge bg-primary">@_uploadedFileName</span>
-        }
-    </div>
-    <div class="card-body">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-5">
-                <label class="form-label fw-semibold" for="excelFileInput">@L["ExcelWorkbook"]</label>
-                <InputFile id="excelFileInput" class="form-control" accept=".xlsx" OnChange="OnFileSelectedAsync" />
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label fw-semibold" for="sheetSelector">@L["Worksheet"]</label>
-                <select id="sheetSelector"
-                        class="form-select"
-                        disabled="@(_inspection is null)"
-                        value="@_selectedSheetName"
-                        @onchange="OnSheetChangedAsync">
-                    @if (_inspection is not null)
-                    {
-                        @foreach (string sheet in _inspection.SheetNames)
-                        {
-                            <option value="@sheet">@sheet</option>
-                        }
-                    }
-                    else
-                    {
-                        <option value="">@L["UploadFileFirst"]</option>
-                    }
-                </select>
-            </div>
-
-            <div class="col-md-2">
-                <label class="form-label fw-semibold" for="headerRowInput">@L["HeaderRow"]</label>
-                <input id="headerRowInput"
-                       type="number"
-                       min="1"
-                       class="form-control"
-                       value="@_headerRowNumber"
-                       @onchange="OnHeaderRowChanged" />
-            </div>
-
-            <div class="col-md-2">
-                <label class="form-label fw-semibold" for="dataStartRowInput">@L["DataStartRow"]</label>
-                <input id="dataStartRowInput"
-                       type="number"
-                       min="@(_headerRowNumber + 1)"
-                       class="form-control"
-                       @bind="_dataStartRowNumber" />
-            </div>
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-white py-2 d-flex flex-wrap justify-content-between
+                align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <span class="fw-semibold">@L["Step1Title"]</span>
+            @if (!string.IsNullOrWhiteSpace(_uploadedFileName))
+            {
+                <span class="badge bg-primary">@_uploadedFileName</span>
+            }
         </div>
-
-        <div class="mt-3 d-flex gap-2">
+        <div class="d-flex flex-wrap gap-2">
             <button type="button"
                     class="btn btn-outline-primary btn-sm"
                     disabled="@(_fileBytes is null || _isBusy)"
@@ -108,22 +62,100 @@
                     @onclick="SaveMappingToStorageAsync">
                 @L["SaveMapping"]
             </button>
+            @if (_inspection is not null)
+            {
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        aria-expanded="@(IsFileSettingsCollapsed ? "false" : "true")"
+                        @onclick="ToggleMapping">
+                    @(IsFileSettingsCollapsed ? L["Expand"] : L["Collapse"])
+                </button>
+            }
+        </div>
+    </div>
+    <div class="card-body" hidden="@IsFileSettingsCollapsed">
+        <div class="row g-3 align-items-end">
+            <div class="col-5">
+                <label class="form-label fw-semibold" for="excelFileInput">@L["ExcelWorkbook"]</label>
+                <InputFile id="excelFileInput" class="form-control" accept=".xlsx" OnChange="OnFileSelectedAsync" />
+            </div>
+
+            <div class="col-3">
+                <label class="form-label fw-semibold" for="sheetSelector">@L["Worksheet"]</label>
+                <select id="sheetSelector"
+                        class="form-select"
+                        disabled="@(_inspection is null)"
+                        value="@_selectedSheetName"
+                        @onchange="OnSheetChangedAsync">
+                    @if (_inspection is not null)
+                    {
+                        @foreach (string sheet in _inspection.SheetNames)
+                        {
+                            <option value="@sheet">@sheet</option>
+                        }
+                    }
+                    else
+                    {
+                        <option value="">@L["UploadFileFirst"]</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-2">
+                <label class="form-label fw-semibold" for="headerRowInput">@L["HeaderRow"]</label>
+                <input id="headerRowInput"
+                       type="number"
+                       min="1"
+                       class="form-control"
+                       value="@_headerRowNumber"
+                       @onchange="OnHeaderRowChanged" />
+            </div>
+
+            <div class="col-2">
+                <label class="form-label fw-semibold" for="dataStartRowInput">@L["DataStartRow"]</label>
+                <input id="dataStartRowInput"
+                       type="number"
+                       min="@(_headerRowNumber + 1)"
+                       class="form-control"
+                       @bind="_dataStartRowNumber" />
+            </div>
         </div>
     </div>
 </div>
 
 @if (_inspection is not null)
 {
-    <div class="card border-0 shadow-sm mb-4 scroll-table-card">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <div class="stock-mapping-card card border-0 shadow-sm mb-3
+                @(_isMappingExpanded ? "scroll-table-card" : null)">
+        <div class="card-header bg-white py-2 d-flex flex-wrap justify-content-between
+                    align-items-center gap-2">
             <span class="fw-semibold">@L["Step2Title", StockReportFieldCatalog.All.Count]</span>
-            <span class="small text-muted">
-                @L["DetectedColumns", _inspection.Columns.Count, GetMappedColumnCount(), GetIgnoredColumns().Count]
-            </span>
+            <div class="d-flex gap-3 align-items-center">
+                <span class="small text-muted">
+                    @L[
+                        "DetectedColumns",
+                        _inspection.Columns.Count,
+                        GetMappedColumnCount(),
+                        GetIgnoredColumns().Count]
+                </span>
+                <button type="button"
+                        class="btn btn-primary btn-sm"
+                        disabled="@(!AreRequiredFieldsMapped() || _isBusy)"
+                        @onclick="ExecuteImportAsync">
+                    @L["ImportButton"]
+                </button>
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        aria-expanded="@(_isMappingExpanded ? "true" : "false")"
+                        @onclick="ToggleMapping">
+                    @(_isMappingExpanded ? L["Collapse"] : L["Expand"])
+                </button>
+            </div>
         </div>
-        <div class="card-body">
+        <div class="card-body scroll-table-body stock-mapping-body"
+             hidden="@(!_isMappingExpanded)">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-3">
+                <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th style="width: 24%;">@L["TargetField"]</th>
@@ -182,8 +214,7 @@
                     </tbody>
                 </table>
             </div>
-
-            <div class="border rounded p-3 bg-light">
+            <div class="column-disposition border rounded p-3 bg-light">
                 <div class="small fw-semibold text-uppercase text-muted mb-2">@L["ColumnDisposition"]</div>
                 <div class="d-flex flex-wrap gap-2">
                     @foreach (DetectedExcelColumnDto col in _inspection.Columns)
@@ -204,26 +235,18 @@
                     }
                 </div>
             </div>
-
-            <div class="mt-3 d-flex justify-content-end">
-                <button type="button"
-                        class="btn btn-primary"
-                        disabled="@(!AreRequiredFieldsMapped() || _isBusy)"
-                        @onclick="ExecuteImportAsync">
-                    @L["ImportButton"]
-                </button>
-            </div>
         </div>
     </div>
 }
 
+<div class="import-results">
 @if (_lastImportResult is not null && _lastImportResult.Errors.Count > 0)
 {
-    <div class="card border-warning shadow-sm mb-4">
+    <div class="import-errors-card card border-warning shadow-sm scroll-table-card">
         <div class="card-header bg-warning-subtle text-warning-emphasis py-2 fw-semibold">
             @L["RowErrorsTitle", _lastImportResult.Errors.Count, _lastImportResult.ErrorRowCount]
         </div>
-        <div class="table-responsive" style="max-height: 240px;">
+        <div class="table-responsive">
             <table class="table table-sm table-striped align-middle mb-0">
                 <thead class="sticky-top">
                     <tr>
@@ -249,8 +272,10 @@
     </div>
 }
 
-<div class="card border-0 shadow-sm scroll-table-card">
-    <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+<div class="stock-report-card card border-0 shadow-sm
+            @(IsStoredReportCollapsed ? null : "scroll-table-card")">
+    <div class="card-header bg-white py-2 d-flex flex-wrap justify-content-between
+                align-items-center gap-2">
         <div>
             <span class="fw-semibold">@L["Step3Title"]</span>
             @if (_currentBatch is not null)
@@ -261,12 +286,15 @@
             }
         </div>
         <div class="d-flex gap-2 align-items-center">
-            <input type="search"
-                   class="form-control form-control-sm"
-                   style="min-width: 260px;"
-                   placeholder="@L["SearchPlaceholder"]"
-                   @bind="_searchQuery"
-                   @bind:event="oninput" />
+            @if (!IsStoredReportCollapsed)
+            {
+                <input type="search"
+                       class="form-control form-control-sm"
+                       style="min-width: 260px;"
+                       placeholder="@L["SearchPlaceholder"]"
+                       @bind="_searchQuery"
+                       @bind:event="oninput" />
+            }
             @if (_currentBatch is not null)
             {
                 <button type="button"
@@ -275,12 +303,22 @@
                     @L["Clear"]
                 </button>
             }
+            @if (_inspection is not null)
+            {
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        aria-expanded="@(IsStoredReportCollapsed ? "false" : "true")"
+                        @onclick="ToggleMapping">
+                    @(IsStoredReportCollapsed ? L["Expand"] : L["Collapse"])
+                </button>
+            }
         </div>
     </div>
 
     @if (_currentBatch is null || _currentBatch.Items.Count == 0)
     {
-        <div class="card-body text-center text-muted py-5">
+        <div class="card-body text-center text-muted py-5"
+             hidden="@IsStoredReportCollapsed">
             @L["NoItems"]
         </div>
     }
@@ -288,9 +326,10 @@
     {
         IReadOnlyList<StockReportItem> filteredItems = GetFilteredItems();
 
-        <div class="card-body border-bottom bg-light py-2">
+        <div class="card-body border-bottom bg-light py-2"
+             hidden="@IsStoredReportCollapsed">
             <div class="row text-center">
-                <div class="col-sm-3">
+                <div class="col-3">
                     <span class="text-muted small">@L["ValidRows"]</span>
                     <strong class="ms-1">@_currentBatch.TotalRows</strong>
                     @if (filteredItems.Count != _currentBatch.TotalRows)
@@ -298,22 +337,22 @@
                         <span class="text-muted small">@L["Showing", filteredItems.Count]</span>
                     }
                 </div>
-                <div class="col-sm-3">
+                <div class="col-3">
                     <span class="text-muted small">@L["TotalQuantity"]</span>
                     <strong class="ms-1 text-primary">@_currentBatch.TotalQuantity.ToString("N3")</strong>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-3">
                     <span class="text-muted small">@L["TotalValue"]</span>
                     <strong class="ms-1 text-success">@_currentBatch.TotalValue.ToString("N2")</strong>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-3">
                     <span class="text-muted small">@L["ImportedAt"]</span>
                     <strong class="ms-1">@L["UtcTime", _currentBatch.ImportedAtUtc]</strong>
                 </div>
             </div>
         </div>
 
-        <div class="table-responsive">
+        <div class="table-responsive" hidden="@IsStoredReportCollapsed">
             <table class="table table-sm table-hover align-middle mb-0">
                 <thead class="table-light sticky-top">
                     <tr>
@@ -339,6 +378,7 @@
             </table>
         </div>
     }
+</div>
 </div>
 
 @if (_isClearDialogOpen && _currentBatch is not null)
@@ -368,6 +408,11 @@
     private StockReportImportResultDto? _lastImportResult;
     private StockReportBatch? _currentBatch;
     private bool _isClearDialogOpen;
+    private bool _isMappingExpanded;
+
+    private bool IsStoredReportCollapsed => _inspection is not null && _isMappingExpanded;
+
+    private bool IsFileSettingsCollapsed => _inspection is not null && !_isMappingExpanded;
 
     protected override async Task OnInitializedAsync()
     {
@@ -451,6 +496,7 @@
             _headerRowNumber = _inspection.HeaderRowNumber;
             _dataStartRowNumber = _inspection.DataStartRowNumber;
             ApplyAutoSuggestedMapping();
+            _isMappingExpanded = true;
         }
         catch (Exception ex)
         {
@@ -560,6 +606,7 @@
 
             await StockReportRepository.SaveCurrentAsync(batch);
             _currentBatch = batch;
+            _isMappingExpanded = false;
 
             _statusMessage = L[
                 "StatusImported",
@@ -634,6 +681,11 @@
             _isErrorStatus = true;
             _statusMessage = L["StatusMappingLoadFailed", ex.Message];
         }
+    }
+
+    private void ToggleMapping()
+    {
+        _isMappingExpanded = !_isMappingExpanded;
     }
 
     private void OpenClearDialog()

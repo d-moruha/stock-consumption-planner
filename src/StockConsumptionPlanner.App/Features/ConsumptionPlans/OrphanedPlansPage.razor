@@ -10,14 +10,34 @@
 
 <div class="screen-row">
 <div class="screen-row-chrome">
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
+<div class="page-toolbar">
+    <div class="page-toolbar-heading">
         <h1 class="h3 mb-1">@L["OrphanedTitle"]</h1>
         <p class="text-muted mb-0">
             @L["OrphanedIntro", PlanOptions.OrphanRetentionMonths]
         </p>
     </div>
-    <a class="btn btn-outline-secondary" href="/consumption-plans">@L["BackToPlans"]</a>
+    <div class="page-toolbar-search card border-0 shadow-sm">
+        <div class="card-body">
+            <label class="form-label fw-semibold" for="orphanSearchInput">@L["Search"]</label>
+            <div class="input-group">
+                <input id="orphanSearchInput"
+                       type="search"
+                       class="form-control"
+                       placeholder="@L["SearchPlaceholder"]"
+                       @bind="_search" />
+                <button type="button"
+                        class="btn btn-primary"
+                        disabled="@_isBusy"
+                        @onclick="SearchAsync">
+                    @L["Search"]
+                </button>
+            </div>
+        </div>
+    </div>
+    <a class="page-toolbar-link btn btn-outline-secondary" href="/consumption-plans">
+        @L["BackToPlans"]
+    </a>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(_statusMessage))
@@ -27,23 +47,6 @@
         <button type="button" class="btn-close" @onclick="() => _statusMessage = null" aria-label="@L["Close"]"></button>
     </div>
 }
-
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-6">
-                <label class="form-label fw-semibold" for="orphanSearchInput">@L["Search"]</label>
-                <input id="orphanSearchInput"
-                       type="search"
-                       class="form-control"
-                       placeholder="@L["SearchPlaceholder"]"
-                       @bind="_search" />
-            </div>
-            <div class="col-md-2">
-                <button type="button" class="btn btn-primary w-100" disabled="@_isBusy" @onclick="SearchAsync">@L["Search"]</button>
-            </div>
-        </div>
-    </div>
 </div>
 
 @if (_plans is null)
@@ -56,8 +59,7 @@ else if (_plans.TotalCount == 0)
         <div class="card-body p-4 text-muted">@L["NoOrphanedPlans"]</div>
     </div>
 }
-</div>
-@if (_plans is not null && _plans.TotalCount > 0)
+else
 {
     <div class="card border-0 shadow-sm scroll-table-card">
         <div class="table-responsive">

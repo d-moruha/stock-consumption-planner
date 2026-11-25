@@ -1,9 +1,18 @@
 .page {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-width: 960px;
+    min-height: 600px;
 }
 
 main {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
     min-width: 0;
+    min-height: 0;
 }
 
 .top-row {
@@ -15,6 +24,7 @@ main {
     align-items: center;
     gap: 0.75rem;
     flex-wrap: nowrap;
+    padding: 0 1.5rem 0 2rem;
     position: sticky;
     top: 0;
     z-index: 1040;
@@ -109,25 +119,14 @@ main {
 .nav-panel {
     position: relative;
     z-index: 1;
-    width: min(22rem, calc(100% - 2rem));
+    width: 22rem;
     max-height: calc(100vh - 5rem);
-    margin: 4.25rem 0 0 1.5rem;
+    margin: 4.25rem 0 0 2rem;
     padding: 0.5rem 0;
     overflow: auto;
     border-radius: 0.5rem;
     background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
     box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.35);
-}
-
-@media (min-width: 641px) {
-    .top-row, article {
-        padding-left: 2rem !important;
-        padding-right: 1.5rem !important;
-    }
-
-    .nav-panel {
-        margin-left: 2rem;
-    }
 }
 
 #blazor-error-ui {
